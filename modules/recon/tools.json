@@ -1,0 +1,80 @@
+{
+    "subfinder": {
+        "sources": [
+            "bevigil",
+            "binaryedge",
+            "bufferover",
+            "c99",
+            "censys",
+            "certspotter",
+            "chaos",
+            "crtsh",
+            "dnsdb",
+            "dnsdumpster",
+            "hackertarget",
+            "rapiddns",
+            "shodan",
+            "spyse",
+            "threatcrowd",
+            "virustotal"
+        ],
+        "timeout": 300,
+        "threads": 10
+    },
+    "nmap": {
+        "default_flags": [
+            "-sS",
+            "-T4",
+            "--max-retries=1",
+            "-p-",
+            "--min-rate=1000"
+        ],
+        "stealth_flags": [
+            "-sS",
+            "-T2",
+            "-f",
+            "--max-retries=2",
+            "--scan-delay=1s"
+        ],
+        "aggressive_flags": [
+            "-sS",
+            "-T5",
+            "-A",
+            "-p-",
+            "--min-rate=5000",
+            "-sV",
+            "-sC",
+            "--script=vuln"
+        ]
+    },
+    "httpx": {
+        "threads": 50,
+        "timeout": 10,
+        "follow_redirects": true,
+        "probe": true,
+        "tech_detect": true,
+        "status_code": true,
+        "title": true,
+        "server": true,
+        "websocket": true,
+        "tls_probe": true,
+        "csp_probe": true,
+        "custom_headers": {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        }
+    },
+    "gobuster": {
+        "threads": 50,
+        "wordlist": "~/wordlists/directory-list-2.3-medium.txt",
+        "extensions": ["php", "asp", "aspx", "jsp", "html", "js", "txt", "json", "xml"],
+        "status_codes": [200, 204, 301, 302, 307, 401, 403],
+        "timeout": 10
+    },
+    "ffuf": {
+        "threads": 50,
+        "wordlist": "~/wordlists/directory-list-2.3-medium.txt",
+        "extensions": ["php", "asp", "aspx", "jsp", "html", "js", "txt", "json", "xml"],
+        "match_codes": [200, 204, 301, 302, 307, 401, 403],
+        "timeout": 10
+    }
+} 
