@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VulnForge Report</title>
+    <meta name="author" content="DemonKing369.0">
+    <meta name="generator" content="VulnForge">
     <style>
         :root {
             --primary-color: #2563eb;
@@ -44,6 +46,15 @@
             background: var(--card-bg);
             border-radius: 0.5rem;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .watermark {
+            font-family: monospace;
+            white-space: pre;
+            text-align: center;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+            font-size: 0.8rem;
         }
 
         .header h1 {
@@ -157,6 +168,11 @@
 <body>
     <div class="container">
         <div class="header">
+            <div class="watermark">╔══════════════════════════════════════════════════════════╗
+║ VulnForge - Built with Blood by DemonKing369.0 👑        ║
+║ GitHub: https://github.com/Arunking9                     ║
+║ AI-Powered Security Framework for Bug Bounty Warriors ⚔️║
+╚══════════════════════════════════════════════════════════╝</div>
             <h1>VulnForge Report</h1>
             <p>Generated on {{ timestamp }}</p>
         </div>

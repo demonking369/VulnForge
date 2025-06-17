@@ -4,6 +4,12 @@ VulnForge - Educational Cybersecurity Research Framework
 For authorized testing and educational purposes only.
 """
 
+# ╔══════════════════════════════════════════════════════════╗
+# ║ VulnForge - Built with Blood by DemonKing369.0 👑        ║
+# ║ GitHub: https://github.com/Arunking9                     ║
+# ║ AI-Powered Security Framework for Bug Bounty Warriors ⚔️║
+# ╚══════════════════════════════════════════════════════════╝
+
 import os
 import sys
 import json
