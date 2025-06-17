@@ -15,54 +15,28 @@ from rich.logging import RichHandler
 import os
 from datetime import datetime
 
-def setup_logger(name: str, log_dir: str, log_file: str = None) -> logging.Logger:
-    """Setup logger with file and console handlers.
+def setup_logger(name: str, log_dir: str = None) -> logging.Logger:
+    """Set up a logger with the given name."""
+    if log_dir is None:
+        log_dir = os.path.join(os.path.expanduser("~"), ".vulnforge", "logs")
     
-    Args:
-        name: Logger name
-        log_dir: Directory to store log files
-        log_file: Optional specific log file name
-        
-    Returns:
-        Configured logger instance
-    """
-    # Create logger
+    os.makedirs(log_dir, exist_ok=True)
+    
     logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)
     
-    # Create log directory if it doesn't exist
-    log_path = Path(log_dir)
-    log_path.mkdir(parents=True, exist_ok=True)
-    
-    # Create file handler
-    if log_file is None:
-        log_file = f"{name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
-    file_handler = logging.FileHandler(log_path / log_file)
-    file_handler.setLevel(logging.INFO)
-    
-    # Create console handler
+    # Create handlers
+    log_file = os.path.join(log_dir, f"{name}.log")
+    file_handler = logging.FileHandler(log_file)
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
     
-    # Create formatter
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    file_handler.setFormatter(formatter)
-    console_handler.setFormatter(formatter)
+    # Create formatters and add it to handlers
+    log_format = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(log_format)
+    console_handler.setFormatter(log_format)
     
-    # Add handlers to logger
+    # Add handlers to the logger
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
-    
-    # Add watermark to log file
-    watermark = """# VulnForge Session Log - Authored by DemonKing369.0
-# Session started at: {timestamp}
-# GitHub: https://github.com/Arunking9
-# ===================================================
-""".format(timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    
-    with open(log_path / log_file, 'r+') as f:
-        content = f.read()
-        f.seek(0, 0)
-        f.write(watermark + content)
     
     return logger 

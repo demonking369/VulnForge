@@ -17,26 +17,49 @@ from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
 class EnhancedReconModule:
-    def __init__(self, base_dir: Path, ai_analyzer: Any):
-        self.base_dir = base_dir
+    def __init__(self, base_dir: Path = None, ai_analyzer: Any = None, config_path: str = None):
+        """Initialize the reconnaissance module."""
+        self.config = {
+            "subfinder": {
+                "sources": ["bevigil", "binaryedge", "bufferover", "c99", "censys"],
+                "timeout": 30
+            },
+            "nmap": {
+                "default_flags": ["-sS", "-T4", "--max-retries=1"],
+                "stealth_flags": ["-sS", "-T2", "-f"],
+                "aggressive_flags": ["-sS", "-T5", "-A"]
+            },
+            "httpx": {
+                "threads": 50,
+                "timeout": 10,
+                "follow_redirects": True
+            }
+        }
+        
+        self.base_dir = base_dir or Path.cwd()
         self.ai_analyzer = ai_analyzer
         self.logger = logging.getLogger(__name__)
         self.console = Console()
-        self.config = self._load_config()
         
-    def _load_config(self) -> Dict:
-        """Load configuration from config file"""
-        config_path = self.base_dir / "configs" / "tools.json"
-        try:
-            with open(config_path) as f:
-                return json.load(f)
-        except:
-            return {
-                "subfinder": {"sources": ["bevigil", "binaryedge", "bufferover", "c99", "censys"]},
-                "httpx": {"threads": 50, "timeout": 10},
-                "nuclei": {"severity": ["critical", "high", "medium"]}
-            }
-            
+        if config_path:
+            try:
+                with open(config_path, 'r') as f:
+                    user_config = json.load(f)
+                    # Deep merge user config with defaults
+                    self.config = self._deep_merge(self.config, user_config)
+            except Exception as e:
+                self.logger.warning(f"Failed to load config from {config_path}: {e}")
+        
+    def _deep_merge(self, default, user):
+        """Deep merge two dictionaries."""
+        result = default.copy()
+        for key, value in user.items():
+            if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+                result[key] = self._deep_merge(result[key], value)
+            else:
+                result[key] = value
+        return result
+        
     async def run_command(self, cmd: List[str], timeout: int = 300) -> str:
         """Run shell command asynchronously"""
         try:
