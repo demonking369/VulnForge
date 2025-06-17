@@ -24,10 +24,11 @@ class AIController:
         """
         self.session_dir = Path(session_dir)
         self.config = ConfigManager(config_path)
-        self.logger = setup_logger("ai_controller", self.session_dir / "logs")
+        self.logger = setup_logger("ai_controller")
         self.context_builder = ContextBuilder(self.session_dir)
         self.notifier = Notifier(self.config)
         self.report_generator = ReportGenerator(self.session_dir)
+        self.output_format = "all"  # Default output format
         
         # Initialize session data
         self.session_data = {
@@ -115,7 +116,7 @@ Provide a detailed response:"""
         Returns:
             Dictionary mapping report types to their file paths
         """
-        self.logger.info("Generating reports...")
+        self.logger.info(f"Generating reports in {self.output_format} format...")
         
         try:
             # Prepare context data
@@ -136,7 +137,7 @@ Provide a detailed response:"""
             }
             
             # Generate reports
-            report_paths = self.report_generator.generate_reports(context)
+            report_paths = self.report_generator.generate_reports(context, self.output_format)
             
             self.logger.info("Reports generated successfully")
             return report_paths
@@ -159,4 +160,27 @@ Provide a detailed response:"""
         minutes = (duration.seconds % 3600) // 60
         seconds = duration.seconds % 60
         
-        return f"{hours:02d}:{minutes:02d}:{seconds:02d}" 
+        return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+    def setup_ai(self) -> bool:
+        """Setup AI environment: check Ollama service and model availability."""
+        try:
+            if hasattr(self, 'ollama'):
+                client = self.ollama
+            else:
+                from ai_integration import OllamaClient
+                client = OllamaClient()
+            if not client.is_available():
+                self.logger.error("Ollama service not available. Start with: ollama serve")
+                return False
+            models = client.list_models()
+            if not models:
+                self.logger.info("No models found. Pulling default model...")
+                if not client.pull_model(client.main_model):
+                    self.logger.error("Failed to pull default model")
+                    return False
+            self.logger.info(f"AI setup complete. Available models: {[m['name'] for m in models]}")
+            return True
+        except Exception as e:
+            self.logger.error(f"Error in setup_ai: {e}")
+            return False 

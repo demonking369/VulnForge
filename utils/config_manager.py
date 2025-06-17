@@ -12,7 +12,12 @@ import os
 
 class ConfigManager:
     def __init__(self, base_dir: Path):
-        self.base_dir = base_dir
+        """Initialize configuration manager.
+        
+        Args:
+            base_dir: Base directory for configuration files (Path or str)
+        """
+        self.base_dir = Path(base_dir) if isinstance(base_dir, str) else base_dir
         self.logger = logging.getLogger(__name__)
         self.config_dir = self.base_dir / "configs"
         self.config_dir.mkdir(parents=True, exist_ok=True)

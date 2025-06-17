@@ -10,6 +10,7 @@ An AI-powered vulnerability research framework for authorized security testing a
   - Real-time analysis and adaptation based on scan results
   - Automatic tool installation and updates
   - Detailed decision logging and reasoning
+  - Ollama integration for efficient model serving
 
 - **Reconnaissance Module**
   - Subdomain discovery using multiple tools
@@ -17,41 +18,49 @@ An AI-powered vulnerability research framework for authorized security testing a
   - Web service enumeration
   - Vulnerability scanning
   - AI-powered analysis
+  - Stealth mode with request delays and user agent rotation
 
 - **Stealth Capabilities**
   - Random delays between requests
   - User agent rotation
   - Proxy support
   - Human-like behavior simulation
+  - Configurable stealth levels
 
 - **Reporting**
-  - Markdown reports
-  - JSON output
-  - Detailed vulnerability information
+  - Markdown reports with detailed findings
+  - JSON output for programmatic analysis
+  - HTML reports with visualizations
   - AI-powered analysis and recommendations
+  - Customizable report templates
 
 - **Notification System**
   - Multi-channel alerts (Email, Discord, Webhooks)
   - Severity levels (info, warning, high, critical)
   - Customizable notification settings
+  - Asynchronous notification processing
+  - Rate limiting and retry mechanisms
 
 - **AI Assistant**
   - Interactive AI queries with `ask-ai` command
   - Context-aware responses
   - Security-focused guidance
   - Tool recommendations
+  - Debug mode for AI decision transparency
 
 - **Custom Tool Generation**
   - AI-powered tool creation
   - Automatic script generation
   - Tool metadata tracking
   - Success rate monitoring
+  - Tool listing and management
 
 - **Development Mode**
   - AI-assisted code improvements
   - Live module modifications
   - Modification history tracking
   - Backup and revert capabilities
+  - Interactive development shell
 
 ## Installation
 
@@ -69,6 +78,7 @@ An AI-powered vulnerability research framework for authorized security testing a
 3. Install Python dependencies:
    ```bash
    pip install -r requirements.txt
+   pip install -r requirements-test.txt  # For development
    ```
 
 4. Install Required Tools:
@@ -84,9 +94,10 @@ An AI-powered vulnerability research framework for authorized security testing a
    - For tools installed via Go (like `nuclei`), ensure `$HOME/go/bin` is in your `PATH` or move the binary to `/usr/local/bin`.
 
 5. **Ollama Setup:**
-   - VulnForge uses Ollama for model serving to optimize resource utilization.
-   - Ensure Ollama is installed and running on your system.
-   - The main model used is `deepseek-coder`, with `mistral` serving as the assistant model.
+   - VulnForge uses Ollama for model serving to optimize resource utilization
+   - Ensure Ollama is installed and running on your system
+   - The main model used is `deepseek-coder`, with `mistral` serving as the assistant model
+   - Models are automatically downloaded on first run
 
 ## Usage
 
@@ -184,6 +195,27 @@ AI-generated tools are stored in:
 - **Testing:** Run tests with `pytest`
 - **Linting:** Use `pylint` for code quality
 - **Formatting:** Use `black` for code formatting
+
+### Running Tests
+```bash
+# Run all tests
+pytest
+
+# Run specific test file
+pytest tests/test_ai_features.py
+
+# Run with coverage
+pytest --cov=.
+```
+
+### Code Quality
+```bash
+# Format code
+black .
+
+# Lint code
+pylint vulnforge_main.py
+```
 
 ## Requirements
 

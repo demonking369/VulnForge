@@ -36,16 +36,17 @@ class ReportGenerator:
             handler.setFormatter(formatter)
             self.logger.addHandler(handler)
 
-    def generate_reports(self, context: Dict[str, Any]) -> Dict[str, str]:
-        """Generate reports in all supported formats.
+    def generate_reports(self, context: Dict[str, Any], output_format: str = "all") -> Dict[str, str]:
+        """Generate reports in specified format(s).
         
         Args:
             context: Dictionary containing report data
+            output_format: Desired output format (markdown, json, html, or all)
             
         Returns:
             Dictionary mapping report types to their file paths
         """
-        self.logger.info("Generating reports...")
+        self.logger.info(f"Generating reports in {output_format} format...")
         
         # Add timestamp if not present
         if "timestamp" not in context:
@@ -54,17 +55,17 @@ class ReportGenerator:
         report_paths = {}
         
         try:
-            # Generate HTML report
-            html_path = self._generate_html_report(context)
-            report_paths["html"] = str(html_path)
+            if output_format in ["html", "all"]:
+                html_path = self._generate_html_report(context)
+                report_paths["html"] = str(html_path)
             
-            # Generate Markdown report
-            md_path = self._generate_markdown_report(context)
-            report_paths["markdown"] = str(md_path)
+            if output_format in ["markdown", "all"]:
+                md_path = self._generate_markdown_report(context)
+                report_paths["markdown"] = str(md_path)
             
-            # Generate JSON report
-            json_path = self._generate_json_report(context)
-            report_paths["json"] = str(json_path)
+            if output_format in ["json", "all"]:
+                json_path = self._generate_json_report(context)
+                report_paths["json"] = str(json_path)
             
             self.logger.info("Reports generated successfully")
             return report_paths
