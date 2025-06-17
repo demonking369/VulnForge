@@ -16,10 +16,15 @@ fi
 
 # Check Python version
 PYTHON_VERSION=$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
-if (( $(echo "$PYTHON_VERSION < 3.8" | bc -l) )); then
+PYTHON_MAJOR=$(echo $PYTHON_VERSION | cut -d. -f1)
+PYTHON_MINOR=$(echo $PYTHON_VERSION | cut -d. -f2)
+
+if [ "$PYTHON_MAJOR" -lt 3 ] || ([ "$PYTHON_MAJOR" -eq 3 ] && [ "$PYTHON_MINOR" -lt 8 ]); then
     echo "Python 3.8 or higher is required. Current version: $PYTHON_VERSION"
     exit 1
 fi
+
+echo "Found Python $PYTHON_VERSION - proceeding with installation..."
 
 # Create virtual environment
 echo "Creating virtual environment..."
