@@ -1,0 +1,47 @@
+{
+    "target": {
+        "domain": "bumba.global",
+        "url": "https://bumba.global/en",
+        "scope": {
+            "included": [
+                "https://bumba.global/*",
+                "https://apps.apple.com/ae/app/bumba-global/id6451416170",
+                "https://play.google.com/store/apps/details?id=com.bumba.global.mobile"
+            ],
+            "excluded": [
+                "*.third-party-domain.com"
+            ]
+        }
+    },
+    "scanning": {
+        "max_threads": 5,
+        "timeout": 300,
+        "rate_limit": {
+            "enabled": true,
+            "delay": 2
+        }
+    },
+    "tools": {
+        "nmap": {
+            "flags": ["-sS", "-T3", "-p-", "--max-retries=1"],
+            "stealth": true
+        },
+        "subfinder": {
+            "sources": ["bevigil", "binaryedge", "bufferover", "c99", "censys"],
+            "timeout": 30
+        },
+        "httpx": {
+            "threads": 20,
+            "timeout": 10,
+            "follow_redirects": true
+        },
+        "nuclei": {
+            "severity": ["critical", "high", "medium"],
+            "rate_limit": 100
+        }
+    },
+    "ai": {
+        "preferred_model": "deepseek-coder-v2:16b-lite-base-q4_0",
+        "fallback_model": "mistral:7b-instruct-v0.2-q4_0"
+    }
+} 

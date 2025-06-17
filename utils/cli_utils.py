@@ -9,55 +9,37 @@ from rich.panel import Panel
 from rich.text import Text
 from typing import Dict, List, Any
 import json
+from rich.progress import Progress, SpinnerColumn, TextColumn
 
 console = Console()
 
 def print_banner(version: str):
     """Print VulnForge banner"""
-    banner_text = f"""
-╔══════════════════════════════════════════════════════════════╗
-║                         VulnForge v{version}                         ║
-║              Educational Security Research Framework          ║
-║                   For Authorized Testing Only                ║
-╚══════════════════════════════════════════════════════════════╝
+    banner = f"""
+    ╔══════════════════════════════════════════════════════════════╗
+    ║                    VulnForge v{version}                       ║
+    ║              Educational Security Framework                   ║
+    ╚══════════════════════════════════════════════════════════════╝
     """
-    console.print(Panel(banner_text, style="bold blue"))
+    console.print(Panel(banner, style="bold blue"))
     
-def print_results_table(results: Dict[str, Any]):
+def print_results_table(results: dict):
     """Print results in a formatted table"""
     for category, items in results.items():
         if not items:
             continue
             
-        table = Table(title=f"\n{category}")
+        table = Table(title=f"{category} Results")
         table.add_column("Item", style="cyan")
         table.add_column("Details", style="green")
         
-        if category == "Subdomains":
-            for item in items:
-                table.add_row(item, "")
-                
-        elif category == "Open Ports":
-            for item in items:
-                details = f"{item['service']}"
-                if item.get('version'):
-                    details += f" ({item['version']})"
-                table.add_row(f"{item['port']}/{item['protocol']}", details)
-                
-        elif category == "Web Services":
-            for item in items:
-                details = f"Status: {item['status_code']}"
-                if item.get('title'):
-                    details += f" | Title: {item['title']}"
-                table.add_row(item['url'], details)
-                
-        elif category == "Vulnerabilities":
-            for item in items:
-                details = f"Severity: {item['severity']}"
-                if item.get('description'):
-                    details += f" | {item['description']}"
-                table.add_row(item['type'], details)
-                
+        for item in items:
+            if isinstance(item, dict):
+                details = ", ".join(f"{k}: {v}" for k, v in item.items())
+            else:
+                details = str(item)
+            table.add_row(str(item), details)
+            
         console.print(table)
         
 def print_json_results(results: Dict[str, Any]):
@@ -97,4 +79,12 @@ def print_stealth_stats(stats: Dict[str, Any]):
     for key, value in stats.items():
         table.add_row(key.replace('_', ' ').title(), str(value))
         
-    console.print(table) 
+    console.print(table)
+
+def create_progress(description: str):
+    """Create a progress bar"""
+    return Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console
+    ) 

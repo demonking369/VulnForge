@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VulnForge Report</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --danger-color: #dc2626;
+            --info-color: #3b82f6;
+            --text-color: #1f2937;
+            --bg-color: #f9fafb;
+            --card-bg: #ffffff;
+            --border-color: #e5e7eb;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background: var(--bg-color);
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            background: var(--card-bg);
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .card h2 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-success { background: #dcfce7; color: var(--success-color); }
+        .status-warning { background: #fef3c7; color: var(--warning-color); }
+        .status-danger { background: #fee2e2; color: var(--danger-color); }
+        .status-info { background: #dbeafe; color: var(--info-color); }
+
+        .section {
+            margin-bottom: 2rem;
+        }
+
+        .section h2 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .vulnerability {
+            background: var(--card-bg);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--danger-color);
+        }
+
+        .vulnerability h3 {
+            color: var(--danger-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .vulnerability p {
+            margin-bottom: 0.5rem;
+        }
+
+        .recommendation {
+            background: var(--card-bg);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--success-color);
+        }
+
+        .recommendation h3 {
+            color: var(--success-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .error {
+            background: var(--card-bg);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--warning-color);
+        }
+
+        .error h3 {
+            color: var(--warning-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .timestamp {
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>VulnForge Report</h1>
+            <p>Generated on {{ timestamp }}</p>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h2>Target Information</h2>
+                <p><strong>Domain:</strong> {{ target.domain }}</p>
+                <p><strong>IP:</strong> {{ target.ip }}</p>
+                <p><strong>Scan Time:</strong> {{ target.scan_time }}</p>
+                <p><strong>Duration:</strong> {{ target.duration }}</p>
+            </div>
+
+            <div class="card">
+                <h2>Modules</h2>
+                {% for module in modules %}
+                <div class="status status-{{ module.status }}">
+                    {{ module.name }}: {{ module.status }}
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="card">
+                <h2>Tools Used</h2>
+                {% for tool in tools %}
+                <div class="status status-{{ tool.status }}">
+                    {{ tool.name }}: {{ tool.status }}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Vulnerabilities</h2>
+            {% for vuln in vulnerabilities %}
+            <div class="vulnerability">
+                <h3>{{ vuln.title }}</h3>
+                <p><strong>Severity:</strong> {{ vuln.severity }}</p>
+                <p><strong>CVSS Score:</strong> {{ vuln.cvss_score }}</p>
+                <p><strong>Description:</strong> {{ vuln.description }}</p>
+                <p><strong>Location:</strong> {{ vuln.location }}</p>
+                {% if vuln.references %}
+                <p><strong>References:</strong></p>
+                <ul>
+                    {% for ref in vuln.references %}
+                    <li><a href="{{ ref.url }}">{{ ref.title }}</a></li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="section">
+            <h2>Exploits</h2>
+            {% for exploit in exploits %}
+            <div class="vulnerability">
+                <h3>{{ exploit.name }}</h3>
+                <p><strong>Status:</strong> {{ exploit.status }}</p>
+                <p><strong>Command:</strong> {{ exploit.command }}</p>
+                {% if exploit.output %}
+                <pre>{{ exploit.output }}</pre>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="section">
+            <h2>Defensive Measures</h2>
+            {% for measure in defensive_measures %}
+            <div class="recommendation">
+                <h3>{{ measure.name }}</h3>
+                <p>{{ measure.description }}</p>
+                {% if measure.details %}
+                <pre>{{ measure.details }}</pre>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="section">
+            <h2>Recommendations</h2>
+            {% for rec in recommendations %}
+            <div class="recommendation">
+                <h3>{{ rec.title }}</h3>
+                <p>{{ rec.description }}</p>
+                {% if rec.steps %}
+                <ol>
+                    {% for step in rec.steps %}
+                    <li>{{ step }}</li>
+                    {% endfor %}
+                </ol>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="section">
+            <h2>Errors</h2>
+            {% for error in errors %}
+            <div class="error">
+                <h3>{{ error.timestamp }}</h3>
+                <p>{{ error.message }}</p>
+                {% if error.context %}
+                <pre>{{ error.context }}</pre>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html> 

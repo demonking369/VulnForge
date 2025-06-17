@@ -30,16 +30,43 @@ ENV/
 .vscode/
 *.swp
 *.swo
+.project
+.pydevproject
+.settings/
 
 # Logs
 *.log
 logs/
+~/.vulnforge/logs/
+
+# Session data
+~/.vulnforge/sessions/
+~/.vulnforge/custom_tools/
+~/.vulnforge/cve_alerts/
+~/.vulnforge/cve_cache/
+
+# Config files
+~/.vulnforge/configs/
+
+# Test coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Distribution
+dist/
+build/
+*.egg-info/
+
+# Misc
+.DS_Store
+.env
+.env.local
+.env.*.local
 
 # Local configuration
-.env
 config.local.json
 
 # Temporary files
 *.tmp
-*.temp
-.DS_Store 
+*.temp 

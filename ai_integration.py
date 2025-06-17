@@ -17,7 +17,8 @@ class OllamaClient:
     def __init__(self, base_url: str = "http://localhost:11434"):
         self.base_url = base_url
         self.logger = logging.getLogger(__name__)
-        self.default_model = "deepseek-coder-v2:16b-lite-base-q5_K_S"
+        self.main_model = "deepseek-coder-v2:16b-lite-base-q4_0"  # Main model
+        self.assistant_model = "mistral:7b-instruct-v0.2-q4_0"    # Assistant model
         self.backup_models = [
             "deepseek-coder:6.7b",
             "codellama:7b",
@@ -105,9 +106,13 @@ class OllamaClient:
         """Get the best available model"""
         available_models = [m['name'] for m in self.list_models()]
         
-        # Check default model first (deepseek-coder-v2)
-        if self.default_model in available_models:
-            return self.default_model
+        # Check main model first (deepseek-coder-v2:16b-lite-base-q4_0)
+        if self.main_model in available_models:
+            return self.main_model
+            
+        # Check assistant model next (mistral:7b-instruct-v0.2-q4_0)
+        if self.assistant_model in available_models:
+            return self.assistant_model
             
         # Check backup models
         for model in self.backup_models:
@@ -345,7 +350,7 @@ class AIOrchestrator:
         models = self.ollama.list_models()
         if not models:
             self.logger.info("No models found. Pulling default model...")
-            if not self.ollama.pull_model(self.ollama.default_model):
+            if not self.ollama.pull_model(self.ollama.get_best_model()):
                 self.logger.error("Failed to pull default model")
                 return False
                 

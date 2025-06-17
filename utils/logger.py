@@ -1,22 +1,29 @@
 """
-Logger module for VulnForge
-Handles logging configuration and formatting
+Logger utility for VulnForge
 """
 
 import logging
 import sys
 from pathlib import Path
 from rich.logging import RichHandler
-from typing import Optional
 
-def setup_logger(name: str = "vulnforge", level: int = logging.INFO) -> logging.Logger:
-    """Setup logger with rich formatting"""
+def setup_logger(name: str = "vulnforge") -> logging.Logger:
+    """Set up and configure logger"""
     logger = logging.getLogger(name)
-    logger.setLevel(level)
+    
+    # Set log level
+    logger.setLevel(logging.INFO)
     
     # Create handlers
     console_handler = RichHandler(rich_tracebacks=True)
-    file_handler = logging.FileHandler(Path.home() / ".vulnforge" / "logs" / "vulnforge.log")
+    
+    # Ensure log directory exists
+    log_dir = Path.home() / ".vulnforge" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    
+    file_handler = logging.FileHandler(
+        log_dir / "vulnforge.log"
+    )
     
     # Create formatters
     formatter = logging.Formatter(
@@ -31,8 +38,4 @@ def setup_logger(name: str = "vulnforge", level: int = logging.INFO) -> logging.
     logger.addHandler(console_handler)
     logger.addHandler(file_handler)
     
-    return logger
-
-def get_logger(name: Optional[str] = None) -> logging.Logger:
-    """Get logger instance"""
-    return logging.getLogger(name or "vulnforge") 
+    return logger 

@@ -200,31 +200,28 @@ if command -v nuclei &> /dev/null; then
     nuclei -update-templates -silent
 fi
 
-# Set up Ollama (optional)
-read -p "Do you want to install Ollama for AI capabilities? (y/N): " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo -e "${BLUE}[*] Installing Ollama...${NC}"
-    curl -fsSL https://ollama.ai/install.sh | sh
-    
-    echo -e "${YELLOW}[*] Installing AI models...${NC}"
-    echo "This may take some time depending on your internet connection."
-    
-    # Install primary model
-    echo -e "${BLUE}[*] Installing DeepSeek Coder v2 (Primary Model)...${NC}"
-    ollama pull deepseek-coder-v2:16b-lite-base-q5_K_S
-    
-    # Install backup models
-    echo -e "${BLUE}[*] Installing backup models...${NC}"
-    ollama pull deepseek-coder:6.7b
-    ollama pull codellama:7b
-    ollama pull mistral:7b
-    
-    echo -e "${GREEN}[+] AI models installed successfully!${NC}"
-    echo -e "${YELLOW}[*] You can manage models with:${NC}"
-    echo "ollama list    # List installed models"
-    echo "ollama rm <model>    # Remove a model"
-    echo "ollama pull <model>  # Install additional models"
+# Check if Ollama is installed
+if ! command -v ollama &> /dev/null; then
+    echo -e "${YELLOW}[*] Installing Ollama...${NC}"
+    curl -fsSL https://ollama.com/install.sh | sh
+else
+    echo -e "${GREEN}[+] Ollama is already installed.${NC}"
+fi
+
+# Check if required AI models are available
+echo -e "${BLUE}[*] Checking for required AI models...${NC}"
+if ! ollama list | grep -q "deepseek-coder-v2:16b-lite-base-q4_0"; then
+    echo -e "${YELLOW}[*] Installing main model: deepseek-coder-v2:16b-lite-base-q4_0...${NC}"
+    ollama pull deepseek-coder-v2:16b-lite-base-q4_0
+else
+    echo -e "${GREEN}[+] Main model is already installed.${NC}"
+fi
+
+if ! ollama list | grep -q "mistral:7b-instruct-v0.2-q4_0"; then
+    echo -e "${YELLOW}[*] Installing assistant model: mistral:7b-instruct-v0.2-q4_0...${NC}"
+    ollama pull mistral:7b-instruct-v0.2-q4_0
+else
+    echo -e "${GREEN}[+] Assistant model is already installed.${NC}"
 fi
 
 # Create desktop shortcut

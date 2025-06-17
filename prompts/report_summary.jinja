@@ -1,0 +1,95 @@
+You are a cybersecurity expert creating a comprehensive security assessment report.
+
+Assessment Data:
+{{ assessment_data }}
+
+Previous Context:
+{{ context }}
+
+Generate a detailed security assessment report with the following sections:
+
+1. Executive Summary
+   - Overall risk level
+   - Key findings
+   - Critical vulnerabilities
+   - Immediate actions required
+
+2. Technical Details
+   - Vulnerability descriptions
+   - Affected systems
+   - Technical impact
+   - Exploitation difficulty
+   - CVSS scores
+
+3. Risk Analysis
+   - Business impact
+   - Likelihood of exploitation
+   - Potential consequences
+   - Risk scoring
+
+4. Remediation
+   - Step-by-step fixes
+   - Priority order
+   - Implementation guidance
+   - Verification steps
+
+5. Recommendations
+   - Short-term actions
+   - Long-term improvements
+   - Security best practices
+   - Tool recommendations
+
+Format your response as JSON with the following structure:
+{
+    "executive_summary": {
+        "overall_risk": "low/medium/high/critical",
+        "key_findings": ["finding1", "finding2"],
+        "critical_vulnerabilities": [
+            {
+                "name": "vulnerability name",
+                "severity": "low/medium/high/critical",
+                "description": "brief description"
+            }
+        ],
+        "immediate_actions": ["action1", "action2"]
+    },
+    "technical_details": [
+        {
+            "vulnerability": "vulnerability name",
+            "description": "detailed description",
+            "affected_systems": ["system1", "system2"],
+            "technical_impact": "impact description",
+            "exploitation_difficulty": "easy/medium/hard",
+            "cvss_score": "score",
+            "cvss_vector": "vector string"
+        }
+    ],
+    "risk_analysis": {
+        "business_impact": "impact description",
+        "likelihood": "low/medium/high",
+        "consequences": ["consequence1", "consequence2"],
+        "risk_score": "score",
+        "risk_level": "low/medium/high"
+    },
+    "remediation": [
+        {
+            "step": "step number",
+            "action": "remediation action",
+            "priority": "high/medium/low",
+            "implementation": "implementation details",
+            "verification": "how to verify"
+        }
+    ],
+    "recommendations": {
+        "short_term": ["action1", "action2"],
+        "long_term": ["action1", "action2"],
+        "best_practices": ["practice1", "practice2"],
+        "tools": [
+            {
+                "name": "tool name",
+                "purpose": "what to use it for",
+                "link": "tool link"
+            }
+        ]
+    }
+} 
