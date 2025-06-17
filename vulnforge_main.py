@@ -366,7 +366,27 @@ async def dev_mode_shell(vf, session_dir):
 
 async def main():
     parser = argparse.ArgumentParser(
-        description="VulnForge - Educational Security Research Framework"
+        description="""
+╔══════════════════════════════════════════════════════════╗
+║ VulnForge - Built with Blood by DemonKing369.0 👑        ║
+║ GitHub: https://github.com/Arunking9                     ║
+║ AI-Powered Security Framework for Bug Bounty Warriors ⚔️║
+╚══════════════════════════════════════════════════════════╝
+
+A powerful AI-driven security testing framework for authorized penetration testing and bug bounty hunting.
+
+Key Features:
+• AI-Autonomous Operation (--ai-only)
+• Advanced Reconnaissance
+• Stealth Mode Capabilities
+• Multi-format Reporting
+• Custom Tool Generation
+• Interactive AI Assistant
+• Development Mode
+
+For detailed documentation, visit: https://github.com/Arunking9/VulnForge
+""",
+        formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument("--target", "-t", help="Target domain or IP")
     parser.add_argument(

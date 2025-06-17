@@ -6,283 +6,106 @@
 # ║ AI-Powered Security Framework for Bug Bounty Warriors ⚔️║
 # ╚══════════════════════════════════════════════════════════╝
 
-# VulnForge Installation Script
-# For Kali Linux systems
+echo "Installing VulnForge..."
 
-set -e
-
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
-echo -e "${BLUE}"
-echo "╔══════════════════════════════════════════════════════════════╗"
-echo "║                    VulnForge Installer                       ║"
-echo "║              Educational Security Framework                   ║"
-echo "╚══════════════════════════════════════════════════════════════╝"
-echo -e "${NC}"
-
-# Check if running on Kali Linux
-if ! grep -q "kali" /etc/os-release 2>/dev/null; then
-    echo -e "${YELLOW}Warning: This script is designed for Kali Linux${NC}"
-    read -p "Continue anyway? (y/N): " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        exit 1
-    fi
+# Check if Python 3.8+ is installed
+if ! command -v python3 &> /dev/null; then
+    echo "Python 3 is required but not installed. Please install Python 3.8 or higher."
+    exit 1
 fi
 
-# Check if running as root
-if [[ $EUID -eq 0 ]]; then
-   echo -e "${RED}This script should not be run as root${NC}" 
-   exit 1
+# Check Python version
+PYTHON_VERSION=$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
+if (( $(echo "$PYTHON_VERSION < 3.8" | bc -l) )); then
+    echo "Python 3.8 or higher is required. Current version: $PYTHON_VERSION"
+    exit 1
 fi
 
-echo -e "${GREEN}[+] Starting VulnForge installation...${NC}"
-
-# Update system packages
-echo -e "${BLUE}[*] Updating system packages...${NC}"
-sudo apt update
+# Create virtual environment
+echo "Creating virtual environment..."
+python3 -m venv venv
+source venv/bin/activate
 
 # Install Python dependencies
-echo -e "${BLUE}[*] Installing Python dependencies...${NC}"
-sudo apt install -y python3 python3-pip python3-venv
+echo "Installing Python dependencies..."
+pip install --upgrade pip
+pip install -r requirements.txt
+pip install -r requirements-test.txt
 
-# Install basic tools
-echo -e "${BLUE}[*] Installing basic security tools...${NC}"
-sudo apt install -y \
-    nmap \
-    dnsutils \
-    curl \
-    wget \
-    git \
-    jq \
-    whatweb \
-    gobuster \
-    ffuf
+# Install VulnForge globally
+echo "Installing VulnForge globally..."
+pip install -e .
 
-# Install Go if not present
+# Install required tools
+echo "Installing required tools..."
+
+# Check if apt is available (Debian/Ubuntu)
+if command -v apt &> /dev/null; then
+    sudo apt update
+    sudo apt install -y nmap dnsutils
+fi
+
+# Check if yum is available (RHEL/CentOS)
+if command -v yum &> /dev/null; then
+    sudo yum install -y nmap bind-utils
+fi
+
+# Install Go tools
+echo "Installing Go tools..."
 if ! command -v go &> /dev/null; then
-    echo -e "${BLUE}[*] Installing Go...${NC}"
-    sudo apt install -y golang-go
-    
-    # Setup Go environment
-    echo 'export GOPATH=$HOME/go' >> ~/.bashrc
-    echo 'export PATH=$PATH:$GOPATH/bin' >> ~/.bashrc
-    export GOPATH=$HOME/go
-    export PATH=$PATH:$GOPATH/bin
-    mkdir -p $GOPATH/bin
+    echo "Go is required but not installed. Please install Go first."
+    exit 1
 fi
 
-# Install Go-based tools
-echo -e "${BLUE}[*] Installing Go-based security tools...${NC}"
+# Install Go tools
+go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
+go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
+go install -v github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest
+go install -v github.com/ffuf/ffuf@latest
+go install -v github.com/OJ/gobuster/v3@latest
 
-# Subfinder
-if ! command -v subfinder &> /dev/null; then
-    echo -e "${YELLOW}[*] Installing subfinder...${NC}"
-    go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
+# Add Go bin to PATH if not already there
+if [[ ":$PATH:" != *":$HOME/go/bin:"* ]]; then
+    echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.bashrc
+    source ~/.bashrc
 fi
 
-# HTTPx
-if ! command -v httpx &> /dev/null; then
-    echo -e "${YELLOW}[*] Installing httpx...${NC}"
-    go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
+# Install Ollama
+echo "Installing Ollama..."
+if ! command -v ollama &> /dev/null; then
+    curl -fsSL https://ollama.com/install.sh | sh
 fi
 
-# Nuclei
-if ! command -v nuclei &> /dev/null; then
-    echo -e "${YELLOW}[*] Installing nuclei...${NC}"
-    go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
-fi
+# Pull required models
+echo "Pulling required AI models..."
+ollama pull deepseek-coder-v2:16b-lite-base-q4_0
+ollama pull mistral:7b-instruct-v0.2-q4_0
 
-# Amass (alternative subdomain finder)
-if ! command -v amass &> /dev/null; then
-    echo -e "${YELLOW}[*] Installing amass...${NC}"
-    go install -v github.com/owasp-amass/amass/v4/...@master
-fi
+# Create necessary directories
+echo "Creating necessary directories..."
+mkdir -p ~/.vulnforge/{configs,sessions,custom_tools}
 
-# Create VulnForge directory structure
-echo -e "${BLUE}[*] Setting up VulnForge directory structure...${NC}"
-VULNFORGE_DIR="$HOME/.vulnforge"
-mkdir -p "$VULNFORGE_DIR"/{modules,tools,results,configs,wordlists}
-
-# Install Python requirements
-echo -e "${BLUE}[*] Installing Python requirements...${NC}"
-cat > "$VULNFORGE_DIR/requirements.txt" << EOF
-requests>=2.28.0
-beautifulsoup4>=4.11.0
-lxml>=4.9.0
-colorama>=0.4.5
-rich>=12.5.0
-click>=8.1.0
-pydantic>=1.10.0
-aiohttp>=3.8.0
-asyncio-mqtt>=0.11.0
-python-nmap>=0.7.1
-python-whois>=0.8.0
-dnspython>=2.2.0
-validators>=0.20.0
-urllib3>=1.26.0
-EOF
-
-pip3 install -r "$VULNFORGE_DIR/requirements.txt"
-
-# Create configuration files
-echo -e "${BLUE}[*] Creating configuration files...${NC}"
-
-# Main config
-cat > "$VULNFORGE_DIR/configs/config.json" << EOF
-{
-    "version": "1.0.0",
-    "default_output_dir": "$VULNFORGE_DIR/results",
-    "log_level": "INFO",
-    "max_threads": 10,
-    "timeout": 300,
-    "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-    "rate_limit": {
-        "enabled": true,
-        "delay": 1
-    },
-    "proxy": {
-        "enabled": false,
-        "http": "",
-        "https": "",
-        "socks": ""
-    }
-}
-EOF
-
-# Tool configurations
-cat > "$VULNFORGE_DIR/configs/tools.json" << EOF
+# Create initial config files
+echo "Creating initial configuration..."
+cat > ~/.vulnforge/configs/tools.json << EOL
 {
     "nmap": {
-        "default_flags": ["-sS", "-T4", "--max-retries=1"],
-        "stealth_flags": ["-sS", "-T2", "-f"],
-        "aggressive_flags": ["-sS", "-T5", "-A"]
+        "enabled": true,
+        "args": "-sV -sC --min-rate 1000"
     },
     "subfinder": {
-        "sources": ["bevigil", "binaryedge", "bufferover", "c99", "censys"],
-        "timeout": 30
+        "enabled": true,
+        "args": "-silent"
     },
     "httpx": {
-        "threads": 50,
-        "timeout": 10,
-        "follow_redirects": true
-    },
-    "nuclei": {
-        "update_templates": true,
-        "severity": ["critical", "high", "medium"],
-        "rate_limit": 150
+        "enabled": true,
+        "args": "-silent -title -status-code"
     }
 }
-EOF
+EOL
 
-# Download common wordlists
-echo -e "${BLUE}[*] Downloading wordlists...${NC}"
-WORDLIST_DIR="$VULNFORGE_DIR/wordlists"
+# Make scripts executable
+chmod +x vulnforge_main.py
 
-# SecLists (basic wordlists)
-if [ ! -d "$WORDLIST_DIR/SecLists" ]; then
-    echo -e "${YELLOW}[*] Downloading SecLists...${NC}"
-    git clone https://github.com/danielmiessler/SecLists.git "$WORDLIST_DIR/SecLists" --depth 1
-fi
-
-# Create symbolic links for easy access
-mkdir -p "$HOME/bin"
-ln -sf "$PWD/vulnforge.py" "$HOME/bin/vulnforge"
-chmod +x "$PWD/vulnforge.py"
-
-# Add to PATH if not already there
-if [[ ":$PATH:" != *":$HOME/bin:"* ]]; then
-    echo 'export PATH="$HOME/bin:$PATH"' >> ~/.bashrc
-fi
-
-# Update nuclei templates
-echo -e "${BLUE}[*] Updating Nuclei templates...${NC}"
-if command -v nuclei &> /dev/null; then
-    nuclei -update-templates -silent
-fi
-
-# Check if Ollama is installed
-if ! command -v ollama &> /dev/null; then
-    echo -e "${YELLOW}[*] Installing Ollama...${NC}"
-    curl -fsSL https://ollama.com/install.sh | sh
-else
-    echo -e "${GREEN}[+] Ollama is already installed.${NC}"
-fi
-
-# Check if required AI models are available
-echo -e "${BLUE}[*] Checking for required AI models...${NC}"
-if ! ollama list | grep -q "deepseek-coder-v2:16b-lite-base-q4_0"; then
-    echo -e "${YELLOW}[*] Installing main model: deepseek-coder-v2:16b-lite-base-q4_0...${NC}"
-    ollama pull deepseek-coder-v2:16b-lite-base-q4_0
-else
-    echo -e "${GREEN}[+] Main model is already installed.${NC}"
-fi
-
-if ! ollama list | grep -q "mistral:7b-instruct-v0.2-q4_0"; then
-    echo -e "${YELLOW}[*] Installing assistant model: mistral:7b-instruct-v0.2-q4_0...${NC}"
-    ollama pull mistral:7b-instruct-v0.2-q4_0
-else
-    echo -e "${GREEN}[+] Assistant model is already installed.${NC}"
-fi
-
-# Create desktop shortcut
-cat > "$HOME/Desktop/VulnForge.desktop" << EOF
-[Desktop Entry]
-Version=1.0
-Type=Application
-Name=VulnForge
-Comment=Educational Security Research Framework
-Exec=gnome-terminal -- bash -c 'cd $(dirname $(readlink -f ~/.vulnforge)) && python3 vulnforge.py; exec bash'
-Icon=utilities-terminal
-Terminal=false
-Categories=Application;Development;
-EOF
-
-chmod +x "$HOME/Desktop/VulnForge.desktop"
-
-# Final checks
-echo -e "${BLUE}[*] Running final checks...${NC}"
-
-# Test tool availability
-TOOLS=("nmap" "subfinder" "httpx" "nuclei" "gobuster" "ffuf")
-MISSING_TOOLS=()
-
-for tool in "${TOOLS[@]}"; do
-    if ! command -v "$tool" &> /dev/null; then
-        MISSING_TOOLS+=("$tool")
-    fi
-done
-
-if [ ${#MISSING_TOOLS[@]} -eq 0 ]; then
-    echo -e "${GREEN}[+] All tools installed successfully!${NC}"
-else
-    echo -e "${YELLOW}[!] Missing tools: ${MISSING_TOOLS[*]}${NC}"
-    echo -e "${YELLOW}[!] You may need to add ~/go/bin to your PATH or install manually${NC}"
-fi
-
-echo -e "${GREEN}"
-echo "╔══════════════════════════════════════════════════════════════╗"
-echo "║                    Installation Complete!                    ║"
-echo "╚══════════════════════════════════════════════════════════════╝"
-echo -e "${NC}"
-
-echo -e "${BLUE}Usage Examples:${NC}"
-echo "  vulnforge --check                    # Check tool availability"
-echo "  vulnforge -t example.com -m recon    # Subdomain discovery"
-echo "  vulnforge -t example.com -m scan     # Port scanning"
-echo "  vulnforge -t example.com -m web      # Web service discovery"
-echo ""
-echo -e "${YELLOW}Remember: Only use on systems you own or have explicit authorization to test!${NC}"
-echo ""
-echo -e "${GREEN}VulnForge directory: $VULNFORGE_DIR${NC}"
-echo -e "${GREEN}Logs and results will be saved there.${NC}"
-
-# Source bashrc to update PATH
-source ~/.bashrc 2>/dev/null || true
-
-echo -e "${BLUE}Installation completed! Restart your terminal or run 'source ~/.bashrc' to use VulnForge.${NC}"
+echo "Installation complete! You can now use VulnForge from anywhere by typing 'vulnforge'"
+echo "For help, run: vulnforge -h"
