@@ -99,6 +99,16 @@ An AI-powered vulnerability research framework for authorized security testing a
    - The main model used is `deepseek-coder`, with `mistral` serving as the assistant model
    - Models are automatically downloaded on first run
 
+   **AI Models Used:**
+   - **Primary Model**: `deepseek-coder-v2:16b-lite-base-q4_0`
+     - 16B parameter model optimized for code understanding and generation
+     - Used for code generation, analysis, and security tasks
+     - Quantized for efficient resource usage
+   - **Assistant Model**: `mistral:7b-instruct-v0.2-q4_0`
+     - 7B parameter model based on Mistral architecture
+     - Used for general queries and security guidance
+     - Provides context-aware responses and tool recommendations
+
 ## Usage
 
 ### Basic Reconnaissance
