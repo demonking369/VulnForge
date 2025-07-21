@@ -2,23 +2,33 @@
 
 An AI-powered vulnerability research framework for authorized security testing and bug bounty hunting.
 
+## Key Enhancements
+
+- **🧠 Advanced AI Pipeline:** VulnForge now features a sophisticated, multi-step AI reasoning engine. By chaining specialized prompts inspired by leading AI agents like Devin and Manus, the system can autonomously plan, execute, and analyze complex security tasks from start to finish.
+- **⚡ Polyglot Performance Architecture:** The framework has been re-engineered to use the best language for the job, resulting in significant speed and efficiency gains.
+  - **Python:** For high-level orchestration and `asyncio` management.
+  - **C/C++ & Rust:** For performance-critical tasks like high-speed data parsing and native OS interaction.
+  - **Assembly:** For fine-grained, "close-to-the-metal" optimizations.
+- **🤖 AI-Powered Screen Control:** A complete, multi-language module that allows the AI to see and interact with the desktop environment like a human, enabling a new class of automated tasks.
+
 ## Features
 
 - **AI-Autonomous Operation**
-  - Fully autonomous mode with `--ai-only` flag
-  - AI-driven decision making for tool selection and attack sequencing
-  - Real-time analysis and adaptation based on scan results
-  - Automatic tool installation and updates
-  - Detailed decision logging and reasoning
-  - Ollama integration for efficient model serving
+  - **NEW: Advanced AI Pipeline (`--ai-pipeline`)**: Engages the new multi-step AI orchestrator for complex task execution.
+  - Standard autonomous mode with `--ai-only` flag.
+  - AI-driven decision making for tool selection and attack sequencing.
+  - Real-time analysis and adaptation based on scan results.
+  - Automatic tool installation and updates.
+  - Detailed decision logging and reasoning.
+  - Ollama integration for efficient model serving.
 
 - **Reconnaissance Module**
-  - Subdomain discovery using multiple tools
-  - Port scanning with stealth options
-  - Web service enumeration
-  - Vulnerability scanning
-  - AI-powered analysis
-  - Stealth mode with request delays and user agent rotation
+  - Subdomain discovery using multiple tools.
+  - Port scanning with stealth options.
+  - Web service enumeration.
+  - Vulnerability scanning.
+  - AI-powered analysis.
+  - Stealth mode with request delays and user agent rotation.
 
 - **Stealth Capabilities**
   - Random delays between requests
@@ -70,18 +80,24 @@ An AI-powered vulnerability research framework for authorized security testing a
    cd VulnForge
    ```
 
-2. Run the installation script:
+2. **Build Native Modules:** Compile the high-performance C/Rust modules required for advanced features.
+   ```bash
+   chmod +x build.sh
+   ./build.sh
+   ```
+
+3. Run the installation script:
    ```bash
    ./install_script.sh
    ```
 
-3. Install Python dependencies:
+4. Install Python dependencies:
    ```bash
    pip install -r requirements.txt
    pip install -r requirements-test.txt  # For development
    ```
 
-4. Install Required Tools:
+5. Install Required Tools:
    - Ensure the following tools are installed and in your `PATH`:
      - `nmap`
      - `subfinder`
@@ -93,7 +109,7 @@ An AI-powered vulnerability research framework for authorized security testing a
      - `dig`
    - For tools installed via Go (like `nuclei`), ensure `$HOME/go/bin` is in your `PATH` or move the binary to `/usr/local/bin`.
 
-5. **Ollama Setup:**
+6. **Ollama Setup:**
    - VulnForge uses Ollama for model serving to optimize resource utilization
    - Ensure Ollama is installed and running on your system
    - The main model used is `deepseek-coder`, with `mistral` serving as the assistant model
@@ -110,6 +126,12 @@ An AI-powered vulnerability research framework for authorized security testing a
      - Provides context-aware responses and tool recommendations
 
 ## Usage
+
+### **NEW: Advanced AI Pipeline Mode**
+Engage the most powerful mode where the AI plans and executes complex tasks autonomously.
+```bash
+vulnforge --target "Perform a full security assessment of example.com" --ai-pipeline
+```
 
 ### Basic Reconnaissance
 ```bash
