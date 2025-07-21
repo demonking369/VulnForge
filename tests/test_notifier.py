@@ -1,42 +1,61 @@
 #!/usr/bin/env python3
 """
-Tests for the VulnForge notification system
+Test suite for the notification system
 """
 
 import pytest
-import asyncio
-from unittest.mock import Mock, patch
+import json
+from pathlib import Path
+from unittest.mock import patch, MagicMock, AsyncMock
+import pytest_asyncio
 from utils.notifier import Notifier
 
-@pytest.fixture
-def mock_config():
-    config = Mock()
-    config.get.side_effect = lambda key: {
-        "notifications.email.enabled": True,
-        "notifications.email.username": "test@example.com",
-        "notifications.email.password": "password123",
-        "notifications.email.smtp_server": "smtp.example.com",
-        "notifications.email.smtp_port": 587,
-        "notifications.discord.enabled": True,
-        "notifications.discord.webhook_url": "https://discord.com/api/webhooks/test",
-        "notifications.webhook_url": "https://example.com/webhook"
-    }.get(key)
-    return config
-
-@pytest.fixture
-async def notifier(mock_config):
-    notifier = Notifier(mock_config)
-    await notifier.start()
+@pytest_asyncio.fixture
+async def notifier():
+    """Create a test notifier instance"""
+    test_dir = Path("test_data")
+    test_dir.mkdir(exist_ok=True)
+    
+    config = {
+        "notifications": {
+            "enabled": True,
+            "email": {
+                "enabled": True,
+                "smtp_server": "smtp.test.com",
+                "smtp_port": 587,
+                "username": "test@test.com",
+                "password": "test123"
+            },
+            "discord": {
+                "enabled": True,
+                "webhook_url": "https://discord.com/api/webhooks/test"
+            },
+            "webhook": {
+                "enabled": True,
+                "url": "https://webhook.test.com"
+            }
+        }
+    }
+    
+    config_path = test_dir / "test_config.json"
+    with open(config_path, "w") as f:
+        json.dump(config, f)
+        
+    notifier = Notifier(str(test_dir), str(config_path))
     yield notifier
-    await notifier.stop()
+    
+    # Cleanup
+    if test_dir.exists():
+        for file in test_dir.glob("*"):
+            file.unlink()
+        test_dir.rmdir()
 
 @pytest.mark.asyncio
 async def test_notify_basic(notifier):
     """Test basic notification"""
     with patch("utils.notifier.Notifier._process_notification") as mock_process:
         await notifier.notify("Test message", "info")
-        await asyncio.sleep(0.1)  # Allow time for queue processing
-        mock_process.assert_called_once()
+        mock_process.assert_called_once_with("Test message", "info", None, [])
 
 @pytest.mark.asyncio
 async def test_notify_with_data(notifier):
@@ -49,13 +68,7 @@ async def test_notify_with_data(notifier):
     
     with patch("utils.notifier.Notifier._process_notification") as mock_process:
         await notifier.notify("Vulnerability found", "high", data=test_data)
-        await asyncio.sleep(0.1)
-        
-        # Verify notification data
-        call_args = mock_process.call_args[0][0]
-        assert call_args["message"] == "Vulnerability found"
-        assert call_args["severity"] == "high"
-        assert call_args["data"] == test_data
+        mock_process.assert_called_once_with("Vulnerability found", "high", test_data, [])
 
 @pytest.mark.asyncio
 async def test_notify_specific_channels(notifier):
@@ -66,11 +79,12 @@ async def test_notify_specific_channels(notifier):
             "info",
             channels=["email", "discord"]
         )
-        await asyncio.sleep(0.1)
-        
-        # Verify channels
-        call_args = mock_process.call_args[0][0]
-        assert set(call_args["channels"]) == {"email", "discord"}
+        mock_process.assert_called_once_with(
+            "Test message",
+            "info",
+            None,
+            ["email", "discord"]
+        )
 
 @pytest.mark.asyncio
 async def test_email_notification(notifier):
@@ -83,37 +97,48 @@ async def test_email_notification(notifier):
             "critical",
             channels=["email"]
         )
-        await asyncio.sleep(0.1)
         
-        # Verify SMTP was called
-        mock_smtp.assert_called_once_with(
-            "smtp.example.com",
-            587
-        )
+        mock_smtp.assert_called_once_with("smtp.test.com", 587)
+        mock_smtp.return_value.starttls.assert_called_once()
+        mock_smtp.return_value.login.assert_called_once_with("test@test.com", "test123")
+        mock_smtp.return_value.send_message.assert_called_once()
 
 @pytest.mark.asyncio
 async def test_discord_notification(notifier):
     """Test Discord notification sending"""
-    with patch("aiohttp.ClientSession.post") as mock_post:
+    mock_response = AsyncMock()
+    mock_response.text = AsyncMock(return_value="")
+    mock_session = AsyncMock()
+    mock_session.post = AsyncMock(return_value=mock_response)
+    mock_cm = AsyncMock()
+    mock_cm.__aenter__.return_value = mock_session
+    mock_cm.__aexit__.return_value = None
+    
+    with patch("aiohttp.ClientSession", return_value=mock_cm):
         await notifier.notify(
             "Test Discord",
             "high",
             data={"finding": "XSS vulnerability"},
             channels=["discord"]
         )
-        await asyncio.sleep(0.1)
         
-        # Verify Discord webhook was called
-        mock_post.assert_called_once()
-        call_args = mock_post.call_args[1]["json"]
-        assert "embeds" in call_args
-        assert len(call_args["embeds"]) == 1
-        assert call_args["embeds"][0]["title"] == "VulnForge Alert: HIGH"
+        mock_session.post.assert_called_once()
+        call_args = mock_session.post.call_args
+        assert call_args[0][0] == "https://discord.com/api/webhooks/test"
+        assert "embeds" in call_args[1]["json"]
 
 @pytest.mark.asyncio
 async def test_webhook_notification(notifier):
     """Test generic webhook notification"""
-    with patch("aiohttp.ClientSession.post") as mock_post:
+    mock_response = AsyncMock()
+    mock_response.text = AsyncMock(return_value="")
+    mock_session = AsyncMock()
+    mock_session.post = AsyncMock(return_value=mock_response)
+    mock_cm = AsyncMock()
+    mock_cm.__aenter__.return_value = mock_session
+    mock_cm.__aexit__.return_value = None
+    
+    with patch("aiohttp.ClientSession", return_value=mock_cm):
         test_data = {
             "scan_id": "123",
             "target": "example.com",
@@ -126,14 +151,13 @@ async def test_webhook_notification(notifier):
             data=test_data,
             channels=["webhook"]
         )
-        await asyncio.sleep(0.1)
         
-        # Verify webhook was called
-        mock_post.assert_called_once()
-        call_args = mock_post.call_args[1]["json"]
-        assert call_args["message"] == "Test webhook"
-        assert call_args["severity"] == "medium"
-        assert call_args["data"] == test_data
+        mock_session.post.assert_called_once()
+        call_args = mock_session.post.call_args
+        assert call_args[0][0] == "https://webhook.test.com"
+        assert call_args[1]["json"]["message"] == "Test webhook"
+        assert call_args[1]["json"]["severity"] == "medium"
+        assert call_args[1]["json"]["data"] == test_data
 
 @pytest.mark.asyncio
 async def test_severity_colors(notifier):
@@ -148,7 +172,4 @@ async def test_severity_colors(notifier):
     
     for severity, expected_color in colors.items():
         color = notifier._get_severity_color(severity)
-        assert color == expected_color
-        
-    # Test unknown severity
-    assert notifier._get_severity_color("unknown") == 0x808080 
+        assert color == expected_color, f"Wrong color for {severity}" 

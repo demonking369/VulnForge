@@ -1,0 +1,6 @@
+{
+  "nuclei": {
+    "severity": ["critical", "high", "medium", "low"],
+    "templates_path": "/path/to/nuclei-templates"
+  }
+} 

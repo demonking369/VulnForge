@@ -32,7 +32,7 @@ class AIController:
         self.config = ConfigManager(config_path)
         self.logger = setup_logger("ai_controller")
         self.context_builder = ContextBuilder(self.session_dir)
-        self.notifier = Notifier(self.config)
+        self.notifier = Notifier(session_dir, config_path)
         self.report_generator = ReportGenerator(self.session_dir)
         self.output_format = "all"  # Default output format
         

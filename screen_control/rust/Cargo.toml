@@ -1,0 +1,11 @@
+[package]
+name = "screen_rust"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+enigo = "0.2.0"
+
+[lib]
+name = "screen_rust"
+crate-type = ["cdylib"] 

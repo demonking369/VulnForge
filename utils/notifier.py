@@ -1,190 +1,150 @@
 #!/usr/bin/env python3
 """
-VulnForge Notification System
-Handles alerts and notifications for findings
+Notification system for VulnForge
 """
 
 import json
 import logging
 import smtplib
-import requests
-from pathlib import Path
-from typing import Dict, List, Optional, Any
+import aiohttp
+import asyncio
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from pathlib import Path
+from typing import Dict, List, Optional, Any
 from datetime import datetime
-import asyncio
-import aiohttp
 
 class Notifier:
-    def __init__(self, config_manager: Any):
-        self.config = config_manager
+    """Handles notifications for various channels"""
+    
+    def __init__(self, base_dir: str, config_path: str):
+        """Initialize notifier with configuration"""
+        self.base_dir = Path(base_dir)
+        self.config_path = Path(config_path)
         self.logger = logging.getLogger(__name__)
-        self.notification_queue = asyncio.Queue()
-        self.worker_task = None
+        self.config = self._load_config()
         
-    async def start(self):
-        """Start notification worker"""
-        self.worker_task = asyncio.create_task(self._notification_worker())
-        
-    async def stop(self):
-        """Stop notification worker"""
-        if self.worker_task:
-            self.worker_task.cancel()
-            try:
-                await self.worker_task
-            except asyncio.CancelledError:
-                pass
-                
-    async def notify(self, message: str, severity: str = "info", 
-                    data: Optional[Dict] = None, channels: Optional[List[str]] = None):
-        """Queue a notification"""
-        notification = {
-            "message": message,
-            "severity": severity,
-            "data": data or {},
-            "timestamp": datetime.now().isoformat(),
-            "channels": channels or self._get_enabled_channels()
-        }
-        
-        await self.notification_queue.put(notification)
-        
-    async def _notification_worker(self):
-        """Process notification queue"""
-        while True:
-            try:
-                notification = await self.notification_queue.get()
-                await self._process_notification(notification)
-                self.notification_queue.task_done()
-            except asyncio.CancelledError:
-                break
-            except Exception as e:
-                self.logger.error(f"Error processing notification: {e}")
-                
-    async def _process_notification(self, notification: Dict):
-        """Process a single notification"""
-        for channel in notification["channels"]:
-            try:
-                if channel == "email":
-                    await self._send_email(notification)
-                elif channel == "discord":
-                    await self._send_discord(notification)
-                elif channel == "webhook":
-                    await self._send_webhook(notification)
-            except Exception as e:
-                self.logger.error(f"Error sending notification to {channel}: {e}")
-                
-    async def _send_email(self, notification: Dict):
-        """Send email notification"""
-        if not self.config.get("notifications.email.enabled"):
+    def _load_config(self) -> Dict:
+        """Load notification configuration"""
+        try:
+            with open(self.config_path) as f:
+                return json.load(f)
+        except Exception as e:
+            self.logger.error(f"Failed to load config: {e}")
+            return {"notifications": {"enabled": False}}
+            
+    async def notify(
+        self,
+        message: str,
+        severity: str = "info",
+        data: Optional[Dict] = None,
+        channels: Optional[List[str]] = None
+    ) -> None:
+        """Send notification to specified channels"""
+        if not self.config["notifications"]["enabled"]:
             return
             
+        if channels is None:
+            channels = []
+            
+        await self._process_notification(message, severity, data, channels)
+        
+    async def _process_notification(
+        self,
+        message: str,
+        severity: str,
+        data: Optional[Dict],
+        channels: List[str]
+    ) -> None:
+        """Process notification for each channel"""
+        tasks = []
+        
+        if "email" in channels and self.config["notifications"]["email"]["enabled"]:
+            tasks.append(self._send_email(message, severity, data))
+            
+        if "discord" in channels and self.config["notifications"]["discord"]["enabled"]:
+            tasks.append(self._send_discord(message, severity, data))
+            
+        if "webhook" in channels and self.config["notifications"]["webhook"]["enabled"]:
+            tasks.append(self._send_webhook(message, severity, data))
+            
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)
+            
+    async def _send_email(self, message: str, severity: str, data: Optional[Dict]) -> None:
+        """Send email notification"""
         try:
+            email_config = self.config["notifications"]["email"]
             msg = MIMEMultipart()
-            msg["Subject"] = f"VulnForge Alert: {notification['severity'].upper()}"
-            msg["From"] = self.config.get("notifications.email.username")
-            msg["To"] = self.config.get("notifications.email.username")
+            msg["From"] = email_config["username"]
+            msg["To"] = email_config["username"]
+            msg["Subject"] = f"VulnForge Alert: {severity.upper()}"
             
-            # Build email body
-            body = f"""
-            VulnForge Alert
-            --------------
-            Severity: {notification['severity']}
-            Time: {notification['timestamp']}
-            
-            Message:
-            {notification['message']}
-            
-            Additional Data:
-            {json.dumps(notification['data'], indent=2)}
-            """
-            
+            body = f"Message: {message}\nSeverity: {severity}\n"
+            if data:
+                body += f"\nAdditional Data:\n{json.dumps(data, indent=2)}"
+                
             msg.attach(MIMEText(body, "plain"))
             
-            # Send email
-            with smtplib.SMTP(
-                self.config.get("notifications.email.smtp_server"),
-                self.config.get("notifications.email.smtp_port")
-            ) as server:
+            with smtplib.SMTP(email_config["smtp_server"], email_config["smtp_port"]) as server:
                 server.starttls()
-                server.login(
-                    self.config.get("notifications.email.username"),
-                    self.config.get("notifications.email.password")
-                )
+                server.login(email_config["username"], email_config["password"])
                 server.send_message(msg)
                 
         except Exception as e:
-            self.logger.error(f"Error sending email: {e}")
+            self.logger.error(f"Failed to send email: {e}")
             
-    async def _send_discord(self, notification: Dict):
+    async def _send_discord(self, message: str, severity: str, data: Optional[Dict]) -> None:
         """Send Discord notification"""
-        if not self.config.get("notifications.discord.enabled"):
-            return
-            
-        webhook_url = self.config.get("notifications.discord.webhook_url")
-        if not webhook_url:
-            return
-            
         try:
-            # Create Discord embed
+            webhook_url = self.config["notifications"]["discord"]["webhook_url"]
+            color = self._get_severity_color(severity)
+            
             embed = {
-                "title": f"VulnForge Alert: {notification['severity'].upper()}",
-                "description": notification["message"],
-                "color": self._get_severity_color(notification["severity"]),
-                "timestamp": notification["timestamp"],
-                "fields": [
-                    {
-                        "name": "Severity",
-                        "value": notification["severity"],
-                        "inline": True
-                    }
-                ]
+                "title": f"VulnForge Alert: {severity.upper()}",
+                "description": message,
+                "color": color,
+                "timestamp": datetime.utcnow().isoformat()
             }
             
-            # Add data fields
-            for key, value in notification["data"].items():
-                embed["fields"].append({
-                    "name": key,
-                    "value": str(value),
-                    "inline": False
-                })
+            if data:
+                embed["fields"] = [
+                    {"name": k, "value": str(v), "inline": True}
+                    for k, v in data.items()
+                ]
                 
-            # Send to Discord
             async with aiohttp.ClientSession() as session:
-                await session.post(webhook_url, json={"embeds": [embed]})
+                response = await session.post(
+                    webhook_url,
+                    json={"embeds": [embed]}
+                )
+                await response.text()
                 
         except Exception as e:
-            self.logger.error(f"Error sending Discord notification: {e}")
+            self.logger.error(f"Failed to send Discord notification: {e}")
             
-    async def _send_webhook(self, notification: Dict):
+    async def _send_webhook(self, message: str, severity: str, data: Optional[Dict]) -> None:
         """Send generic webhook notification"""
-        webhook_url = self.config.get("notifications.webhook_url")
-        if not webhook_url:
-            return
-            
         try:
+            webhook_url = self.config["notifications"]["webhook"]["url"]
+            payload = {
+                "message": message,
+                "severity": severity,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+            
+            if data:
+                payload["data"] = data
+                
             async with aiohttp.ClientSession() as session:
-                await session.post(webhook_url, json=notification)
+                response = await session.post(webhook_url, json=payload)
+                await response.text()
+                
         except Exception as e:
-            self.logger.error(f"Error sending webhook notification: {e}")
+            self.logger.error(f"Failed to send webhook notification: {e}")
             
-    def _get_enabled_channels(self) -> List[str]:
-        """Get list of enabled notification channels"""
-        channels = []
-        
-        if self.config.get("notifications.email.enabled"):
-            channels.append("email")
-            
-        if self.config.get("notifications.discord.enabled"):
-            channels.append("discord")
-            
-        if self.config.get("notifications.webhook_url"):
-            channels.append("webhook")
-            
-        return channels
-        
     def _get_severity_color(self, severity: str) -> int:
-        """Get Discord color for severity level"""
+        """Get color code for severity level"""
         colors = {
             "critical": 0xFF0000,  # Red
             "high": 0xFFA500,      # Orange

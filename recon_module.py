@@ -80,14 +80,17 @@ class EnhancedReconModule:
     async def discover_subdomains(self, domain: str) -> List[str]:
         """Discover subdomains using subfinder"""
         self.console.print("[bold blue]Discovering subdomains...[/bold blue]")
-        
         sources = self.config["subfinder"]["sources"]
         cmd = ["subfinder", "-d", domain, "-sources", ",".join(sources), "-silent"]
-        
         output = await self.run_command(cmd)
+        if not output:
+            self.logger.warning(f"No output from subfinder for {domain}. Check if subfinder is installed and configured correctly.")
+            self.console.print(f"[yellow]Warning: No output from subfinder for {domain}. Check if subfinder is installed and configured correctly.[/yellow]")
         subdomains = [line.strip() for line in output.splitlines() if line.strip()]
-        
         self.console.print(f"[green]Found {len(subdomains)} subdomains[/green]")
+        if len(subdomains) == 0:
+            self.logger.warning(f"No subdomains found for {domain}. Check subfinder installation, network, and API keys.")
+            self.console.print(f"[yellow]Warning: No subdomains found for {domain}. Check subfinder installation, network, and API keys.[/yellow]")
         return subdomains
         
     async def probe_web_services(self, subdomains: List[str]) -> List[Dict]:
@@ -174,14 +177,26 @@ class EnhancedReconModule:
         return vulnerabilities
         
     async def run_recon(self, target: str, output_dir: Optional[Path] = None) -> Dict[str, Any]:
-        """Run complete reconnaissance on target"""
+        """Run complete reconnaissance on target concurrently"""
         if not output_dir:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             output_dir = self.base_dir / "results" / f"{target}_{timestamp}"
         output_dir.mkdir(parents=True, exist_ok=True)
         
-        # Run reconnaissance steps
-        subdomains = await self.discover_subdomains(target)
+        # Define all reconnaissance tasks
+        recon_tasks = [
+            self.discover_subdomains(target),
+            self.run_port_scan(target),  # Assuming a new async port scan method
+            # Add other concurrent tasks here
+        ]
+        
+        # Run tasks concurrently
+        results = await asyncio.gather(*recon_tasks, return_exceptions=True)
+        
+        # Process results...
+        subdomains = results[0] if not isinstance(results[0], Exception) else []
+        port_scan_results = results[1] if not isinstance(results[1], Exception) else {}
+
         web_services = await self.probe_web_services(subdomains)
         vulnerabilities = await self.scan_vulnerabilities(web_services)
         

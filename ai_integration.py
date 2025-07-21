@@ -12,6 +12,8 @@ from typing import Dict, List, Optional, Any
 import time
 import re
 from pathlib import Path
+import asyncio
+import ctypes
 
 class OllamaClient:
     def __init__(self, base_url: str = "http://localhost:11434"):
@@ -77,19 +79,19 @@ class OllamaClient:
                 "prompt": prompt,
                 "stream": False,
                 "options": {
-                    "temperature": 0.7,
+                    "temperature": 0.5, # Lowered for more deterministic planning
                     "top_p": 0.9,
-                    "max_tokens": 4096,  # Increased for better code generation
-                    "num_ctx": 8192,     # Increased context window
-                    "num_thread": 8,      # Optimize for multi-core systems
-                    "repeat_penalty": 1.1  # Slightly reduce repetition
+                    "max_tokens": 4096,
+                    "num_ctx": 16384,     # Increased context window for large prompts
+                    "num_thread": 8,
+                    "repeat_penalty": 1.1
                 }
             }
             
             if system_prompt:
                 data["system"] = system_prompt
                 
-            response = requests.post(f"{self.base_url}/api/generate", json=data, timeout=180)  # Increased timeout
+            response = requests.post(f"{self.base_url}/api/generate", json=data, timeout=300)  # Increased timeout
             
             if response.status_code == 200:
                 result = response.json()
@@ -125,6 +127,14 @@ class OllamaClient:
             
         return None
 
+
+# Load the shared library
+parser_lib_path = Path(__file__).parent / "utils" / "c_parser" / "libparser.so"
+c_parser = ctypes.CDLL(str(parser_lib_path))
+
+# Define the function signature for type safety
+c_parser.parse_nuclei_output.argtypes = [ctypes.c_char_p]
+c_parser.parse_nuclei_output.restype = ctypes.c_char_p
 
 class AIAnalyzer:
     def __init__(self, ollama_client: OllamaClient):
@@ -332,82 +342,107 @@ class AIAnalyzer:
                 
         return vulnerabilities
 
+    def analyze_nuclei_output(self, nuclei_json_output: str) -> Dict[str, Any]:
+        """Analyze nuclei output using the high-speed C parser."""
+        
+        # Call the C function
+        raw_summary = c_parser.parse_nuclei_output(nuclei_json_output.encode('utf-8'))
+        summary_str = raw_summary.decode('utf-8')
+        
+        # The C function must free the memory it allocated, or we'd have a memory leak.
+        # For this example, we assume a simple case. A real implementation needs memory management.
+        
+        try:
+            return json.loads(summary_str)
+        except json.JSONDecodeError:
+            return {"error": "Failed to parse summary from C module"}
+
 
 class AIOrchestrator:
-    def __init__(self, base_dir: Path):
-        self.base_dir = base_dir
+    """
+    Manages a multi-step AI reasoning pipeline for complex security tasks.
+    It chains specialized prompts for planning, tool selection, and execution.
+    """
+    def __init__(self, prompt_dir: Path):
+        self.prompt_dir = prompt_dir
         self.ollama = OllamaClient()
-        self.analyzer = AIAnalyzer(self.ollama)
-        self.logger = logging.getLogger(__name__)
-        
-    def setup_ai(self) -> bool:
-        """Setup AI environment"""
-        if not self.ollama.is_available():
-            self.logger.error("Ollama service not available. Start with: ollama serve")
-            return False
-            
-        # Ensure we have at least one model
-        models = self.ollama.list_models()
-        if not models:
-            self.logger.info("No models found. Pulling default model...")
-            if not self.ollama.pull_model(self.ollama.get_best_model()):
-                self.logger.error("Failed to pull default model")
-                return False
-                
-        self.logger.info(f"AI setup complete. Available models: {[m['name'] for m in models]}")
-        return True
-        
-    def generate_attack_strategy(self, target_info: Dict) -> Dict[str, Any]:
-        """Generate comprehensive attack strategy"""
-        system_prompt = """You are a senior penetration tester creating attack strategies.
-        Generate comprehensive, methodical attack plans based on reconnaissance data."""
-        
-        prompt = f"""
-        Based on this reconnaissance data, create a comprehensive attack strategy:
-        
-        Target Information: {json.dumps(target_info, indent=2)}
-        
-        Generate attack strategy with:
-        1. Attack phases (reconnaissance, scanning, exploitation, post-exploitation)
-        2. Specific tools and techniques for each phase
-        3. Priority targets and attack vectors
-        4. Potential exploit chains
-        5. Risk assessment
-        6. Timeline and resource requirements
-        
-        Format as JSON:
-        {{
-            "attack_phases": [
-                {{
-                    "phase": "phase name",
-                    "objectives": ["what to achieve"],
-                    "tools": ["specific tools to use"],
-                    "techniques": ["attack techniques"],
-                    "expected_duration": "time estimate",
-                    "success_indicators": ["how to know if successful"]
-                }}
-            ],
-            "priority_targets": ["highest value targets"],
-            "attack_vectors": ["main attack paths"],
-            "exploit_chains": ["potential exploit combinations"],
-            "risk_level": "low/medium/high",
-            "recommendations": ["strategic recommendations"]
-        }}
+        self.prompts = self._load_prompts()
+        self.state = {}
+
+    def _load_prompts(self):
+        """Loads the specialized AI prompts from the prompt directory."""
+        prompts = {}
+        try:
+            # Devin-style planning prompt
+            with open(self.prompt_dir / "Devin AI/system.md", "r") as f:
+                prompts["planner"] = f.read()
+            # Manus-style tool selection prompt
+            with open(self.prompt_dir / "Manus Agent Tools & Prompt/system.md", "r") as f:
+                prompts["tool_selector"] = f.read()
+            # Cursor-style code/analysis prompt
+            with open(self.prompt_dir / "Cursor Prompts/prompts.md", "r") as f:
+                prompts["analyst"] = f.read()
+        except FileNotFoundError as e:
+            print(f"Error: Could not load a required prompt. {e}")
+            raise
+        return prompts
+
+    def execute_task(self, task_description: str):
         """
+        Executes a full task pipeline: Plan -> Select Tool -> Execute -> Analyze.
+        """
+        print("--- AI Task Pipeline Initiated ---")
         
-        response = self.ollama.generate(prompt, system_prompt=system_prompt)
-        if response:
-            try:
-                return json.loads(response)
-            except json.JSONDecodeError:
-                json_match = re.search(r'```json\n(.*?)\n```', response, re.DOTALL)
-                if json_match:
-                    try:
-                        return json.loads(json_match.group(1))
-                    except:
-                        pass
-                        
-        return {"error": "Failed to generate attack strategy"}
+        # 1. Planning Phase (using Devin's prompt)
+        plan = self._planning_phase(task_description)
+        self.state['plan'] = plan
+        print(f"Phase 1: Plan Created -> {plan}")
+
+        # 2. Tool Selection Phase (using Manus' prompt)
+        tool_command = self._tool_selection_phase(task_description, plan)
+        self.state['tool_command'] = tool_command
+        print(f"Phase 2: Tool Selected -> {tool_command}")
+
+        # 3. Execution Phase (simulated)
+        execution_result = self._execution_phase(tool_command)
+        self.state['execution_result'] = execution_result
+        print(f"Phase 3: Execution Result -> {execution_result[:100]}...")
+
+        # 4. Analysis Phase (using Cursor's prompt)
+        analysis = self._analysis_phase(execution_result)
+        self.state['analysis'] = analysis
+        print(f"Phase 4: Analysis Complete -> {analysis}")
+
+        print("--- AI Task Pipeline Complete ---")
+        return self.state
+
+    def _planning_phase(self, task: str) -> str:
+        """Uses the 'planner' prompt to create a high-level strategy."""
+        system_prompt = self.prompts['planner']
+        user_prompt = f"Create a step-by-step plan for the following task: {task}"
+        response = self.ollama.generate(user_prompt, system_prompt=system_prompt)
+        return response
+
+    def _tool_selection_phase(self, task: str, plan: str) -> str:
+        """Uses the 'tool_selector' prompt to choose the right command."""
+        system_prompt = self.prompts['tool_selector']
+        user_prompt = f"Given the task '{task}' and the plan '{plan}', what is the exact shell command to execute next? Only output the command."
+        response = self.ollama.generate(user_prompt, system_prompt=system_prompt)
+        return response
+    
+    def _execution_phase(self, command: str) -> str:
+        """Simulates running the command and returns mock output."""
+        print(f"Simulating execution of: `{command}`")
+        if "nmap" in command:
+            return "Starting Nmap 7.92 ... Nmap scan report for example.com (93.184.216.34)\nHost is up (0.011s latency).\nNot shown: 998 filtered tcp ports\nPORT    STATE SERVICE\n80/tcp  open  http\n443/tcp open  https"
+        return "Command executed successfully. No output."
+
+    def _analysis_phase(self, result: str) -> str:
+        """Uses the 'analyst' prompt to interpret the results."""
+        system_prompt = self.prompts['analyst']
+        user_prompt = f"Analyze the following tool output and provide a summary of key findings and recommendations:\n\n{result}"
+        response = self.ollama.generate(user_prompt, system_prompt=system_prompt)
+        return response
 
 
 # CLI interface for AI module
@@ -419,13 +454,19 @@ if __name__ == "__main__":
     parser.add_argument("--pull-model", help="Pull a specific model")
     parser.add_argument("--list-models", action="store_true", help="List available models")
     parser.add_argument("--analyze-nmap", help="Analyze nmap output file")
+    parser.add_argument(
+        "--ai-pipeline", action="store_true", help="Enable the advanced multi-prompt AI pipeline."
+    )
+    parser.add_argument(
+        "--prompt-dir", help="Directory for the AI pipeline prompts.", default="AI_Propmt/system-prompts-and-models-of-ai-tools"
+    )
     
     args = parser.parse_args()
     
-    orchestrator = AIOrchestrator(Path.home() / ".vulnforge")
+    orchestrator = AIOrchestrator(Path(args.prompt_dir))
     
     if args.test_connection:
-        if orchestrator.setup_ai():
+        if orchestrator.ollama.is_available():
             print("✓ AI system ready")
         else:
             print("✗ AI system not available")
@@ -447,3 +488,18 @@ if __name__ == "__main__":
             content = f.read()
         result = orchestrator.analyzer.analyze_nmap_output(content)
         print(json.dumps(result, indent=2))
+
+    # Handle AI Pipeline Mode
+    if args.ai_pipeline:
+        if not args.target:
+            print("Error: A target is required for AI pipeline mode, e.g., --target 'scan example.com'")
+            return
+        
+        prompt_path = Path(args.prompt_dir)
+        if not prompt_path.exists():
+            print(f"Error: Prompt directory not found at '{prompt_path}'")
+            return
+            
+        orchestrator = AIOrchestrator(prompt_path)
+        orchestrator.execute_task(f"Perform a security scan on {args.target}")
+        return
