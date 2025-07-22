@@ -493,13 +493,10 @@ if __name__ == "__main__":
     if args.ai_pipeline:
         if not args.target:
             print("Error: A target is required for AI pipeline mode, e.g., --target 'scan example.com'")
-            return
         
         prompt_path = Path(args.prompt_dir)
         if not prompt_path.exists():
             print(f"Error: Prompt directory not found at '{prompt_path}'")
-            return
-            
+        
         orchestrator = AIOrchestrator(prompt_path)
         orchestrator.execute_task(f"Perform a security scan on {args.target}")
-        return

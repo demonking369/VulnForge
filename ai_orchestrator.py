@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 from ai_integration import OllamaClient
+import subprocess
 
 class AIOrchestrator:
     """
@@ -75,11 +76,16 @@ class AIOrchestrator:
         return response
     
     def _execution_phase(self, command: str) -> str:
-        """Simulates running the command and returns mock output."""
-        print(f"Simulating execution of: `{command}`")
-        if "nmap" in command:
-            return "Starting Nmap 7.92 ... Nmap scan report for example.com (93.184.216.34)\nHost is up (0.011s latency).\nNot shown: 998 filtered tcp ports\nPORT    STATE SERVICE\n80/tcp  open  http\n443/tcp open  https"
-        return "Command executed successfully. No output."
+        """Executes the shell command and returns real output."""
+        print(f"Executing: `{command}`")
+        try:
+            result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=600)
+            if result.returncode == 0:
+                return result.stdout
+            else:
+                return f"[ERROR] Command failed: {result.stderr}"
+        except Exception as e:
+            return f"[ERROR] Exception during execution: {e}"
 
     def _analysis_phase(self, result: str) -> str:
         """Uses the 'analyst' prompt to interpret the results."""
