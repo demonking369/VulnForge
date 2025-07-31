@@ -76,7 +76,7 @@ An AI-powered vulnerability research framework for authorized security testing a
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/Arunking9/VulnForge.git
+   git clone https://github.com/demonking369/VulnForge.git
    cd VulnForge
    ```
 
