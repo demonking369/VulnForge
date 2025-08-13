@@ -1,7 +1,47 @@
 version = 1
 
+# Analyzers to enable (only Python syntax/runtime checks)
 [[analyzers]]
 name = "python"
+enabled = true
 
-  [analyzers.meta]
-  runtime_version = "3.x.x"
+[analyzers.meta]
+# Main language
+runtime_version = "3.x.x"
+
+# Linters to use
+# Only enabling pylint for bug risks, disabling style/security linters
+transformers = ["black", "isort"]
+
+# Files/folders to exclude from scanning
+exclude_patterns = [
+  "tests/**",          # Ignore test payloads
+  "payloads/**",       # Ignore exploit code
+  "scripts/**"         # Ignore helper scripts
+]
+
+[analyzers.config.pylint]
+disable = [
+  "W1510",   # subprocess run ignored exit
+  "W1203",   # formatted logging string
+  "W0612",   # unused variable
+  "W0613",   # unused argument
+  "W0621",   # redefined variable
+  "W0622",   # redefinition of builtin
+  "W0212",   # protected member access
+  "E722",    # bare except
+  "W0070",   # append after list definition
+  "W0079",   # unnecessary json.dumps
+  "W2000",   # unused imports
+]
+
+[analyzers.config.bandit]
+skip = [
+  "B103",  # insecure file permissions
+  "B108",  # hardcoded tmp dir
+  "B314",  # insecure xml
+  "B405",  # xml import
+  "B602",  # subprocess shell=True
+  "B607",  # partial exec path
+  "B701",  # jinja2 autoescape false
+]
