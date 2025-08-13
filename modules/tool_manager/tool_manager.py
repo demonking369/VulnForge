@@ -281,7 +281,7 @@ class ToolManager:
                 # Restore backup
                 shutil.rmtree(tool_dir)
                 shutil.copytree(backup_dir, tool_dir)
-                return {"success": False, "error": f"Failed to verify new installation"}
+                return {"success": False, "error": "Failed to verify new installation"}
             progress.update(task, completed=True)
 
             # Remove backup
