@@ -15,18 +15,15 @@ from pathlib import Path
 import asyncio
 import ctypes
 
+
 class OllamaClient:
     def __init__(self, base_url: str = "http://localhost:11434"):
         self.base_url = base_url
         self.logger = logging.getLogger(__name__)
         self.main_model = "deepseek-coder-v2:16b-lite-base-q4_0"  # Main model
-        self.assistant_model = "mistral:7b-instruct-v0.2-q4_0"    # Assistant model
-        self.backup_models = [
-            "deepseek-coder:6.7b",
-            "codellama:7b",
-            "mistral:7b"
-        ]
-        
+        self.assistant_model = "mistral:7b-instruct-v0.2-q4_0"  # Assistant model
+        self.backup_models = ["deepseek-coder:6.7b", "codellama:7b", "mistral:7b"]
+
     def is_available(self) -> bool:
         """Check if Ollama service is running"""
         try:
@@ -34,97 +31,111 @@ class OllamaClient:
             return response.status_code == 200
         except (requests.RequestException, requests.Timeout, requests.ConnectionError):
             return False
-            
+
     def list_models(self) -> List[Dict]:
         """List available models"""
         try:
             response = requests.get(f"{self.base_url}/api/tags")
             if response.status_code == 200:
-                return response.json().get('models', [])
-        except (requests.RequestException, requests.Timeout, requests.ConnectionError) as e:
+                return response.json().get("models", [])
+        except (
+            requests.RequestException,
+            requests.Timeout,
+            requests.ConnectionError,
+        ) as e:
             self.logger.error(f"Error listing models: {e}")
         return []
-        
+
     def pull_model(self, model: str) -> bool:
         """Pull a model if not available"""
         try:
             self.logger.info(f"Pulling model: {model}")
             data = {"name": model}
-            response = requests.post(f"{self.base_url}/api/pull", json=data, stream=True)
-            
+            response = requests.post(
+                f"{self.base_url}/api/pull", json=data, stream=True
+            )
+
             for line in response.iter_lines():
                 if line:
                     try:
-                        status = json.loads(line.decode('utf-8'))
-                        if status.get('status') == 'success':
+                        status = json.loads(line.decode("utf-8"))
+                        if status.get("status") == "success":
                             return True
                     except:
                         continue
         except Exception as e:
             self.logger.error(f"Error pulling model {model}: {e}")
         return False
-        
-    def generate(self, prompt: str, model: str = None, system_prompt: str = None) -> Optional[str]:
+
+    def generate(
+        self, prompt: str, model: str = None, system_prompt: str = None
+    ) -> Optional[str]:
         """Generate text using Ollama"""
         if not model:
             model = self.get_best_model()
-            
+
         if not model:
             self.logger.error("No suitable model available")
             return None
-            
+
         try:
             data = {
                 "model": model,
                 "prompt": prompt,
                 "stream": False,
                 "options": {
-                    "temperature": 0.5, # Lowered for more deterministic planning
+                    "temperature": 0.5,  # Lowered for more deterministic planning
                     "top_p": 0.9,
                     "max_tokens": 4096,
-                    "num_ctx": 16384,     # Increased context window for large prompts
+                    "num_ctx": 16384,  # Increased context window for large prompts
                     "num_thread": 8,
-                    "repeat_penalty": 1.1
-                }
+                    "repeat_penalty": 1.1,
+                },
             }
-            
+
             if system_prompt:
                 data["system"] = system_prompt
-                
-            response = requests.post(f"{self.base_url}/api/generate", json=data, timeout=300)  # Increased timeout
-            
+
+            response = requests.post(
+                f"{self.base_url}/api/generate", json=data, timeout=300
+            )  # Increased timeout
+
             if response.status_code == 200:
                 result = response.json()
-                return result.get('response', '').strip()
+                return result.get("response", "").strip()
             else:
                 self.logger.error(f"Ollama API error: {response.status_code}")
-                
-        except (requests.RequestException, requests.Timeout, requests.ConnectionError) as e:
+
+        except (
+            requests.RequestException,
+            requests.Timeout,
+            requests.ConnectionError,
+        ) as e:
             self.logger.error(f"Error generating with Ollama: {e}")
-            
+
         return None
-        
+
     def get_best_model(self) -> Optional[str]:
         """Get the best available model"""
-        available_models = [m['name'] for m in self.list_models()]
-        
+        available_models = [m["name"] for m in self.list_models()]
+
         # Check main model first (deepseek-coder-v2:16b-lite-base-q4_0)
         if self.main_model in available_models:
             return self.main_model
-            
+
         # Check assistant model next (mistral:7b-instruct-v0.2-q4_0)
         if self.assistant_model in available_models:
             return self.assistant_model
-            
+
         # Check backup models
         for model in self.backup_models:
             if model in available_models:
                 return model
-                
+
         # If no preferred models, return first available
         if available_models:
             return available_models[0]
-            
+
         return None
 
 
@@ -144,20 +155,23 @@ except (OSError, FileNotFoundError):
     c_parser = None
     C_PARSER_AVAILABLE = False
     import logging
-    logging.getLogger(__name__).warning("C parser library not found. Using Python fallback.")
+
+    logging.getLogger(__name__).warning(
+        "C parser library not found. Using Python fallback."
+    )
 
 
 class AIAnalyzer:
     def __init__(self, ollama_client: OllamaClient):
         self.ollama = ollama_client
         self.logger = logging.getLogger(__name__)
-        
+
     def analyze_nmap_output(self, nmap_output: str) -> Dict[str, Any]:
         """Analyze nmap scan results using AI"""
         system_prompt = """You are a cybersecurity expert analyzing nmap scan results. 
         Identify potential vulnerabilities, interesting services, and security issues.
         Provide structured analysis in JSON format with severity levels."""
-        
+
         prompt = f"""
         Analyze this nmap scan output and identify potential security issues:
         
@@ -180,28 +194,28 @@ class AIAnalyzer:
             "next_steps": ["recommended follow-up actions"]
         }}
         """
-        
+
         response = self.ollama.generate(prompt, system_prompt=system_prompt)
         if response:
             try:
                 return json.loads(response)
             except json.JSONDecodeError:
                 # Extract JSON if wrapped in markdown
-                json_match = re.search(r'```json\n(.*?)\n```', response, re.DOTALL)
+                json_match = re.search(r"```json\n(.*?)\n```", response, re.DOTALL)
                 if json_match:
                     try:
                         return json.loads(json_match.group(1))
                     except json.JSONDecodeError:
                         pass
-                        
+
         return {"error": "Failed to analyze nmap output", "raw_response": response}
-        
+
     def generate_exploit_code(self, vulnerability_info: Dict) -> str:
         """Generate exploit code based on vulnerability information"""
         system_prompt = """You are a security researcher creating proof-of-concept exploit code.
         Generate safe, educational exploit code with proper error handling and comments.
         Include safety warnings and ethical use disclaimers."""
-        
+
         prompt = f"""
         Generate a Python proof-of-concept exploit for this vulnerability:
         
@@ -220,18 +234,18 @@ class AIAnalyzer:
         
         Generate complete, working Python code:
         """
-        
+
         response = self.ollama.generate(prompt, system_prompt=system_prompt)
         return response or "# Failed to generate exploit code"
-        
+
     def analyze_web_response(self, url: str, response_data: Dict) -> Dict[str, Any]:
         """Analyze web service response for vulnerabilities"""
         system_prompt = """You are a web application security expert.
         Analyze HTTP responses for potential vulnerabilities and security issues."""
-        
-        headers = response_data.get('headers', {})
-        content = response_data.get('content', '')[:2000]  # Limit content length
-        
+
+        headers = response_data.get("headers", {})
+        content = response_data.get("content", "")[:2000]  # Limit content length
+
         prompt = f"""
         Analyze this web service for security issues:
         
@@ -266,26 +280,28 @@ class AIAnalyzer:
             "recommendations": ["security recommendations"]
         }}
         """
-        
+
         response = self.ollama.generate(prompt, system_prompt=system_prompt)
         if response:
             try:
                 return json.loads(response)
             except json.JSONDecodeError:
-                json_match = re.search(r'```json\n(.*?)\n```', response, re.DOTALL)
+                json_match = re.search(r"```json\n(.*?)\n```", response, re.DOTALL)
                 if json_match:
                     try:
                         return json.loads(json_match.group(1))
                     except json.JSONDecodeError:
                         pass
-                        
+
         return {"error": "Failed to analyze web response", "raw_response": response}
-        
-    def fix_broken_tool(self, tool_name: str, error_output: str, source_code: str = None) -> str:
+
+    def fix_broken_tool(
+        self, tool_name: str, error_output: str, source_code: str = None
+    ) -> str:
         """Generate fixes for broken security tools"""
         system_prompt = """You are a DevOps engineer specializing in fixing broken security tools.
         Analyze errors and provide working solutions."""
-        
+
         prompt = f"""
         This security tool is broken and needs fixing:
         
@@ -307,15 +323,15 @@ class AIAnalyzer:
         - Missing environment variables
         - Network/permission issues
         """
-        
+
         response = self.ollama.generate(prompt, system_prompt=system_prompt)
         return response or "# Failed to generate fix"
-        
+
     def prioritize_vulnerabilities(self, vulnerabilities: List[Dict]) -> List[Dict]:
         """Use AI to prioritize vulnerabilities by exploitability and impact"""
         system_prompt = """You are a penetration tester prioritizing vulnerabilities.
         Rank vulnerabilities by exploitability and business impact."""
-        
+
         prompt = f"""
         Prioritize these vulnerabilities for testing:
         
@@ -342,35 +358,42 @@ class AIAnalyzer:
             ]
         }}
         """
-        
+
         response = self.ollama.generate(prompt, system_prompt=system_prompt)
         if response:
             try:
                 result = json.loads(response)
-                return result.get('prioritized_vulnerabilities', vulnerabilities)
+                return result.get("prioritized_vulnerabilities", vulnerabilities)
             except:
                 pass
-                
+
         return vulnerabilities
 
     def analyze_nuclei_output(self, nuclei_json_output: str) -> Dict[str, Any]:
         """Analyze nuclei output using the high-speed C parser."""
-        
+
         if C_PARSER_AVAILABLE and c_parser:
             # Use the high-speed C parser when available
-            raw_summary = c_parser.parse_nuclei_output(nuclei_json_output.encode('utf-8'))
-            summary_str = raw_summary.decode('utf-8')
+            raw_summary = c_parser.parse_nuclei_output(
+                nuclei_json_output.encode("utf-8")
+            )
+            summary_str = raw_summary.decode("utf-8")
         else:
             # SECURITY FIX: Fallback to pure Python implementation
             # This ensures the application works even without the native library
             try:
                 import json
+
                 data = json.loads(nuclei_json_output)
-                critical_count = sum(1 for item in data if item.get('info', {}).get('severity') == 'critical')
+                critical_count = sum(
+                    1
+                    for item in data
+                    if item.get("info", {}).get("severity") == "critical"
+                )
                 summary_str = json.dumps({"critical_findings": critical_count})
             except (json.JSONDecodeError, TypeError):
                 summary_str = '{"error": "Failed to parse nuclei output"}'
-        
+
         try:
             return json.loads(summary_str)
         except json.JSONDecodeError:
@@ -382,6 +405,7 @@ class AIOrchestrator:
     Manages a multi-step AI reasoning pipeline for complex security tasks.
     It chains specialized prompts for planning, tool selection, and execution.
     """
+
     def __init__(self, prompt_dir: Path):
         self.prompt_dir = prompt_dir
         self.ollama = OllamaClient()
@@ -396,7 +420,9 @@ class AIOrchestrator:
             with open(self.prompt_dir / "Devin AI/system.md", "r") as f:
                 prompts["planner"] = f.read()
             # Manus-style tool selection prompt
-            with open(self.prompt_dir / "Manus Agent Tools & Prompt/system.md", "r") as f:
+            with open(
+                self.prompt_dir / "Manus Agent Tools & Prompt/system.md", "r"
+            ) as f:
                 prompts["tool_selector"] = f.read()
             # Cursor-style code/analysis prompt
             with open(self.prompt_dir / "Cursor Prompts/prompts.md", "r") as f:
@@ -411,25 +437,25 @@ class AIOrchestrator:
         Executes a full task pipeline: Plan -> Select Tool -> Execute -> Analyze.
         """
         print("--- AI Task Pipeline Initiated ---")
-        
+
         # 1. Planning Phase (using Devin's prompt)
         plan = self._planning_phase(task_description)
-        self.state['plan'] = plan
+        self.state["plan"] = plan
         print(f"Phase 1: Plan Created -> {plan}")
 
         # 2. Tool Selection Phase (using Manus' prompt)
         tool_command = self._tool_selection_phase(task_description, plan)
-        self.state['tool_command'] = tool_command
+        self.state["tool_command"] = tool_command
         print(f"Phase 2: Tool Selected -> {tool_command}")
 
         # 3. Execution Phase (simulated)
         execution_result = self._execution_phase(tool_command)
-        self.state['execution_result'] = execution_result
+        self.state["execution_result"] = execution_result
         print(f"Phase 3: Execution Result -> {execution_result[:100]}...")
 
         # 4. Analysis Phase (using Cursor's prompt)
         analysis = self._analysis_phase(execution_result)
-        self.state['analysis'] = analysis
+        self.state["analysis"] = analysis
         print(f"Phase 4: Analysis Complete -> {analysis}")
 
         print("--- AI Task Pipeline Complete ---")
@@ -437,18 +463,18 @@ class AIOrchestrator:
 
     def _planning_phase(self, task: str) -> str:
         """Uses the 'planner' prompt to create a high-level strategy."""
-        system_prompt = self.prompts['planner']
+        system_prompt = self.prompts["planner"]
         user_prompt = f"Create a step-by-step plan for the following task: {task}"
         response = self.ollama.generate(user_prompt, system_prompt=system_prompt)
         return response
 
     def _tool_selection_phase(self, task: str, plan: str) -> str:
         """Uses the 'tool_selector' prompt to choose the right command."""
-        system_prompt = self.prompts['tool_selector']
+        system_prompt = self.prompts["tool_selector"]
         user_prompt = f"Given the task '{task}' and the plan '{plan}', what is the exact shell command to execute next? Only output the command."
         response = self.ollama.generate(user_prompt, system_prompt=system_prompt)
         return response
-    
+
     def _execution_phase(self, command: str) -> str:
         """Simulates running the command and returns mock output."""
         print(f"Simulating execution of: `{command}`")
@@ -458,7 +484,7 @@ class AIOrchestrator:
 
     def _analysis_phase(self, result: str) -> str:
         """Uses the 'analyst' prompt to interpret the results."""
-        system_prompt = self.prompts['analyst']
+        system_prompt = self.prompts["analyst"]
         user_prompt = f"Analyze the following tool output and provide a summary of key findings and recommendations:\n\n{result}"
         response = self.ollama.generate(user_prompt, system_prompt=system_prompt)
         return response
@@ -467,43 +493,51 @@ class AIOrchestrator:
 # CLI interface for AI module
 if __name__ == "__main__":
     import argparse
-    
+
     parser = argparse.ArgumentParser(description="VulnForge AI Module")
-    parser.add_argument("--test-connection", action="store_true", help="Test Ollama connection")
+    parser.add_argument(
+        "--test-connection", action="store_true", help="Test Ollama connection"
+    )
     parser.add_argument("--pull-model", help="Pull a specific model")
-    parser.add_argument("--list-models", action="store_true", help="List available models")
+    parser.add_argument(
+        "--list-models", action="store_true", help="List available models"
+    )
     parser.add_argument("--analyze-nmap", help="Analyze nmap output file")
     parser.add_argument(
-        "--ai-pipeline", action="store_true", help="Enable the advanced multi-prompt AI pipeline."
+        "--ai-pipeline",
+        action="store_true",
+        help="Enable the advanced multi-prompt AI pipeline.",
     )
     parser.add_argument(
-        "--prompt-dir", help="Directory for the AI pipeline prompts.", default="AI_Propmt/system-prompts-and-models-of-ai-tools"
+        "--prompt-dir",
+        help="Directory for the AI pipeline prompts.",
+        default="AI_Propmt/system-prompts-and-models-of-ai-tools",
     )
-    
+
     args = parser.parse_args()
-    
+
     orchestrator = AIOrchestrator(Path(args.prompt_dir))
-    
+
     if args.test_connection:
         if orchestrator.ollama.is_available():
             print("✓ AI system ready")
         else:
             print("✗ AI system not available")
-            
+
     elif args.pull_model:
         if orchestrator.ollama.pull_model(args.pull_model):
             print(f"✓ Model {args.pull_model} pulled successfully")
         else:
             print(f"✗ Failed to pull model {args.pull_model}")
-            
+
     elif args.list_models:
         models = orchestrator.ollama.list_models()
         print("Available models:")
         for model in models:
             print(f"  - {model['name']}")
-            
+
     elif args.analyze_nmap:
-        with open(args.analyze_nmap, 'r') as f:
+        with open(args.analyze_nmap, "r") as f:
             content = f.read()
         result = orchestrator.analyzer.analyze_nmap_output(content)
         print(json.dumps(result, indent=2))
@@ -511,11 +545,13 @@ if __name__ == "__main__":
     # Handle AI Pipeline Mode
     if args.ai_pipeline:
         if not args.target:
-            print("Error: A target is required for AI pipeline mode, e.g., --target 'scan example.com'")
-        
+            print(
+                "Error: A target is required for AI pipeline mode, e.g., --target 'scan example.com'"
+            )
+
         prompt_path = Path(args.prompt_dir)
         if not prompt_path.exists():
             print(f"Error: Prompt directory not found at '{prompt_path}'")
-        
+
         orchestrator = AIOrchestrator(prompt_path)
         orchestrator.execute_task(f"Perform a security scan on {args.target}")
