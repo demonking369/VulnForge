@@ -50,7 +50,8 @@ class CVECollector:
                 with open(config_path, 'r') as f:
                     return json.load(f)
         except Exception as e:
-            self.logger.warning(f"Failed to load API keys: {e}")
+            self.logger.warning("Failed to load API keys: %s", e)
+            self.api_keys = {}
         return {}
         
     async def _wait_for_rate_limit(self, api_type: str):
@@ -85,8 +86,8 @@ class CVECollector:
                     async with aiofiles.open(cache_path, 'r') as f:
                         return json.loads(await f.read())
         except Exception as e:
-            self.logger.warning(f"Error reading cache: {e}")
-        return None
+            self.logger.warning("Error reading cache: %s", e)
+            return None
         
     async def _save_to_cache(self, cache_path: Path, data: Dict):
         """Save data to cache"""
@@ -94,7 +95,7 @@ class CVECollector:
             async with aiofiles.open(cache_path, 'w') as f:
                 await f.write(json.dumps(data))
         except Exception as e:
-            self.logger.warning(f"Error saving to cache: {e}")
+            self.logger.warning("Error saving to cache: %s", e)
             
     async def fetch_nvd_feed(self, start_date: Optional[str] = None) -> List[Dict]:
         """Fetch CVE data from NVD feed"""
@@ -133,10 +134,10 @@ class CVECollector:
                         await asyncio.sleep(60)
                         return await self.fetch_nvd_feed(start_date)
                     else:
-                        self.logger.error(f"NVD API error: {response.status}")
+                        self.logger.error("NVD API error: %s", response.status)
                         return []
             except (aiohttp.ClientError, asyncio.TimeoutError) as e:
-                self.logger.error(f"Error fetching NVD feed: {e}")
+                self.logger.error("Error fetching NVD feed: %s", e)
                 return []
                 
     async def fetch_exploit_db(self) -> List[Dict]:
@@ -182,10 +183,10 @@ class CVECollector:
                         await self._save_to_cache(cache_path, exploits)
                         return exploits
                     else:
-                        self.logger.error(f"Exploit-DB fetch error: {response.status}")
+                        self.logger.error("Exploit-DB fetch error: %s", response.status)
                         return []
             except Exception as e:
-                self.logger.error(f"Error fetching Exploit-DB: {e}")
+                self.logger.error("Error fetching Exploit-DB: %s", e)
                 return []
                 
     async def fetch_github_pocs(self, cve_id: str) -> List[Dict]:
@@ -240,7 +241,7 @@ class CVECollector:
                                             "forks": result["repository"].get("forks_count", 0)
                                         })
                             except Exception as e:
-                                self.logger.warning(f"Error processing GitHub result: {e}")
+                                self.logger.warning("Error processing GitHub result: %s", e)
                                 continue
                                 
                         await self._save_to_cache(cache_path, processed_results)
@@ -250,10 +251,10 @@ class CVECollector:
                         await asyncio.sleep(3600)  # Wait 1 hour
                         return await self.fetch_github_pocs(cve_id)
                     else:
-                        self.logger.error(f"GitHub API error: {response.status}")
+                        self.logger.error("GitHub API error: %s", response.status)
                         return []
             except (aiohttp.ClientError, asyncio.TimeoutError) as e:
-                self.logger.error(f"Error searching GitHub: {e}")
+                self.logger.error("Error searching GitHub: %s", e)
                 return []
                 
     async def analyze_cve(self, cve_data: Dict) -> Dict:
@@ -315,7 +316,7 @@ class CVECollector:
                 # If not valid JSON, store as raw text
                 cve_data["ai_analysis"] = {"raw_analysis": analysis}
         except Exception as e:
-            self.logger.error(f"Error analyzing CVE: {e}")
+            self.logger.error("Error analyzing CVE: %s", e)
             
         return cve_data
         

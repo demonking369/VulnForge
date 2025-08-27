@@ -51,8 +51,8 @@ class LLMEngine:
                     return {**default_config, **json.load(f)}
             return default_config
         except Exception as e:
-            self.logger.error(f"Error loading LLM config: {e}")
-            return default_config
+            self.logger.error("Error loading LLM config: %s", e)
+            self.config = {}
             
     def _initialize_models(self) -> List[str]:
         """Initialize available models"""
@@ -80,14 +80,14 @@ class LLMEngine:
                 models = response.json().get('models', [])
                 return any(m['name'] == model for m in models)
         except (requests.RequestException, requests.Timeout, requests.ConnectionError) as e:
-            self.logger.error(f"Error checking model availability: {e}")
+            self.logger.error("Error checking model availability: %s", e)
             return False
         return False
         
     def _pull_model(self, model: str) -> bool:
         """Pull a model if not available"""
         try:
-            self.logger.info(f"Pulling model: {model}")
+            self.logger.info("Pulling model: %s", model)
             data = {"name": model}
             response = requests.post(f"{self.base_url}/api/pull", json=data, stream=True)
             
@@ -100,7 +100,7 @@ class LLMEngine:
                     except:
                         continue
         except Exception as e:
-            self.logger.error(f"Error pulling model {model}: {e}")
+            self.logger.error("Error pulling model %s: %s", model, e)
         return False
         
     @lru_cache(maxsize=100)
@@ -147,14 +147,14 @@ class LLMEngine:
                     return result
                     
             except (requests.RequestException, requests.Timeout, requests.ConnectionError) as e:
-                self.logger.error(f"Error querying model {model}: {e}")
+                self.logger.error("Error querying model %s: %s", model, e)
                 
             # Try next model if available
             if model in self.models:
                 current_index = self.models.index(model)
                 if current_index + 1 < len(self.models):
                     model = self.models[current_index + 1]
-                    self.logger.info(f"Switching to fallback model: {model}")
+                    self.logger.info("Switching to fallback model: %s", model)
                 else:
                     break
                     

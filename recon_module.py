@@ -50,7 +50,8 @@ class EnhancedReconModule:
                     # Deep merge user config with defaults
                     self.config = self._deep_merge(self.config, user_config)
             except Exception as e:
-                self.logger.warning(f"Failed to load config from {config_path}: {e}")
+                self.logger.warning("Failed to load config from %s: %s", config_path, e)
+                self.config = self._get_default_config()
         
     def _deep_merge(self, default, user):
         """Deep merge two dictionaries."""
@@ -73,10 +74,10 @@ class EnhancedReconModule:
             stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=timeout)
             return stdout.decode().strip()
         except asyncio.TimeoutError:
-            self.logger.error(f"Command timed out: {' '.join(cmd)}")
+            self.logger.error("Command timed out: %s", " ".join(cmd))
             return ""
         except Exception as e:
-            self.logger.error(f"Error running command: {e}")
+            self.logger.error("Error running command: %s", e)
             return ""
             
     async def discover_subdomains(self, domain: str) -> List[str]:
@@ -86,13 +87,13 @@ class EnhancedReconModule:
         cmd = ["subfinder", "-d", domain, "-sources", ",".join(sources), "-silent"]
         output = await self.run_command(cmd)
         if not output:
-            self.logger.warning(f"No output from subfinder for {domain}. Check if subfinder is installed and configured correctly.")
-            self.console.print(f"[yellow]Warning: No output from subfinder for {domain}. Check if subfinder is installed and configured correctly.[/yellow]")
+            self.logger.warning("No output from subfinder for %s. Check if subfinder is installed and configured correctly.", domain)
+            self.console.print("Warning: No output from subfinder for %s. Check if subfinder is installed and configured correctly." % domain)
         subdomains = [line.strip() for line in output.splitlines() if line.strip()]
         self.console.print(f"[green]Found {len(subdomains)} subdomains[/green]")
-        if len(subdomains) == 0:
-            self.logger.warning(f"No subdomains found for {domain}. Check subfinder installation, network, and API keys.")
-            self.console.print(f"[yellow]Warning: No subdomains found for {domain}. Check subfinder installation, network, and API keys.[/yellow]")
+        if not subdomains:
+            self.logger.warning("No subdomains found for %s. Check subfinder installation, network, and API keys.", domain)
+            self.console.print("Warning: No subdomains found for %s. Check subfinder installation, network, and API keys." % domain)
         return subdomains
         
     async def probe_web_services(self, subdomains: List[str]) -> List[Dict]:
@@ -224,7 +225,7 @@ class EnhancedReconModule:
             return results
             
         except Exception as e:
-            self.logger.error(f"Error during reconnaissance: {e}")
+            self.logger.error("Error during reconnaissance: %s", e)
             return {
                 "target": target,
                 "timestamp": datetime.now().isoformat(),
@@ -287,7 +288,7 @@ class EnhancedReconModule:
             async with aiofiles.open(json_path, 'w') as f:
                 await f.write(json.dumps(results, indent=2))
         except (aiofiles.OSError, aiofiles.IOError) as e:
-            self.logger.error(f"Error writing results: {e}")
+            self.logger.error("Error writing results: %s", e)
             
         # Generate Markdown report
         md_path = output_dir / "report.md"
@@ -316,6 +317,6 @@ class EnhancedReconModule:
 {json.dumps(results['ai_analysis'], indent=2)}
 """)
         except (aiofiles.OSError, aiofiles.IOError) as e:
-            self.logger.error(f"Error writing results: {e}")
+            self.logger.error("Error writing results: %s", e)
             
         self.console.print(f"[green]Results saved to: {output_dir}[/green]") 

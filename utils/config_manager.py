@@ -20,16 +20,15 @@ class ConfigManager:
         
     def _load_config(self) -> Dict[str, Any]:
         """Load configuration from file"""
+        if not self.config_path.exists():
+            self.logger.warning("Config file not found: %s", self.config_path)
+            self._save_config()
         try:
-            if self.config_path.exists():
-                with open(self.config_path, 'r') as f:
-                    return json.load(f)
-            else:
-                self.logger.warning(f"Config file not found: {self.config_path}")
-                return {}
+            with open(self.config_path, 'r') as f:
+                self.config = json.load(f)
         except Exception as e:
-            self.logger.error(f"Error loading config: {e}")
-            return {}
+            self.logger.error("Error loading config: %s", e)
+            self.config = self._get_default_config()
             
     def get(self, key: str, default: Any = None) -> Any:
         """Get configuration value"""
@@ -49,7 +48,7 @@ class ConfigManager:
                 json.dump(self.config, f, indent=2)
             os.chmod(self.config_path, 0o600)
         except Exception as e:
-            self.logger.error(f"Error saving config: {e}")
+            self.logger.error("Error saving config: %s", e)
             
     def get_ai_config(self) -> Dict[str, Any]:
         """Get AI configuration"""
@@ -71,7 +70,7 @@ class ConfigManager:
                 json.dump(self.config, f, indent=2)
             os.chmod(self.config_path, 0o600)
         except Exception as e:
-            self.logger.error(f"Error saving config: {e}")
+            self.logger.error("Error saving config: %s", e)
             
     def update(self, updates: Dict[str, Any]):
         """Update multiple configuration values"""
@@ -91,7 +90,7 @@ class ConfigManager:
                 json.dump(self.config, f, indent=2)
             os.chmod(filepath, 0o600)
         except Exception as e:
-            self.logger.error(f"Error exporting config: {e}")
+            self.logger.error("Error exporting config: %s", e)
             
     def import_config(self, filepath: Path):
         """Import configuration from file"""
@@ -101,7 +100,7 @@ class ConfigManager:
                 self.config = {**self.config, **imported_config}
                 self._save_config()
         except Exception as e:
-            self.logger.error(f"Error importing config: {e}")
+            self.logger.error("Error importing config: %s", e)
             
     def get_all(self) -> Dict[str, Any]:
         """Get complete configuration"""
@@ -118,7 +117,7 @@ class ConfigManager:
         
         for key in required_keys:
             if self.get(key) is None:
-                self.logger.error(f"Missing required config key: {key}")
+                self.logger.error("Missing required config key: %s", key)
                 return False
                 
         return True 

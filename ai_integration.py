@@ -42,13 +42,13 @@ class OllamaClient:
             if response.status_code == 200:
                 return response.json().get('models', [])
         except (requests.RequestException, requests.Timeout, requests.ConnectionError) as e:
-            self.logger.error(f"Error listing models: {e}")
+            self.logger.error("Error listing models: %s", e)
         return []
         
     def pull_model(self, model: str) -> bool:
         """Pull a model if not available"""
         try:
-            self.logger.info(f"Pulling model: {model}")
+            self.logger.info("Pulling model: %s", model)
             data = {"name": model}
             response = requests.post(f"{self.base_url}/api/pull", json=data, stream=True)
             
@@ -61,8 +61,8 @@ class OllamaClient:
                     except:
                         continue
         except Exception as e:
-            self.logger.error(f"Error pulling model {model}: {e}")
-        return False
+            self.logger.error("Error pulling model %s: %s", model, e)
+            return False
         
     def generate(self, prompt: str, model: str = None, system_prompt: str = None) -> Optional[str]:
         """Generate text using Ollama"""
@@ -97,10 +97,10 @@ class OllamaClient:
                 result = response.json()
                 return result.get('response', '').strip()
             else:
-                self.logger.error(f"Ollama API error: {response.status_code}")
+                self.logger.error("Ollama API error: %s", response.status_code)
                 
         except (requests.RequestException, requests.Timeout, requests.ConnectionError) as e:
-            self.logger.error(f"Error generating with Ollama: {e}")
+            self.logger.error("Error generating with Ollama: %s", e)
             
         return None
         

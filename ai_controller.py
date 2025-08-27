@@ -57,7 +57,7 @@ class AIController:
         Returns:
             Dictionary containing the response and metadata
         """
-        self.logger.info(f"Processing AI query: {query}")
+        self.logger.info("Processing AI query: %s", query)
         
         try:
             # Prepare context
@@ -95,7 +95,7 @@ Provide a detailed response:"""
             }
             
         except Exception as e:
-            self.logger.error(f"Error processing query: {str(e)}")
+            self.logger.error("Error processing query: %s", str(e))
             raise
 
     async def _get_ai_response(self, prompt: str) -> str:
@@ -113,7 +113,7 @@ Provide a detailed response:"""
             return "This is a placeholder response. AI integration pending."
             
         except Exception as e:
-            self.logger.error(f"Error getting AI response: {str(e)}")
+            self.logger.error("Error getting AI response: %s", str(e))
             raise
 
     def _generate_report(self) -> Dict[str, str]:
@@ -122,7 +122,7 @@ Provide a detailed response:"""
         Returns:
             Dictionary mapping report types to their file paths
         """
-        self.logger.info(f"Generating reports in {self.output_format} format...")
+        self.logger.info("Generating reports in %s format...", self.output_format)
         
         try:
             # Prepare context data
@@ -149,7 +149,7 @@ Provide a detailed response:"""
             return report_paths
             
         except Exception as e:
-            self.logger.error(f"Error generating reports: {str(e)}")
+            self.logger.error("Error generating reports: %s", str(e))
             raise
 
     def _calculate_duration(self) -> str:
@@ -185,8 +185,8 @@ Provide a detailed response:"""
                 if not client.pull_model(client.main_model):
                     self.logger.error("Failed to pull default model")
                     return False
-            self.logger.info(f"AI setup complete. Available models: {[m['name'] for m in models]}")
+            self.logger.info("AI setup complete. Available models: %s", [m['name'] for m in models])
             return True
         except Exception as e:
-            self.logger.error(f"Error in setup_ai: {e}")
+            self.logger.error("Error in setup_ai: %s", e)
             return False 

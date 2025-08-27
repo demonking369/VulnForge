@@ -90,7 +90,7 @@ class VulnForge:
                 missing_tools.append(tool)
 
         if missing_tools:
-            self.logger.warning(f"Missing tools: {', '.join(missing_tools)}")
+            self.logger.warning("Missing tools: %s", ", ".join(missing_tools))
             return False
         return True
 
@@ -115,7 +115,7 @@ class VulnForge:
         try:
             subprocess.run(["sudo", "apt", "update"], check=True)
         except subprocess.CalledProcessError as e:
-            self.logger.error(f"Failed to update package list: {e}")
+            self.logger.error("Failed to update package list: %s", e)
             return False
 
         # Install Go tools
@@ -127,18 +127,18 @@ class VulnForge:
 
         for tool, package in go_tools.items():
             if not self.is_tool_installed(tool):
-                self.logger.info(f"Installing {tool}...")
+                self.logger.info("Installing %s...", tool)
                 try:
                     # SECURITY FIX: Use full executable path and handle subprocess failures
                     result = subprocess.run(["/usr/bin/go", "install", package], 
                                           capture_output=True, text=True, check=True)
-                    self.logger.info(f"Successfully installed {tool}")
+                    self.logger.info("Successfully installed %s", tool)
                 except subprocess.CalledProcessError as e:
-                    self.logger.error(f"Failed to install {tool}: {e}")
-                    self.logger.error(f"stderr: {e.stderr}")
+                    self.logger.error("Failed to install %s: %s", tool, e)
+                    self.logger.error("stderr: %s", e.stderr)
                     return False
                 except FileNotFoundError:
-                    self.logger.error(f"Go not found. Please install Go first.")
+                    self.logger.error("Go not found. Please install Go first.")
                     return False
 
         return True
@@ -179,16 +179,10 @@ class VulnForge:
                     f"[bold green]✓ Directory created/verified:[/bold green] {tool_dir}"
                 )
             except PermissionError as e:
-                self.console.print(
-                    f"[bold red]Error: Permission denied creating directory {tool_dir}[/bold red]"
-                )
-                self.logger.error(f"Permission error creating directory: {e}")
+                self.logger.error("Permission error creating directory: %s", e)
                 return
             except Exception as e:
-                self.console.print(
-                    f"[bold red]Error: Failed to create directory {tool_dir}[/bold red]"
-                )
-                self.logger.error(f"Error creating directory: {e}")
+                self.logger.error("Error creating directory: %s", e)
                 return
 
             metadata_path = os.path.join(tool_dir, "metadata.json")
@@ -234,7 +228,7 @@ class VulnForge:
                         with open(metadata_path) as f:
                             metadata = json.load(f)
                     except Exception as e:
-                        self.logger.warning(f"Error reading metadata file: {e}")
+                        self.logger.warning("Error reading metadata file: %s", e)
                         metadata = []
 
                 metadata.append(
@@ -253,16 +247,12 @@ class VulnForge:
                     f"[bold green]✓ Metadata updated:[/bold green] {metadata_path}"
                 )
             except Exception as e:
-                self.console.print(
-                    f"[bold yellow]Warning: Failed to update metadata: {e}[/bold yellow]"
-                )
-                self.logger.error(f"Error updating metadata: {e}")
+                self.logger.error("Error updating metadata: %s", e)
+                return False
 
         except Exception as e:
-            self.console.print(
-                f"[bold red]Unexpected error in generate_tool: {e}[/bold red]"
-            )
-            self.logger.error(f"Unexpected error in generate_tool: {e}")
+            self.logger.error("Unexpected error in generate_tool: %s", e)
+            return False
 
     def list_custom_tools(self):
         """List all custom tools in the custom_tools directory."""
@@ -305,14 +295,12 @@ class VulnForge:
                     )
 
             except Exception as e:
-                self.console.print(f"[bold red]Error reading metadata: {e}[/bold red]")
-                self.logger.error(f"Error reading metadata: {e}")
+                self.logger.error("Error reading metadata: %s", e)
+                return []
 
         except Exception as e:
-            self.console.print(
-                f"[bold red]Unexpected error in list_custom_tools: {e}[/bold red]"
-            )
-            self.logger.error(f"Unexpected error in list_custom_tools: {e}")
+            self.logger.error("Unexpected error in list_custom_tools: %s", e)
+            return []
 
 
 async def dev_mode_shell(vf, session_dir):

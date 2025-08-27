@@ -53,10 +53,10 @@ class ReconScanner:
                     "timestamp": datetime.now().isoformat()
                 })
             else:
-                logger.error(f"Nmap scan failed: {stderr.decode()}")
+                logger.error("Nmap scan failed: %s", stderr.decode())
                 
         except Exception as e:
-            logger.error(f"Error running Nmap scan: {e}")
+            logger.error("Error running Nmap scan: %s", e)
             
     async def run_subfinder(self):
         """Run Subfinder for subdomain enumeration"""
@@ -77,10 +77,10 @@ class ReconScanner:
                     "timestamp": datetime.now().isoformat()
                 })
             else:
-                logger.error(f"Subfinder failed: {stderr.decode()}")
+                logger.error("Subfinder failed: %s", stderr.decode())
                 
         except Exception as e:
-            logger.error(f"Error running Subfinder: {e}")
+            logger.error("Error running Subfinder: %s", e)
             
     async def run_httpx(self, urls: List[str]):
         """Run httpx for HTTP probing"""
@@ -104,13 +104,13 @@ class ReconScanner:
                     "timestamp": datetime.now().isoformat()
                 })
             else:
-                logger.error(f"httpx failed: {stderr.decode()}")
+                logger.error("httpx failed: %s", stderr.decode())
                 
             # Clean up temp file
             temp_file.unlink()
             
         except Exception as e:
-            logger.error(f"Error running httpx: {e}")
+            logger.error("Error running httpx: %s", e)
             
     async def run_nuclei(self, urls: List[str]):
         """Run Nuclei for vulnerability scanning"""
@@ -135,9 +135,9 @@ class ReconScanner:
                     "timestamp": datetime.now().isoformat()
                 })
             else:
-                logger.error(f"Nuclei failed: {stderr.decode()}")
+                logger.error("Nuclei failed: %s", stderr.decode())
         except Exception as e:
-            logger.error(f"Error running Nuclei: {e}")
+            logger.error("Error running Nuclei: %s", e)
         finally:
             # SECURITY FIX: Ensure temp file is always cleaned up
             try:
@@ -184,7 +184,7 @@ async def main():
     output_path.parent.mkdir(parents=True, exist_ok=True)
     scanner.save_results(output_path)
     
-    logger.info(f"Scan completed. Results saved to {output_path}")
+    logger.info("Scan completed. Results saved to %s", output_path)
 
 if __name__ == "__main__":
     asyncio.run(main()) 

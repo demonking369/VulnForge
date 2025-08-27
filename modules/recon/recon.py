@@ -40,7 +40,7 @@ class ReconModule:
         Returns:
             Dictionary containing reconnaissance results
         """
-        self.logger.info(f"Starting reconnaissance on {target}")
+        self.logger.info("Starting reconnaissance on %s", target)
         
         # Initialize results dictionary
         results = {
@@ -98,7 +98,7 @@ class ReconModule:
             return results
             
         except Exception as e:
-            self.logger.error(f"Error during reconnaissance: {e}")
+            self.logger.error("Error during reconnaissance: %s", e)
             results["errors"].append(str(e))
             return results
             
@@ -109,7 +109,7 @@ class ReconModule:
             domain = target.split("://")[-1].split("/")[0]
             s3_check = await self._run_command(f"dig +short -t NS {domain}")
             if "s3" in s3_check.lower():
-                self.logger.info(f"Domain {domain} appears to be S3-hosted")
+                self.logger.info("Domain %s appears to be S3-hosted", domain)
                 return [domain]
             # Try subfinder with retries
             for attempt in range(3):
@@ -157,13 +157,13 @@ class ReconModule:
             stdout, stderr = await proc.communicate()
             
             if proc.returncode != 0:
-                self.logger.error(f"Subfinder error: {stderr.decode()}")
+                self.logger.error("Subfinder error: %s", stderr.decode())
                 return []
                 
             return [line.strip() for line in stdout.decode().splitlines() if line.strip()]
             
         except Exception as e:
-            self.logger.error(f"Error running subfinder: {e}")
+            self.logger.error("Error running subfinder: %s", e)
             return []
             
     async def _run_nmap(self, target: str) -> List[Dict[str, Any]]:
@@ -282,7 +282,7 @@ class ReconModule:
             stdout, stderr = await proc.communicate()
             
             if proc.returncode != 0:
-                self.logger.error(f"Nuclei error: {stderr.decode()}")
+                self.logger.error("Nuclei error: %s", stderr.decode())
                 return []
                 
             vulnerabilities = []
@@ -302,7 +302,7 @@ class ReconModule:
             return vulnerabilities
             
         except Exception as e:
-            self.logger.error(f"Error running nuclei: {e}")
+            self.logger.error("Error running nuclei: %s", e)
             return []
             
         finally:
@@ -384,5 +384,4 @@ class ReconModule:
             with open("/tmp/vulnforge_subfinder_debug.log", "a") as f:
                 f.write(debug_info)
             if stderr:
-                self.logger.warning(f"Command stderr: {stderr.decode()}")
-            return stdout.decode().strip() 
+                self.logger.warning("Command stderr: %s", stderr.decode()) 
