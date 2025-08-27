@@ -72,7 +72,7 @@ A powerful, AI-driven security testing framework designed for authorized penetra
 ### **Quick Start**
 ```bash
 # Clone the repository
-git clone https://github.com/Arunking9/VulnForge.git
+git clone https://github.com/demonking369/VulnForge.git
 cd VulnForge
 
 # Install dependencies
