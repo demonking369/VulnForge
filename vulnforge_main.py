@@ -27,7 +27,7 @@ from typing import Optional
 
 from recon_module import EnhancedReconModule
 from ai_integration import AIAnalyzer, OllamaClient
-from ai_orchestrator import AIOrchestrator # New Import
+from ai_orchestrator import AIOrchestrator  # New Import
 
 
 class VulnForge:
@@ -130,8 +130,12 @@ class VulnForge:
                 self.logger.info(f"Installing {tool}...")
                 try:
                     # SECURITY FIX: Use full executable path and handle subprocess failures
-                    result = subprocess.run(["/usr/bin/go", "install", package], 
-                                          capture_output=True, text=True, check=True)
+                    result = subprocess.run(
+                        ["/usr/bin/go", "install", package],
+                        capture_output=True,
+                        text=True,
+                        check=True,
+                    )
                     self.logger.info(f"Successfully installed {tool}")
                 except subprocess.CalledProcessError as e:
                     self.logger.error(f"Failed to install {tool}: {e}")
@@ -145,7 +149,9 @@ class VulnForge:
 
     async def run_recon(self, target: str, output_dir: Optional[Path] = None):
         """Run reconnaissance on target"""
-        recon = EnhancedReconModule(self.base_dir, self.ai_analyzer, config_path="configs/tools.json")
+        recon = EnhancedReconModule(
+            self.base_dir, self.ai_analyzer, config_path="configs/tools.json"
+        )
         return await recon.run_recon(target, output_dir)
 
     def ask_ai(self, question: str):
@@ -396,7 +402,7 @@ Key Features:
 
 For detailed documentation, visit: https://github.com/Arunking9/VulnForge
 """,
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("--target", "-t", help="Target domain or IP")
     parser.add_argument(
@@ -432,30 +438,52 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
         "--stealth", "-s", action="store_true", help="Enable stealth mode"
     )
     parser.add_argument(
-        "--ai-pipeline", action="store_true", help="Enable the advanced multi-prompt AI pipeline."
+        "--ai-pipeline",
+        action="store_true",
+        help="Enable the advanced multi-prompt AI pipeline.",
     )
     parser.add_argument(
-        "--prompt-dir", help="Directory for the AI pipeline prompts.", default="AI_Propmt/system-prompts-and-models-of-ai-tools"
+        "--prompt-dir",
+        help="Directory for the AI pipeline prompts.",
+        default="AI_Propmt/system-prompts-and-models-of-ai-tools",
     )
 
     # Add subparsers for commands
-    subparsers = parser.add_subparsers(dest='command', help='Available commands')
-    
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+
     # Ask AI command
-    ask_ai_parser = subparsers.add_parser('ask-ai', help='Ask the AI assistant a question')
-    ask_ai_parser.add_argument('question', help='The question to ask the AI')
-    ask_ai_parser.add_argument('--verbose', action='store_true', help='Show detailed model logs')
-    ask_ai_parser.add_argument('--dangerous', action='store_true', help='Enable dangerous mode')
-    ask_ai_parser.add_argument('--confirm-danger', action='store_true', help='Confirm dangerous mode')
-    
+    ask_ai_parser = subparsers.add_parser(
+        "ask-ai", help="Ask the AI assistant a question"
+    )
+    ask_ai_parser.add_argument("question", help="The question to ask the AI")
+    ask_ai_parser.add_argument(
+        "--verbose", action="store_true", help="Show detailed model logs"
+    )
+    ask_ai_parser.add_argument(
+        "--dangerous", action="store_true", help="Enable dangerous mode"
+    )
+    ask_ai_parser.add_argument(
+        "--confirm-danger", action="store_true", help="Confirm dangerous mode"
+    )
+
     # Generate tool command
-    generate_tool_parser = subparsers.add_parser('generate-tool', help='Generate a custom tool')
-    generate_tool_parser.add_argument('description', help='Description of the tool to generate')
-    generate_tool_parser.add_argument('--verbose', action='store_true', help='Show detailed generation logs')
-    
+    generate_tool_parser = subparsers.add_parser(
+        "generate-tool", help="Generate a custom tool"
+    )
+    generate_tool_parser.add_argument(
+        "description", help="Description of the tool to generate"
+    )
+    generate_tool_parser.add_argument(
+        "--verbose", action="store_true", help="Show detailed generation logs"
+    )
+
     # List tools command
-    list_tools_parser = subparsers.add_parser('list-tools', help='List all custom tools')
-    list_tools_parser.add_argument('--verbose', action='store_true', help='Show detailed tool information')
+    list_tools_parser = subparsers.add_parser(
+        "list-tools", help="List all custom tools"
+    )
+    list_tools_parser.add_argument(
+        "--verbose", action="store_true", help="Show detailed tool information"
+    )
 
     args = parser.parse_args()
 
@@ -466,14 +494,16 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
     # Handle AI Pipeline Mode
     if args.ai_pipeline:
         if not args.target:
-            print("Error: A target is required for AI pipeline mode, e.g., --target 'scan example.com'")
+            print(
+                "Error: A target is required for AI pipeline mode, e.g., --target 'scan example.com'"
+            )
             return
-        
+
         prompt_path = Path(args.prompt_dir)
         if not prompt_path.exists():
             print(f"Error: Prompt directory not found at '{prompt_path}'")
             return
-            
+
         orchestrator = AIOrchestrator(prompt_path)
         orchestrator.execute_task(f"Perform a security scan on {args.target}")
         return
