@@ -6,6 +6,8 @@ VulnForge Reconnaissance Script for Bumba Global
 import asyncio
 import json
 import logging
+import tempfile
+import os
 from pathlib import Path
 from typing import Dict, List
 import aiohttp
@@ -112,12 +114,13 @@ class ReconScanner:
             
     async def run_nuclei(self, urls: List[str]):
         """Run Nuclei for vulnerability scanning"""
-        try:
-            # Write URLs to temporary file
-            temp_file = Path("temp_urls.txt")
-            temp_file.write_text("\n".join(urls))
+        # SECURITY FIX: Use tempfile module instead of hardcoded temp paths
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as temp_file:
+            temp_file.write('\n'.join(urls))
+            temp_file_path = temp_file.name
             
-            cmd = ["nuclei", "-l", str(temp_file), "-severity", "critical,high,medium"]
+        try:
+            cmd = ["nuclei", "-l", temp_file_path, "-severity", "critical,high,medium"]
             process = await asyncio.create_subprocess_exec(
                 *cmd,
                 stdout=asyncio.subprocess.PIPE,
@@ -133,12 +136,14 @@ class ReconScanner:
                 })
             else:
                 logger.error(f"Nuclei failed: {stderr.decode()}")
-                
-            # Clean up temp file
-            temp_file.unlink()
-            
         except Exception as e:
             logger.error(f"Error running Nuclei: {e}")
+        finally:
+            # SECURITY FIX: Ensure temp file is always cleaned up
+            try:
+                os.unlink(temp_file_path)
+            except OSError:
+                pass  # File may already be deleted
             
     def save_results(self, output_path: Path):
         """Save scan results to file"""

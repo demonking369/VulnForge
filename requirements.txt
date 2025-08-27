@@ -9,6 +9,9 @@ pyyaml>=6.0
 requests>=2.26.0
 rich>=10.0.0
 
+# Security dependencies
+defusedxml>=0.7.1  # SECURITY: Safe XML parsing to prevent XXE attacks
+
 # Security tools
 dnspython>=2.1.0
 python-nmap>=0.7.1

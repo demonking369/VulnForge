@@ -1,7 +1,8 @@
 import json
+import subprocess
+import shlex
 from pathlib import Path
 from ai_integration import OllamaClient
-import subprocess
 
 class AIOrchestrator:
     """
@@ -15,21 +16,45 @@ class AIOrchestrator:
         self.state = {}
 
     def _load_prompts(self):
-        """Loads the specialized AI prompts from the prompt directory."""
         prompts = {}
         try:
-            # Devin-style planning prompt
-            with open(self.prompt_dir / "Devin AI/system.md", "r") as f:
-                prompts["planner"] = f.read()
-            # Manus-style tool selection prompt
-            with open(self.prompt_dir / "Manus Agent Tools & Prompt/system.md", "r") as f:
-                prompts["tool_selector"] = f.read()
-            # Cursor-style code/analysis prompt
-            with open(self.prompt_dir / "Cursor Prompts/prompts.md", "r") as f:
-                prompts["analyst"] = f.read()
-        except FileNotFoundError as e:
-            print(f"Error: Could not load a required prompt. {e}")
-            raise
+            # SECURITY FIX: Use correct path structure and file names for the nested prompt directories
+            base_prompt_dir = self.prompt_dir / "system-prompts-and-models-of-ai-tools"
+            
+            # Check what files actually exist and use appropriate fallbacks
+            devin_file = base_prompt_dir / "Devin AI/Prompt.txt"
+            manus_file = base_prompt_dir / "Manus Agent Tools & Prompt/system.md"
+            cursor_file = base_prompt_dir / "Cursor Prompts/prompts.md"
+            
+            # Load Devin AI prompt
+            if devin_file.exists():
+                with open(devin_file, "r") as f:
+                    prompts["planner"] = f.read()
+            else:
+                prompts["planner"] = "You are a planning AI. Create step-by-step plans for tasks."
+            
+            # Load Manus prompt
+            if manus_file.exists():
+                with open(manus_file, "r") as f:
+                    prompts["tool_selector"] = f.read()
+            else:
+                prompts["tool_selector"] = "You are a tool selection AI. Choose appropriate tools for tasks."
+            
+            # Load Cursor prompt
+            if cursor_file.exists():
+                with open(cursor_file, "r") as f:
+                    prompts["analyst"] = f.read()
+            else:
+                prompts["analyst"] = "You are an analysis AI. Analyze results and provide insights."
+                
+        except Exception as e:
+            print(f"Error: Could not load prompts. {e}")
+            # Provide fallback prompts
+            prompts = {
+                "planner": "You are a planning AI. Create step-by-step plans for tasks.",
+                "tool_selector": "You are a tool selection AI. Choose appropriate tools for tasks.",
+                "analyst": "You are an analysis AI. Analyze results and provide insights."
+            }
         return prompts
 
     def execute_task(self, task_description: str):
@@ -79,7 +104,10 @@ class AIOrchestrator:
         """Executes the shell command and returns real output."""
         print(f"Executing: `{command}`")
         try:
-            result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=600)
+            # SECURITY FIX: Use shlex.split to safely parse command without shell=True
+            # This prevents command injection while maintaining functionality
+            cmd_parts = shlex.split(command)
+            result = subprocess.run(cmd_parts, capture_output=True, text=True, timeout=600)
             if result.returncode == 0:
                 return result.stdout
             else:

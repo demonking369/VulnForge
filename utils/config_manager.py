@@ -6,9 +6,9 @@ Handles loading and managing configuration settings
 
 import json
 import logging
+import os
 from pathlib import Path
 from typing import Dict, Any, Optional
-import os
 
 class ConfigManager:
     def __init__(self, config_path: str):
@@ -43,8 +43,11 @@ class ConfigManager:
     def _save_config(self) -> None:
         """Save configuration to file"""
         try:
+            # SECURITY FIX: Set secure file permissions (0o600) for sensitive config files
+            # This ensures only the owner can read/write the file
             with open(self.config_path, 'w') as f:
                 json.dump(self.config, f, indent=2)
+            os.chmod(self.config_path, 0o600)
         except Exception as e:
             self.logger.error(f"Error saving config: {e}")
             
@@ -63,8 +66,10 @@ class ConfigManager:
     def save_config(self):
         """Save current configuration to file"""
         try:
+            # SECURITY FIX: Set secure file permissions for sensitive config files
             with open(self.config_path, 'w') as f:
                 json.dump(self.config, f, indent=2)
+            os.chmod(self.config_path, 0o600)
         except Exception as e:
             self.logger.error(f"Error saving config: {e}")
             
@@ -81,8 +86,10 @@ class ConfigManager:
     def export(self, filepath: Path):
         """Export configuration to file"""
         try:
+            # SECURITY FIX: Set secure file permissions for exported config files
             with open(filepath, 'w') as f:
                 json.dump(self.config, f, indent=2)
+            os.chmod(filepath, 0o600)
         except Exception as e:
             self.logger.error(f"Error exporting config: {e}")
             

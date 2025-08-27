@@ -12,6 +12,16 @@ import subprocess
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.console import Console
 import os
+import tempfile
+
+# SECURITY FIX: Use defusedxml instead of xml.etree to prevent XXE attacks
+try:
+    from defusedxml import ElementTree as ET
+except ImportError:
+    # Fallback to regular ElementTree if defusedxml is not available
+    import xml.etree.ElementTree as ET
+    import warnings
+    warnings.warn("defusedxml not available, using regular ElementTree. Install defusedxml for better security.")
 
 class ReconModule:
     def __init__(self, base_dir: Path):
@@ -170,7 +180,6 @@ class ReconModule:
                 )
                 stdout, stderr = await proc.communicate()
                 if proc.returncode == 0:
-                    import xml.etree.ElementTree as ET
                     root = ET.fromstring(stdout.decode())
                     ports = []
                     for port in root.findall(".//port"):
@@ -194,20 +203,23 @@ class ReconModule:
             if not self._check_tool("httpx"):
                 self.logger.error("HTTPx not found. Please install it first.")
                 continue
-            temp_file = self.base_dir / "temp_subdomains.txt"
-            with open(temp_file, "w") as f:
-                f.write("\n".join(subdomains))
-            cmd = [
-                "httpx",
-                "-l", str(temp_file),
-                "-silent",
-                "-json",
-                "-status-code",
-                "-title",
-                "-tech-detect",
-                "-o", "-"
-            ]
+                
+            # SECURITY FIX: Use tempfile module instead of hardcoded temp paths
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as temp_file:
+                temp_file.write('\n'.join(subdomains))
+                temp_file_path = temp_file.name
+                
             try:
+                cmd = [
+                    "httpx",
+                    "-l", temp_file_path,
+                    "-silent",
+                    "-json",
+                    "-status-code",
+                    "-title",
+                    "-tech-detect",
+                    "-o", "-"
+                ]
                 proc = await asyncio.create_subprocess_exec(
                     *cmd,
                     stdout=asyncio.subprocess.PIPE,
@@ -228,14 +240,17 @@ class ReconModule:
                         except json.JSONDecodeError:
                             continue
                     if services:
-                        temp_file.unlink(missing_ok=True)
                         return services
                 await asyncio.sleep(1)
             except Exception as e:
                 with open("/tmp/vulnforge_subfinder_debug.log", "a") as f:
                     f.write(f"[ERROR] httpx: {e}\n")
             finally:
-                temp_file.unlink(missing_ok=True)
+                # SECURITY FIX: Ensure temp file is always cleaned up
+                try:
+                    os.unlink(temp_file_path)
+                except OSError:
+                    pass  # File may already be deleted
         return []
             
     async def _run_nuclei(self, target: str, services: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -244,21 +259,21 @@ class ReconModule:
             self.logger.error("Nuclei not found. Please install it first.")
             return []
             
-        # Create temporary file with URLs
-        temp_file = self.base_dir / "temp_urls.txt"
-        with open(temp_file, "w") as f:
-            f.write("\n".join(service["url"] for service in services))
+        # SECURITY FIX: Use tempfile module instead of hardcoded temp paths
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as temp_file:
+            temp_file.write('\n'.join(service["url"] for service in services))
+            temp_file_path = temp_file.name
             
-        cmd = [
-            "nuclei",
-            "-l", str(temp_file),
-            "-json",
-            "-severity", "critical,high,medium",
-            "-silent",
-            "-o", "-"
-        ]
-        
         try:
+            cmd = [
+                "nuclei",
+                "-l", temp_file_path,
+                "-json",
+                "-severity", "critical,high,medium",
+                "-silent",
+                "-o", "-"
+            ]
+            
             proc = await asyncio.create_subprocess_exec(
                 *cmd,
                 stdout=asyncio.subprocess.PIPE,
@@ -291,7 +306,11 @@ class ReconModule:
             return []
             
         finally:
-            temp_file.unlink(missing_ok=True)
+            # SECURITY FIX: Ensure temp file is always cleaned up
+            try:
+                os.unlink(temp_file_path)
+            except OSError:
+                pass  # File may already be deleted
             
     def _check_tool(self, tool_name: str) -> bool:
         """Check if a tool is installed and accessible"""
@@ -366,7 +385,4 @@ class ReconModule:
                 f.write(debug_info)
             if stderr:
                 self.logger.warning(f"Command stderr: {stderr.decode()}")
-            return stdout.decode().strip()
-        except Exception as e:
-            self.logger.error(f"Error running command '{command}': {str(e)}")
-            return "" 
+            return stdout.decode().strip() 

@@ -79,8 +79,9 @@ class LLMEngine:
             if response.status_code == 200:
                 models = response.json().get('models', [])
                 return any(m['name'] == model for m in models)
-        except:
-            pass
+        except (requests.RequestException, requests.Timeout, requests.ConnectionError) as e:
+            self.logger.error(f"Error checking model availability: {e}")
+            return False
         return False
         
     def _pull_model(self, model: str) -> bool:
@@ -145,7 +146,7 @@ class LLMEngine:
                         self.response_cache[cache_key] = result
                     return result
                     
-            except Exception as e:
+            except (requests.RequestException, requests.Timeout, requests.ConnectionError) as e:
                 self.logger.error(f"Error querying model {model}: {e}")
                 
             # Try next model if available

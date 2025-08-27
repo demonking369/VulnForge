@@ -64,8 +64,8 @@ class VulnForge:
         """Display tool banner"""
         banner_text = f"""
 ╔══════════════════════════════════════════════════════════════╗
-║                         VulnForge v{self.version}                         ║
-║              Educational Security Research Framework          ║
+║                         VulnForge v{self.version}            ║
+║              Educational Security Research Framework         ║
 ║                   For Authorized Testing Only                ║
 ╚══════════════════════════════════════════════════════════════╝
         """
@@ -112,7 +112,11 @@ class VulnForge:
         self.logger.info("Installing missing tools...")
 
         # Update package list
-        subprocess.run(["sudo", "apt", "update"], check=True)
+        try:
+            subprocess.run(["sudo", "apt", "update"], check=True)
+        except subprocess.CalledProcessError as e:
+            self.logger.error(f"Failed to update package list: {e}")
+            return False
 
         # Install Go tools
         go_tools = {
@@ -124,7 +128,20 @@ class VulnForge:
         for tool, package in go_tools.items():
             if not self.is_tool_installed(tool):
                 self.logger.info(f"Installing {tool}...")
-                subprocess.run(["go", "install", package], check=True)
+                try:
+                    # SECURITY FIX: Use full executable path and handle subprocess failures
+                    result = subprocess.run(["/usr/bin/go", "install", package], 
+                                          capture_output=True, text=True, check=True)
+                    self.logger.info(f"Successfully installed {tool}")
+                except subprocess.CalledProcessError as e:
+                    self.logger.error(f"Failed to install {tool}: {e}")
+                    self.logger.error(f"stderr: {e.stderr}")
+                    return False
+                except FileNotFoundError:
+                    self.logger.error(f"Go not found. Please install Go first.")
+                    return False
+
+        return True
 
     async def run_recon(self, target: str, output_dir: Optional[Path] = None):
         """Run reconnaissance on target"""
@@ -199,25 +216,15 @@ class VulnForge:
             filename = f"{base_name or 'custom_tool'}_{int(time.time())}.py"
             tool_path = os.path.join(tool_dir, filename)
 
-            # Save the script
-            try:
-                with open(tool_path, "w", encoding="utf-8") as f:
-                    f.write(response)
-                self.console.print(
-                    f"[bold green]✓ Tool generated and saved to:[/bold green] {tool_path}"
-                )
-            except PermissionError as e:
-                self.console.print(
-                    f"[bold red]Error: Permission denied writing to {tool_path}[/bold red]"
-                )
-                self.logger.error(f"Permission error writing file: {e}")
-                return
-            except Exception as e:
-                self.console.print(
-                    f"[bold red]Error: Failed to write tool to {tool_path}[/bold red]"
-                )
-                self.logger.error(f"Error writing file: {e}")
-                return
+            # Write the generated tool to file
+            with open(tool_path, "w", encoding="utf-8") as f:
+                f.write(response)
+            # SECURITY FIX: Set secure file permissions (0o600) for generated tool files
+            # This ensures only the owner can read/write the file
+            os.chmod(tool_path, 0o600)
+            self.console.print(
+                f"[bold green]✓ Tool generated and saved to:[/bold green] {tool_path}"
+            )
 
             # Update metadata
             try:
@@ -240,6 +247,8 @@ class VulnForge:
 
                 with open(metadata_path, "w", encoding="utf-8") as f:
                     json.dump(metadata, f, indent=2)
+                # SECURITY FIX: Set secure file permissions for metadata files
+                os.chmod(metadata_path, 0o600)
                 self.console.print(
                     f"[bold green]✓ Metadata updated:[/bold green] {metadata_path}"
                 )
@@ -371,7 +380,7 @@ async def main():
 ╔══════════════════════════════════════════════════════════╗
 ║ VulnForge - Built with Blood by DemonKing369.0 👑        ║
 ║ GitHub: https://github.com/Arunking9                     ║
-║ AI-Powered Security Framework for Bug Bounty Warriors ⚔️║
+║ AI-Powered Security Framework for Bug Bounty Warriors ⚔️ ║
 ╚══════════════════════════════════════════════════════════╝
 
 A powerful AI-driven security testing framework for authorized penetration testing and bug bounty hunting.

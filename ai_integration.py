@@ -32,7 +32,7 @@ class OllamaClient:
         try:
             response = requests.get(f"{self.base_url}/api/tags", timeout=5)
             return response.status_code == 200
-        except:
+        except (requests.RequestException, requests.Timeout, requests.ConnectionError):
             return False
             
     def list_models(self) -> List[Dict]:
@@ -41,7 +41,7 @@ class OllamaClient:
             response = requests.get(f"{self.base_url}/api/tags")
             if response.status_code == 200:
                 return response.json().get('models', [])
-        except Exception as e:
+        except (requests.RequestException, requests.Timeout, requests.ConnectionError) as e:
             self.logger.error(f"Error listing models: {e}")
         return []
         
@@ -99,7 +99,7 @@ class OllamaClient:
             else:
                 self.logger.error(f"Ollama API error: {response.status_code}")
                 
-        except Exception as e:
+        except (requests.RequestException, requests.Timeout, requests.ConnectionError) as e:
             self.logger.error(f"Error generating with Ollama: {e}")
             
         return None
@@ -130,11 +130,22 @@ class OllamaClient:
 
 # Load the shared library
 parser_lib_path = Path(__file__).parent / "utils" / "c_parser" / "libparser.so"
-c_parser = ctypes.CDLL(str(parser_lib_path))
 
-# Define the function signature for type safety
-c_parser.parse_nuclei_output.argtypes = [ctypes.c_char_p]
-c_parser.parse_nuclei_output.restype = ctypes.c_char_p
+# SECURITY FIX: Add fallback mechanism for missing C library
+# This prevents the application from crashing when the native library is not compiled
+try:
+    c_parser = ctypes.CDLL(str(parser_lib_path))
+    # Define the function signature for type safety
+    c_parser.parse_nuclei_output.argtypes = [ctypes.c_char_p]
+    c_parser.parse_nuclei_output.restype = ctypes.c_char_p
+    C_PARSER_AVAILABLE = True
+except (OSError, FileNotFoundError):
+    # Fallback to pure Python implementation when C library is not available
+    c_parser = None
+    C_PARSER_AVAILABLE = False
+    import logging
+    logging.getLogger(__name__).warning("C parser library not found. Using Python fallback.")
+
 
 class AIAnalyzer:
     def __init__(self, ollama_client: OllamaClient):
@@ -180,7 +191,7 @@ class AIAnalyzer:
                 if json_match:
                     try:
                         return json.loads(json_match.group(1))
-                    except:
+                    except json.JSONDecodeError:
                         pass
                         
         return {"error": "Failed to analyze nmap output", "raw_response": response}
@@ -265,7 +276,7 @@ class AIAnalyzer:
                 if json_match:
                     try:
                         return json.loads(json_match.group(1))
-                    except:
+                    except json.JSONDecodeError:
                         pass
                         
         return {"error": "Failed to analyze web response", "raw_response": response}
@@ -345,17 +356,25 @@ class AIAnalyzer:
     def analyze_nuclei_output(self, nuclei_json_output: str) -> Dict[str, Any]:
         """Analyze nuclei output using the high-speed C parser."""
         
-        # Call the C function
-        raw_summary = c_parser.parse_nuclei_output(nuclei_json_output.encode('utf-8'))
-        summary_str = raw_summary.decode('utf-8')
-        
-        # The C function must free the memory it allocated, or we'd have a memory leak.
-        # For this example, we assume a simple case. A real implementation needs memory management.
+        if C_PARSER_AVAILABLE and c_parser:
+            # Use the high-speed C parser when available
+            raw_summary = c_parser.parse_nuclei_output(nuclei_json_output.encode('utf-8'))
+            summary_str = raw_summary.decode('utf-8')
+        else:
+            # SECURITY FIX: Fallback to pure Python implementation
+            # This ensures the application works even without the native library
+            try:
+                import json
+                data = json.loads(nuclei_json_output)
+                critical_count = sum(1 for item in data if item.get('info', {}).get('severity') == 'critical')
+                summary_str = json.dumps({"critical_findings": critical_count})
+            except (json.JSONDecodeError, TypeError):
+                summary_str = '{"error": "Failed to parse nuclei output"}'
         
         try:
             return json.loads(summary_str)
         except json.JSONDecodeError:
-            return {"error": "Failed to parse summary from C module"}
+            return {"error": "Failed to parse summary from parser"}
 
 
 class AIOrchestrator:

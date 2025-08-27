@@ -135,7 +135,7 @@ class CVECollector:
                     else:
                         self.logger.error(f"NVD API error: {response.status}")
                         return []
-            except Exception as e:
+            except (aiohttp.ClientError, asyncio.TimeoutError) as e:
                 self.logger.error(f"Error fetching NVD feed: {e}")
                 return []
                 
@@ -252,7 +252,7 @@ class CVECollector:
                     else:
                         self.logger.error(f"GitHub API error: {response.status}")
                         return []
-            except Exception as e:
+            except (aiohttp.ClientError, asyncio.TimeoutError) as e:
                 self.logger.error(f"Error searching GitHub: {e}")
                 return []
                 
