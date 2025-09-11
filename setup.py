@@ -47,4 +47,4 @@ setup(
         "Topic :: Security",
     ],
     python_requires=">=3.8",
-) 
+)
