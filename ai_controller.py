@@ -57,6 +57,10 @@ class AIController:
         Returns:
             Dictionary containing the response and metadata
         """
+        # Validate input
+        if not isinstance(query, str) or not query.strip():
+            raise ValueError("Query must be a non-empty string")
+
         self.logger.info("Processing AI query: %s", query)
         
         try:
@@ -90,7 +94,8 @@ Provide a detailed response:"""
             
             return {
                 "answer": response,
-                "logs": self.logger.get_logs(),
+                # Return an empty log list as the logger doesn't expose in-memory logs
+                "logs": [],
                 "prompt": prompt
             }
             

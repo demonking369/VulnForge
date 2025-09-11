@@ -362,7 +362,7 @@ async def dev_mode_shell(vf, session_dir):
             )
 
 
-async def main():
+async def _async_main():
     parser = argparse.ArgumentParser(
         description="""
 ╔══════════════════════════════════════════════════════════╗
@@ -583,5 +583,9 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
         print("Exploit mode not implemented yet")
 
 
+def main():
+    """Synchronous entrypoint for console_scripts."""
+    asyncio.run(_async_main())
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

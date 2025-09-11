@@ -1,0 +1,15 @@
+{
+  "target": "example.com",
+  "timestamp": "2025-08-27T05:16:16.855174",
+  "subdomains": [],
+  "web_services": [],
+  "vulnerabilities": [],
+  "ai_analysis": {
+    "target": "example.com",
+    "subdomain_count": 0,
+    "web_service_count": 0,
+    "vulnerability_count": 0,
+    "critical_findings": [],
+    "recommendations": []
+  }
+}

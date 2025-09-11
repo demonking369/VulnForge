@@ -95,20 +95,94 @@ echo -e "\n${YELLOW}Installation Options:${NC}"
 read -p "Do you want to install missing tools? (y/N): " INSTALL_TOOLS
 read -p "Do you want to install/update Ollama and AI models? (y/N): " INSTALL_AI
 
-# Create virtual environment
-echo -e "\n${BLUE}Setting up Python environment...${NC}"
-python3 -m venv venv
-source venv/bin/activate
+# Install Python dependencies and CLI globally/for user
+echo -e "\n${BLUE}Installing Python dependencies and CLI...${NC}"
 
-# Install Python dependencies
-echo -e "\n${BLUE}Installing Python dependencies...${NC}"
-pip install --upgrade pip
-pip install -r requirements.txt
-pip install -r requirements-test.txt
+# Prefer system-wide install when sudo is available and user consents
+INSTALL_SCOPE="user"
+if command -v sudo &> /dev/null; then
+    read -p "Install system-wide using sudo? (y/N): " INSTALL_SYSTEM
+    if [[ $INSTALL_SYSTEM =~ ^[Yy]$ ]]; then
+        INSTALL_SCOPE="system"
+    fi
+fi
 
-# Install VulnForge globally
-echo -e "\n${BLUE}Installing VulnForge globally...${NC}"
-pip install -e .
+if [ "$INSTALL_SCOPE" = "system" ]; then
+    echo -e "${YELLOW}Using sudo to install system-wide...${NC}"
+    sudo python3 -m pip install --upgrade pip setuptools wheel
+    sudo python3 -m pip install -r requirements.txt
+    sudo python3 -m pip install -r requirements-test.txt
+    sudo python3 -m pip install .
+    # Determine system scripts directory
+    SYSTEM_BIN=$(python3 -c 'import sysconfig; print(sysconfig.get_path("scripts"))' 2>/dev/null || echo "/usr/local/bin")
+else
+    echo -e "${YELLOW}Installing for current user (~/.local) or via pipx...${NC}"
+
+    # Prefer pipx if available to avoid PEP 668 restrictions
+    if command -v pipx &> /dev/null; then
+        echo -e "${YELLOW}Using pipx to install in an isolated venv...${NC}"
+        # Install runtime deps first (pipx does not support -r directly for local dirs)
+        pipx runpip vulnforge install -r requirements.txt || true
+        # Install the app itself
+        pipx install --force .
+        # Ensure shim is linked
+        pipx ensurepath || true
+    else
+        # Fallback to user installation, with --break-system-packages for PEP 668 distros (Kali/Debian)
+        python3 -m pip install --user --upgrade pip setuptools wheel --break-system-packages || true
+        python3 -m pip install --user -r requirements.txt --break-system-packages || true
+        python3 -m pip install --user -r requirements-test.txt --break-system-packages || true
+        python3 -m pip install --user . --break-system-packages || true
+    fi
+
+    # Ensure ~/.local/bin is on PATH for bash and zsh
+    for RC in ~/.bashrc ~/.zshrc; do
+        if [ -f "$RC" ]; then
+            if ! grep -q "\.local/bin" "$RC"; then
+                echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$RC"
+            fi
+        fi
+    done
+
+    # Update current shell PATH if needed
+    if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
+        export PATH="$HOME/.local/bin:$PATH"
+    fi
+    USER_BIN="$HOME/.local/bin"
+fi
+
+# Post-install verification and fallback
+echo -e "\n${BLUE}Verifying CLI installation...${NC}"
+if command -v vulnforge &> /dev/null; then
+    echo -e "${GREEN}[✓] 'vulnforge' is available on PATH${NC}"
+else
+    echo -e "${YELLOW}[!] 'vulnforge' not found on PATH yet.${NC}"
+    if [ "$INSTALL_SCOPE" = "system" ]; then
+        # Try to create a symlink in /usr/local/bin
+        SRC_PATH="${SYSTEM_BIN:-/usr/local/bin}/vulnforge"
+        if [ ! -x "$SRC_PATH" ]; then
+            # Some distros place console_scripts under /usr/bin
+            [ -x "/usr/bin/vulnforge" ] && SRC_PATH="/usr/bin/vulnforge"
+        fi
+        if [ -x "$SRC_PATH" ]; then
+            echo -e "${YELLOW}Creating symlink in /usr/local/bin for global access...${NC}"
+            sudo ln -sf "$SRC_PATH" /usr/local/bin/vulnforge
+        else
+            echo -e "${RED}Could not locate installed script to symlink. Check your pip scripts directory.${NC}"
+        fi
+    else
+        echo -e "${YELLOW}Adding ~/.local/bin to your PATH in the current session...${NC}"
+        if [ -n "$USER_BIN" ]; then
+            export PATH="$USER_BIN:$PATH"
+        fi
+        echo -e "${YELLOW}Open a new shell or 'source' your shell rc file to persist.${NC}"
+    fi
+    if command -v vulnforge &> /dev/null; then
+        echo -e "${GREEN}[✓] 'vulnforge' is now available on PATH${NC}"
+    else
+        echo -e "${RED}[✗] 'vulnforge' still not on PATH. Try reloading your shell or check pip install logs.${NC}"
+    fi
+fi
 
 # Install missing tools if requested
 if [[ $INSTALL_TOOLS =~ ^[Yy]$ ]]; then
