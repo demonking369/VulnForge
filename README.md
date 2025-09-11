@@ -1,7 +1,7 @@
 # 🔥 VulnForge - AI-Powered Security Research Framework
 
 > **Built with Blood by DemonKing369.0 👑**  
-> **GitHub: https://github.com/Arunking9/VulnForge**  
+> **GitHub: https://github.com/demonking369/VulnForge**  
 > **AI-Powered Security Framework for Bug Bounty Warriors ⚔️**
 
 A powerful, AI-driven security testing framework designed for authorized penetration testing and bug bounty hunting. VulnForge combines advanced reconnaissance capabilities with cutting-edge AI integration to provide comprehensive security assessment tools.
@@ -72,7 +72,7 @@ A powerful, AI-driven security testing framework designed for authorized penetra
 ### **Quick Start**
 ```bash
 # Clone the repository
-git clone https://github.com/Arunking9/VulnForge.git
+git clone https://github.com/demonking369/VulnForge.git
 cd VulnForge
 
 # Install dependencies
