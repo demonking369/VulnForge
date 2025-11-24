@@ -28,6 +28,11 @@ from typing import Optional
 from recon_module import EnhancedReconModule
 from ai_integration import AIAnalyzer, OllamaClient
 from ai_orchestrator import AIOrchestrator # New Import
+from modules.darkweb import (
+    run_darkweb_osint,
+    ROBIN_DEFAULT_MODEL,
+    get_robin_model_choices,
+)
 
 
 class VulnForge:
@@ -445,6 +450,31 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
     list_tools_parser = subparsers.add_parser('list-tools', help='List all custom tools')
     list_tools_parser.add_argument('--verbose', action='store_true', help='Show detailed tool information')
 
+    # Dark web OSINT command (Robin integration)
+    darkweb_parser = subparsers.add_parser(
+        'darkweb', help='Run the Robin dark web OSINT workflow'
+    )
+    darkweb_parser.add_argument('--query', '-q', required=True, help='Dark web search query')
+    darkweb_parser.add_argument(
+        '--model',
+        '-m',
+        choices=get_robin_model_choices(),
+        default=ROBIN_DEFAULT_MODEL,
+        help='LLM model to use for refinement/filtering',
+    )
+    darkweb_parser.add_argument(
+        '--threads',
+        '-t',
+        type=int,
+        default=5,
+        help='Number of concurrent requests for search/scrape',
+    )
+    darkweb_parser.add_argument(
+        '--output',
+        '-o',
+        help='Optional output file or directory for the markdown report',
+    )
+
     args = parser.parse_args()
 
     # Initialize VulnForge
@@ -482,6 +512,14 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
         return
     elif args.command == "list-tools":
         vf.list_custom_tools()
+        return
+    elif args.command == "darkweb":
+        run_darkweb_osint(
+            args.query,
+            model=args.model,
+            threads=args.threads,
+            output=args.output,
+        )
         return
 
     # Check tools

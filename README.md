@@ -42,6 +42,15 @@ A powerful, AI-driven security testing framework designed for authorized penetra
 - **Custom Reports**: Tailored reporting for different audiences
 - **Real-time Updates**: Live progress tracking and status updates
 
+### 🌐 **Dark Web OSINT Integration (Robin)**
+- **Production-Ready Integration**: Complete Docker-based stack for Robin findings
+- **Secure Storage**: AES-GCM encryption for sensitive data at rest
+- **Automated Enrichment**: Background processing with HIBP, Shodan, Censys integration
+- **Intelligent Triage**: Configurable scoring system for prioritization
+- **Review Dashboard**: Web-based interface for findings review and management
+- **Deduplication**: Automatic detection and merging of duplicate findings
+- **Audit Logging**: Complete action history with structured JSON logs
+
 ## 🏗️ New Architecture
 
 ### **Polyglot Performance System**
@@ -114,6 +123,215 @@ python3 vulnforge_main.py generate-tool "A port scanner for web services"
 # Use advanced AI pipeline
 python3 vulnforge_main.py --ai-pipeline --target "example.com" --prompt-dir AI_Propmt
 ```
+
+### **Dark Web OSINT (Robin Integration)**
+
+VulnForge includes a production-ready integration module for processing Robin dark web OSINT findings. This integration provides secure ingestion, normalization, encryption, enrichment, scoring, and a review dashboard.
+
+#### **Quick Start with Robin Integration**
+
+```bash
+# Navigate to integration directory
+cd vulnforge_robin_integration
+
+# Copy and configure environment
+cp .env.example .env
+# Edit .env with your encryption key, reviewer password, and API keys
+
+# Start the integration stack
+docker-compose up --build
+
+# The API will be available at http://localhost:8080
+# Dashboard: http://localhost:8080
+# Health check: http://localhost:8080/healthz
+```
+
+#### **Features**
+
+- **Secure Ingestion**: Directory watcher and webhook endpoints for Robin output
+- **Encryption at Rest**: AES-GCM encryption for raw snippets with configurable keys
+- **Canonical Normalization**: Robust parsing of Markdown/JSON Robin reports
+- **Background Enrichment**: Celery workers with rate-limited API calls (HIBP, Shodan, Censys)
+- **Intelligent Scoring**: Configurable triage scoring based on confidence, impact, and timeliness
+- **Deduplication**: Automatic detection and merging of duplicate findings
+- **Review Dashboard**: Web-based interface for reviewing, scoring, and taking actions
+- **Audit Logging**: Complete action history with structured JSON logs
+
+#### **Architecture**
+
+```
+┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│   Robin     │────▶│   Ingest     │────▶│   Queue     │
+│  Container  │     │  (Watcher/   │     │  (Redis)    │
+│             │     │   Webhook)   │     │             │
+└─────────────┘     └──────────────┘     └─────────────┘
+                                              │
+                                              ▼
+                                    ┌──────────────┐
+                                    │   Worker     │
+                                    │  (Enrich +   │
+                                    │   Score)     │
+                                    └──────────────┘
+                                              │
+                                              ▼
+                                    ┌──────────────┐
+                                    │  Database    │
+                                    │  (Postgres/  │
+                                    │   SQLite)    │
+                                    └──────────────┘
+                                              │
+                                              ▼
+                                    ┌──────────────┐
+                                    │   API +      │
+                                    │  Dashboard   │
+                                    └──────────────┘
+```
+
+#### **Usage Examples**
+
+**1. Ingest via Directory Watcher**
+
+Place Robin output files in the configured directory:
+```bash
+# Files are automatically detected and processed
+cp robin-report.md ./samples/inbox/
+# Integration will normalize, encrypt, and queue for enrichment
+```
+
+**2. Ingest via Webhook**
+
+```bash
+curl -X POST http://localhost:8080/ingest \
+  -H "Content-Type: application/json" \
+  -d '{
+    "source": "webhook",
+    "payload": {
+      "target": {"type": "email", "value": "user@example.com"},
+      "leak_type": "credentials",
+      "source": "darkweb forum",
+      "raw_snippet": "user: user@example.com\npass: password123"
+    }
+  }'
+```
+
+**3. Query Items**
+
+```bash
+# List all items (paginated)
+curl http://localhost:8080/items?page=1&limit=10
+
+# Get specific item
+curl http://localhost:8080/items/{item_id}
+
+# Filter by score
+curl http://localhost:8080/items?min_score=50
+```
+
+**4. Decrypt Raw Snippet (Reviewer Only)**
+
+```bash
+curl -X POST http://localhost:8080/items/{item_id}/decrypt \
+  -H "Content-Type: application/json" \
+  -d '{"reviewer_password": "your_password"}'
+```
+
+**5. Record Actions**
+
+```bash
+curl -X POST http://localhost:8080/items/{item_id}/actions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "action": "approve",
+    "actor": "security-team",
+    "notes": "Verified and notified affected parties"
+  }'
+```
+
+#### **Configuration**
+
+Edit `vulnforge_robin_integration/.env`:
+
+```bash
+# Core Settings
+API_HOST=0.0.0.0
+API_PORT=8080
+DATABASE_URL=sqlite:///./data/vulnforge_robin.db
+BROKER_URL=redis://broker:6379/0
+
+# Security (REQUIRED)
+ENCRYPTION_KEY_BASE64=<32-byte-base64-key>
+REVIEWER_PASSWORD=<secure-password>
+
+# Watcher
+ROBIN_OUTPUT_DIR=/data/robin/outbox
+ROBIN_WATCH_INTERVAL=5
+
+# Enrichment APIs (Optional)
+HIBP_API_KEY=your-hibp-key
+SHODAN_API_KEY=your-shodan-key
+CENSYS_API_ID=your-censys-id
+CENSYS_API_SECRET=your-censys-secret
+```
+
+#### **Scoring Configuration**
+
+Default scoring weights (configurable in `scoring.py`):
+- **Confidence Weight**: 50
+- **Impact Weight**: 30
+- **Timeliness Weight**: 20
+
+Impact factors:
+- Email-only: 0.4
+- Credential present: 0.9
+- Token/API key: 1.0
+- Database dump with PII: 0.95
+
+#### **Dashboard Features**
+
+Access the dashboard at `http://localhost:8080`:
+- **Item List**: View all findings with scores, tags, and enrichment status
+- **Filtering**: Filter by score, leak type, tags, or date range
+- **Details View**: View full item details including structured fields
+- **Actions**: Approve, archive, or notify for each finding
+- **Audit Trail**: View complete action history
+
+#### **Monitoring & Health**
+
+```bash
+# Health check
+curl http://localhost:8080/healthz
+
+# Prometheus metrics
+curl http://localhost:8080/metrics
+
+# View logs
+docker-compose logs -f api worker
+```
+
+#### **Testing**
+
+```bash
+# Run integration tests
+cd vulnforge_robin_integration
+pytest tests/ -v
+
+# Run demo script
+./demo.sh
+```
+
+#### **Legacy Robin CLI Usage**
+
+For direct Robin workflow execution (without integration stack):
+
+```bash
+# Run the Robin workflow with default model and 5 threads
+vulnforge darkweb --query "ransomware payments"
+
+# Specify a model, increase scraping threads, and control the output path
+vulnforge darkweb --query "credential leaks" --model gpt-5.1 --threads 10 --output ~/reports/robin.md
+```
+
+> **Requirements:** Tor service listening on `127.0.0.1:9050` and optional OpenAI/Anthropic/Google/Ollama credentials via `~/.vulnforge/.env`.
 
 ### **Tool Management**
 ```bash
