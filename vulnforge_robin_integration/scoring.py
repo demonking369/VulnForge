@@ -36,9 +36,14 @@ def timeliness_factor(first_seen, last_seen) -> float:
     return 0.5
 
 
-def compute_score(confidence: float, structured_fields: Dict[str, any], first_seen, last_seen) -> int:
+def compute_score(
+    confidence: float, structured_fields: Dict[str, any], first_seen, last_seen
+) -> int:
     impact = impact_factor(structured_fields)
     timeliness = timeliness_factor(first_seen, last_seen)
-    score = round((confidence * CONFIDENCE_WEIGHT) + (impact * IMPACT_WEIGHT) + (timeliness * TIMELINESS_WEIGHT))
+    score = round(
+        (confidence * CONFIDENCE_WEIGHT)
+        + (impact * IMPACT_WEIGHT)
+        + (timeliness * TIMELINESS_WEIGHT)
+    )
     return min(score, 100)
-

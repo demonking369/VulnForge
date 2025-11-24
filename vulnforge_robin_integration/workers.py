@@ -16,11 +16,18 @@ logger = logging.getLogger(__name__)
 BROKER_URL = os.getenv("BROKER_URL", "redis://localhost:6379/0")
 RESULT_BACKEND = os.getenv("RESULT_BACKEND", BROKER_URL)
 
-app = Celery("vulnforge_robin", broker=BROKER_URL, backend=RESULT_BACKEND, include=["vulnforge_robin_integration.workers"])
+app = Celery(
+    "vulnforge_robin",
+    broker=BROKER_URL,
+    backend=RESULT_BACKEND,
+    include=["vulnforge_robin_integration.workers"],
+)
 if os.getenv("CELERY_EAGER") == "1":
     app.conf.task_always_eager = True
 
-PROCESSED_COUNTER = Counter("robin_items_processed_total", "Total processed items via worker")
+PROCESSED_COUNTER = Counter(
+    "robin_items_processed_total", "Total processed items via worker"
+)
 
 
 @app.task(name="vulnforge_robin.process_item")
@@ -35,12 +42,18 @@ def process_item(leak_id: str) -> None:
         try:
             enrichment = asyncio.run(enrich(structured, leak.target_value))
         except Exception as exc:
-            logger.exception("worker.enrich.error", extra={"item_id": leak_id, "error": str(exc)})
+            logger.exception(
+                "worker.enrich.error", extra={"item_id": leak_id, "error": str(exc)}
+            )
             enrichment = {"error": str(exc)}
 
         leak.enrichment = enrichment
-        leak.score = compute_score(leak.confidence or 0.5, structured, leak.first_seen, leak.last_seen)
+        leak.score = compute_score(
+            leak.confidence or 0.5, structured, leak.first_seen, leak.last_seen
+        )
         session.add(leak)
-        logger.info("worker.process_item.completed", extra={"item_id": leak_id, "score": leak.score})
+        logger.info(
+            "worker.process_item.completed",
+            extra={"item_id": leak_id, "score": leak.score},
+        )
         PROCESSED_COUNTER.inc()
-
