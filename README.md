@@ -444,7 +444,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **GitHub Issues**: [Report bugs and request features](https://github.com/Arunking9/VulnForge/issues)
 - **Documentation**: [Comprehensive documentation](https://github.com/Arunking9/VulnForge/wiki)
-- **Community**: Join our [Discord server](https://discord.gg/vulnforge)
+- **Community**: Join our [Reddit Community](https://reddit.com/r/Linux_369/s/ZHjJ08fNPL)
 
 ## 🙏 Acknowledgments
 
