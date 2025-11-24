@@ -57,7 +57,7 @@ A powerful, AI-driven security testing framework designed for authorized penetra
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Python Core   │    │   C++ Modules   │    │   Rust Modules  │
-│   (Orchestration)│    │  (Screen Control)│    │ (Input Handling)│
+│  (Orchestration)│    │ (Screen Control)│    │ (Input Handling)│
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │
          └───────────────────────┼───────────────────────┘
@@ -71,7 +71,7 @@ A powerful, AI-driven security testing framework designed for authorized penetra
 ### **AI Pipeline Architecture**
 ```
 ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
-│   Planning  │→│ Tool Select │→│ Execution   │→│  Analysis   │
+│   Planning  │→ │ Tool Select │→ │ Execution   │→ │  Analysis   │
 │   Phase     │  │   Phase     │  │   Phase     │  │   Phase     │
 └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘
 ```
