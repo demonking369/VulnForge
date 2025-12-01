@@ -13,4 +13,3 @@ def test_compute_score_high_impact():
         last_seen=last,
     )
     assert score >= 80
-

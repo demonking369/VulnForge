@@ -71,4 +71,3 @@ class HealthResponse(BaseModel):
     status: str
     broker_ok: bool
     db_ok: bool
-

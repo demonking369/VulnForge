@@ -18,4 +18,3 @@ def test_normalize_markdown():
     assert item["leak_type"] == "credentials"
     assert item["source"] == "forum"
     assert item["first_seen"].isoformat().startswith("2024-08-01")
-

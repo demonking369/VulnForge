@@ -76,15 +76,29 @@ model = st.sidebar.selectbox(
     index=default_model_index,
     key="model_select",
 )
-if any(name not in {"gpt4o", "gpt-4.1", "claude-3-5-sonnet-latest", "llama3.1", "gemini-2.5-flash"} for name in model_options):
-    st.sidebar.caption("Locally detected Ollama models are automatically added to this list.")
+if any(
+    name
+    not in {
+        "gpt4o",
+        "gpt-4.1",
+        "claude-3-5-sonnet-latest",
+        "llama3.1",
+        "gemini-2.5-flash",
+    }
+    for name in model_options
+):
+    st.sidebar.caption(
+        "Locally detected Ollama models are automatically added to this list."
+    )
 threads = st.sidebar.slider("Scraping Threads", 1, 16, 4, key="thread_slider")
 
 
 # Main UI - logo and input
 _, logo_col, _ = st.columns(3)
 with logo_col:
-    logo_path = Path(__file__).resolve().parent / ".github" / "assets" / "robin_logo.png"
+    logo_path = (
+        Path(__file__).resolve().parent / ".github" / "assets" / "robin_logo.png"
+    )
     if logo_path.exists():
         st.image(str(logo_path), width=200)
 
