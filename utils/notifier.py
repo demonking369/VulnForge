@@ -12,7 +12,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from pathlib import Path
 from typing import Dict, List, Optional, Any
-from datetime import datetime
+from datetime import datetime, timezone
 
 class Notifier:
     """Handles notifications for various channels"""
@@ -104,7 +104,7 @@ class Notifier:
                 "title": f"VulnForge Alert: {severity.upper()}",
                 "description": message,
                 "color": color,
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat() # Changed datetime.utcnow() to datetime.now(UTC)
             }
             
             if data:
@@ -130,7 +130,7 @@ class Notifier:
             payload = {
                 "message": message,
                 "severity": severity,
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat() # Changed datetime.utcnow() to datetime.now(UTC)
             }
             
             if data:

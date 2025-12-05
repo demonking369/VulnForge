@@ -1,9 +1,10 @@
 #!/bin/bash
 
 # ╔══════════════════════════════════════════════════════════╗
-# ║ VulnForge - Built with Blood by DemonKing369.0 👑        ║
-# ║ GitHub: https://github.com/Arunking9                     ║
-# ║ AI-Powered Security Framework for Bug Bounty Warriors ⚔️║
+# ║                       VulnForge                          ║
+# ║         Built with Blood by DemonKing369.0 👑            ║
+# ║         GitHub: https://github.com/Arunking9             ║
+# ║ AI-Powered Security Framework for Bug Bounty Warriors ⚔️ ║
 # ╚══════════════════════════════════════════════════════════╝
 
 # Colors for output
@@ -67,21 +68,69 @@ for tool in "${TOOLS[@]}"; do
     fi
 done
 
-# Check Ollama
+# Check Ollama and configure models
 OLLAMA_INSTALLED=false
 if check_command ollama; then
     OLLAMA_INSTALLED=true
-    echo -e "\n${YELLOW}Checking Ollama models...${NC}"
-    if ollama list | grep -q "deepseek-coder-v2:16b-lite-base-q4_0"; then
-        echo -e "${GREEN}[✓] Main model (deepseek-coder) is installed${NC}"
+    echo -e "\n${YELLOW}Checking Ollama Setup...${NC}"
+    
+    # Get available models
+    AVAILABLE_MODELS=$(ollama list | tail -n +2 | awk '{print $1}')
+    
+    if [ -z "$AVAILABLE_MODELS" ]; then
+        echo -e "${YELLOW}[!] No models found installed.${NC}"
     else
-        echo -e "${YELLOW}[!] Main model is not installed${NC}"
+        echo -e "${GREEN}Available models:${NC}"
+        echo "$AVAILABLE_MODELS"
     fi
-    if ollama list | grep -q "mistral:7b-instruct-v0.2-q4_0"; then
-        echo -e "${GREEN}[✓] Assistant model (mistral) is installed${NC}"
-    else
-        echo -e "${YELLOW}[!] Assistant model is not installed${NC}"
-    fi
+
+    # Function to select model
+    select_model() {
+        local type=$1
+        local default=$2
+        local selection=""
+        
+        echo -e "\n${BLUE}Select $type Model:${NC}"
+        echo "1) Use Default ($default)"
+        echo "2) Select from installed models"
+        echo "3) Enter custom model name"
+        
+        read -p "Choice [1]: " choice
+        choice=${choice:-1}
+        
+        case $choice in
+            2)
+                echo -e "\nInstalled models:"
+                select m in $AVAILABLE_MODELS; do
+                    if [ -n "$m" ]; then
+                        selection=$m
+                        break
+                    fi
+                done
+                ;;
+            3)
+                read -p "Enter model name: " selection
+                ;;
+            *)
+                selection=$default
+                ;;
+        esac
+        echo "$selection"
+    }
+
+    # Select models
+    echo -e "\n${YELLOW}Configuring AI Models...${NC}"
+    MAIN_MODEL=$(select_model "Main (Logic/Reasoning)" "deepseek-coder-v2:16b-lite-base-q4_0")
+    ASSISTANT_MODEL=$(select_model "Assistant (Fast/Chat)" "mistral:7b-instruct-v0.2-q4_0")
+    
+    echo -e "\n${GREEN}Selected Configuration:${NC}"
+    echo -e "Main Model: $MAIN_MODEL"
+    echo -e "Assistant Model: $ASSISTANT_MODEL"
+    
+    # Save to .env
+    echo "OLLAMA_MAIN_MODEL=$MAIN_MODEL" > .env
+    echo "OLLAMA_ASSISTANT_MODEL=$ASSISTANT_MODEL" >> .env
+    echo -e "${GREEN}[✓] Saved model configuration to .env${NC}"
 fi
 
 # Installation summary

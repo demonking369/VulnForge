@@ -5,6 +5,7 @@ Handles Ollama integration, prompt engineering, and AI-powered analysis
 """
 
 import json
+import os
 import requests
 import subprocess
 import logging
@@ -19,8 +20,11 @@ class OllamaClient:
     def __init__(self, base_url: str = "http://localhost:11434"):
         self.base_url = base_url
         self.logger = logging.getLogger(__name__)
-        self.main_model = "deepseek-coder-v2:16b-lite-base-q4_0"  # Main model
-        self.assistant_model = "mistral:7b-instruct-v0.2-q4_0"    # Assistant model
+        
+        # Load configuration from environment
+        self.main_model = os.getenv("OLLAMA_MAIN_MODEL", "deepseek-coder-v2:16b-lite-base-q4_0")
+        self.assistant_model = os.getenv("OLLAMA_ASSISTANT_MODEL", "mistral:7b-instruct-v0.2-q4_0")
+        
         self.backup_models = [
             "deepseek-coder:6.7b",
             "codellama:7b",
