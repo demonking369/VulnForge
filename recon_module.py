@@ -83,8 +83,11 @@ class EnhancedReconModule:
     async def discover_subdomains(self, domain: str) -> List[str]:
         """Discover subdomains using subfinder"""
         self.console.print("[bold blue]Discovering subdomains...[/bold blue]")
-        sources = self.config["subfinder"]["sources"]
-        cmd = ["subfinder", "-d", domain, "-sources", ",".join(sources), "-silent"]
+        
+        # Use all available sources instead of restricting to specific ones
+        # This allows subfinder to use passive sources that don't require API keys
+        cmd = ["subfinder", "-d", domain, "-silent", "-all"]
+        
         output = await self.run_command(cmd)
         if not output:
             self.logger.warning("No output from subfinder for %s. Check if subfinder is installed and configured correctly.", domain)

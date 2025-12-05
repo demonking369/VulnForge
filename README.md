@@ -345,6 +345,49 @@ python3 vulnforge_main.py --check
 python3 vulnforge_main.py --install
 ```
 
+### **Uninstalling VulnForge**
+
+VulnForge provides an interactive uninstall utility that allows you to selectively remove components:
+
+```bash
+# Run the uninstall utility
+python3 vulnforge_main.py --uninstall
+
+# Or run the script directly
+./uninstall_script.sh
+```
+
+The uninstall utility will prompt you to choose which components to remove:
+- **VulnForge Application**: Removes the Python package (via pipx/pip)
+- **AI Models**: Removes all Ollama models
+- **Security Tools**: Removes Go-based tools (subfinder, httpx, nuclei, etc.)
+- **Configuration Files**: Removes ~/.vulnforge directory and .env files
+
+**Example Uninstall Session:**
+```bash
+$ python3 vulnforge_main.py --uninstall
+
+╔══════════════════════════════════════════════════════════╗
+║           VulnForge Uninstall Utility                    ║
+╚══════════════════════════════════════════════════════════╝
+
+Select components to uninstall:
+
+Remove VulnForge application (Python package)? [y/N]: y
+Remove AI models (Ollama models)? [y/N]: n
+Remove security tools (subfinder, httpx, nuclei, etc.)? [y/N]: y
+Remove configuration files (~/.vulnforge)? [y/N]: y
+
+Summary of what will be removed:
+  ✗ VulnForge application
+  ✗ Security tools
+  ✗ Configuration files
+
+Proceed with uninstallation? [y/N]: y
+```
+
+> **Note**: The uninstall process is interactive and allows you to keep specific components if needed. You can always reinstall VulnForge by running `./install_script.sh`.
+
 ## 🔧 Configuration
 
 ### **AI Configuration**

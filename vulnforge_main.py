@@ -430,6 +430,9 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
     parser.add_argument(
         "--prompt-dir", help="Directory for the AI pipeline prompts.", default="AI_Propmt/system-prompts-and-models-of-ai-tools"
     )
+    parser.add_argument(
+        "--uninstall", action="store_true", help="Uninstall VulnForge and its components"
+    )
 
     # Add subparsers for commands
     subparsers = parser.add_subparsers(dest='command', help='Available commands')
@@ -480,6 +483,23 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
     # Initialize VulnForge
     vf = VulnForge()
     vf.banner()
+
+    # Handle uninstall
+    if args.uninstall:
+        script_dir = Path(__file__).parent
+        uninstall_script = script_dir / "uninstall_script.sh"
+        
+        if not uninstall_script.exists():
+            print(f"Error: Uninstall script not found at {uninstall_script}")
+            return
+        
+        try:
+            subprocess.run([str(uninstall_script)], check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"Error running uninstall script: {e}")
+        except KeyboardInterrupt:
+            print("\nUninstall cancelled by user")
+        return
 
     # Handle AI Pipeline Mode
     if args.ai_pipeline:
