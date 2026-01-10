@@ -165,7 +165,8 @@ def fetch_ollama_models() -> List[str]:
             if name:
                 available.append(name)
         return available
-    except (requests.RequestException, ValueError):
+    except (requests.RequestException, ValueError) as e:
+        logging.debug(f"Failed to fetch Ollama models from {base_url}: {e}")
         return []
 
 

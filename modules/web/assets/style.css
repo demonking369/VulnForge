@@ -1,0 +1,91 @@
+/* VulnForge Premium Dashboard Styling */
+
+:root {
+    --bg-dark: #0f172a;
+    --card-bg: rgba(30, 41, 59, 0.7);
+    --accent-blue: #38bdf8;
+    --accent-red: #ef4444;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --glass-border: rgba(255, 255, 255, 0.1);
+}
+
+.stApp {
+    background-color: var(--bg-dark);
+}
+
+/* Glassmorphism Cards */
+.css-1r6slb0, .css-kcm08f {
+    background: var(--card-bg) !important;
+    backdrop-filter: blur(10px) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 15px !important;
+    padding: 20px !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
+}
+
+/* Sidebar Styling */
+section[data-testid="stSidebar"] {
+    background-color: #0c111d !important;
+    border-right: 1px solid var(--glass-border);
+}
+
+/* Metrics Styling */
+[data-testid="stMetricValue"] {
+    color: var(--accent-blue) !important;
+    font-size: 2.5rem !important;
+    font-weight: 700 !important;
+}
+
+[data-testid="stMetricLabel"] {
+    color: var(--text-secondary) !important;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Buttons */
+.stButton>button {
+    background: linear-gradient(135deg, var(--accent-blue) 0%, #0ea5e9 100%) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 0.5rem 2rem !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+}
+
+.stButton>button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(56, 189, 248, 0.4);
+}
+
+/* Headers */
+h1, h2, h3 {
+    color: var(--accent-blue) !important;
+    font-family: 'Inter', sans-serif !important;
+}
+
+/* Text Input */
+.stTextInput>div>div>input {
+    background-color: rgba(15, 23, 42, 0.8) !important;
+    color: white !important;
+    border: 1px solid var(--glass-border) !important;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-dark);
+}
+
+::-webkit-scrollbar-thumb {
+    background: #1e293b;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-blue);
+}

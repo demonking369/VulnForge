@@ -13,7 +13,7 @@ def main():
         from streamlit.web import cli as stcli
         
         # Get the UI file path
-        ui_file = Path(__file__).parent / "modules" / "darkweb" / "robin" / "ui.py"
+        ui_file = Path(__file__).parent / "modules" / "web" / "dashboard.py"
         
         if not ui_file.exists():
             print(f"❌ Error: Web UI file not found at {ui_file}")

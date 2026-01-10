@@ -75,9 +75,9 @@ class VulnForge:
         """Display tool banner"""
         banner_text = f"""
 ╔══════════════════════════════════════════════════════════════╗
-║                         VulnForge v{self.version}            ║
-║              Educational Security Research Framework         ║
-║                   For Authorized Testing Only                ║
+║                    VulnForge v{self.version:10}                ║
+║           Educational Security Research Framework            ║
+║                For Authorized Testing Only                   ║
 ╚══════════════════════════════════════════════════════════════╝
         """
         self.console.print(Panel(banner_text, style="bold blue"))
@@ -394,7 +394,7 @@ async def dev_mode_shell(vf, session_dir):
             )
 
 
-async def _async_main():
+def get_parser():
     parser = argparse.ArgumentParser(
         description="""
 ╔══════════════════════════════════════════════════════════╗
@@ -515,66 +515,13 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
     )
 
     args = parser.parse_args()
+    return parser, args
 
+async def _async_main(args):
     # Initialize VulnForge
     vf = VulnForge()
     vf.banner()
 
-    # Handle web mode
-    if args.webmod:
-        print("🌐 Launching VulnForge Web Interface...")
-        
-        # Check if Robin module is available
-        if not darkweb_module.ROBIN_AVAILABLE:
-            print("❌ Error: Robin module dependencies not installed.")
-            print("\nInstall required packages:")
-            print("  pip install langchain-core langchain-openai langchain-ollama")
-            print("  pip install langchain-anthropic langchain-google-genai langchain-community")
-            print("\nOr install all requirements:")
-            print("  pip install -r requirements.txt")
-            return
-        
-        print(f"📍 Access the UI at: http://{args.web_host}:{args.web_port}")
-        print("⚠️  Press Ctrl+C to stop the server\n")
-        
-        try:
-            # Import streamlit CLI
-            from streamlit.web import cli as stcli
-            import sys
-            
-            # Get the UI file path
-            ui_file = Path(__file__).parent / "modules" / "darkweb" / "robin" / "ui.py"
-            
-            if not ui_file.exists():
-                print(f"❌ Error: Web UI file not found at {ui_file}")
-                print("Please ensure the Robin module is installed correctly.")
-                return
-            
-            # Prepare streamlit arguments
-            sys.argv = [
-                "streamlit",
-                "run",
-                str(ui_file),
-                "--server.port", str(args.web_port),
-                "--server.address", args.web_host,
-                "--server.headless", "true",
-                "--browser.gatherUsageStats", "false"
-            ]
-            
-            # Launch streamlit
-            sys.exit(stcli.main())
-            
-        except ImportError:
-            print("❌ Error: Streamlit is not installed.")
-            print("Install it with: pip install streamlit")
-            return
-        except KeyboardInterrupt:
-            print("\n\n👋 Web interface stopped.")
-            return
-        except Exception as e:
-            print(f"❌ Error launching web interface: {e}")
-            return
-    
     # Handle uninstall
     if args.uninstall:
         script_dir = Path(__file__).parent
@@ -753,7 +700,59 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
 
 def main():
     """Synchronous entrypoint for console_scripts."""
-    asyncio.run(_async_main())
+    parser, args = get_parser()
+
+    # Handle web mode BEFORE starting asyncio loop
+    if args.webmod:
+        # Check if Robin module is available
+        if not darkweb_module.ROBIN_AVAILABLE:
+            print("❌ Error: Robin module dependencies not installed.")
+            print("\nInstall required packages:")
+            print("  pip install langchain-core langchain-openai langchain-ollama")
+            print("  pip install langchain-anthropic langchain-google-genai langchain-community")
+            print("\nOr install all requirements:")
+            print("  pip install -r requirements.txt")
+            return
+        
+        print("🌐 Launching VulnForge Web Interface...")
+        print(f"📍 Access the UI at: http://{args.web_host}:{args.web_port}")
+        print("⚠️  Press Ctrl+C to stop the server\n")
+        
+        try:
+            # Import streamlit CLI
+            from streamlit.web import cli as stcli
+            import sys
+            
+            # Get the UI file path
+            ui_file = Path(__file__).parent / "modules" / "web" / "dashboard.py"
+            
+            if not ui_file.exists():
+                print(f"❌ Error: Web UI file not found at {ui_file}")
+                return
+            
+            # Prepare streamlit arguments
+            sys.argv = [
+                "streamlit",
+                "run",
+                str(ui_file),
+                "--server.port", str(args.web_port),
+                "--server.address", args.web_host,
+                "--server.headless", "true",
+                "--browser.gatherUsageStats", "false"
+            ]
+            
+            # Launch streamlit
+            sys.exit(stcli.main())
+            
+        except ImportError:
+            print("❌ Error: Streamlit is not installed.")
+            return
+        except Exception as e:
+            print(f"❌ Error launching web interface: {e}")
+            return
+
+    # Run the main async pipeline
+    asyncio.run(_async_main(args))
 
 if __name__ == "__main__":
     main()

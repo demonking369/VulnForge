@@ -94,8 +94,17 @@ model = st.sidebar.selectbox(
     index=default_model_index,
     key="model_select",
 )
+from .llm_utils import fetch_ollama_models
+ollama_reachable = len(fetch_ollama_models()) > 0
+
 if any(name not in {"gpt4o", "gpt-4.1", "claude-3-5-sonnet-latest", "llama3.1", "gemini-2.5-flash"} for name in model_options):
-    st.sidebar.caption("Locally detected Ollama models are automatically added to this list.")
+    if ollama_reachable:
+        st.sidebar.caption("✅ Locally detected Ollama models are added to this list.")
+    else:
+        st.sidebar.warning("⚠️ Ollama server unreachable. Only configured models shown.")
+        if st.sidebar.button("🔄 Refresh Models"):
+            st.rerun()
+
 threads = st.sidebar.slider("Scraping Threads", 1, 16, 4, key="thread_slider")
 
 
