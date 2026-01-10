@@ -16,11 +16,12 @@ try:
 except ImportError:
     # Fall back to absolute imports (when run directly by Streamlit)
     import os
+
     # Add parent directory to path
     current_dir = Path(__file__).parent
     if str(current_dir) not in sys.path:
         sys.path.insert(0, str(current_dir))
-    
+
     from scrape import scrape_multiple
     from search import get_search_results
     from llm_utils import BufferedStreamingHandler, get_model_choices
@@ -81,7 +82,11 @@ model_options = get_model_choices()
 default_model = OLLAMA_MAIN_MODEL or "gpt-5-mini"
 default_model_index = (
     next(
-        (idx for idx, name in enumerate(model_options) if name.lower() == default_model.lower()),
+        (
+            idx
+            for idx, name in enumerate(model_options)
+            if name.lower() == default_model.lower()
+        ),
         0,
     )
     if model_options
@@ -95,9 +100,20 @@ model = st.sidebar.selectbox(
     key="model_select",
 )
 from .llm_utils import fetch_ollama_models
+
 ollama_reachable = len(fetch_ollama_models()) > 0
 
-if any(name not in {"gpt4o", "gpt-4.1", "claude-3-5-sonnet-latest", "llama3.1", "gemini-2.5-flash"} for name in model_options):
+if any(
+    name
+    not in {
+        "gpt4o",
+        "gpt-4.1",
+        "claude-3-5-sonnet-latest",
+        "llama3.1",
+        "gemini-2.5-flash",
+    }
+    for name in model_options
+):
     if ollama_reachable:
         st.sidebar.caption("✅ Locally detected Ollama models are added to this list.")
     else:
@@ -111,7 +127,9 @@ threads = st.sidebar.slider("Scraping Threads", 1, 16, 4, key="thread_slider")
 # Main UI - logo and input
 _, logo_col, _ = st.columns(3)
 with logo_col:
-    logo_path = Path(__file__).resolve().parent / ".github" / "assets" / "robin_logo.png"
+    logo_path = (
+        Path(__file__).resolve().parent / ".github" / "assets" / "robin_logo.png"
+    )
     if logo_path.exists():
         st.image(str(logo_path), width=200)
 
