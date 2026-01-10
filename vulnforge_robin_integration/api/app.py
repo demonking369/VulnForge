@@ -134,11 +134,15 @@ async def get_item(item_id: str, db: Session = Depends(get_db)):
 
 
 @app.post("/items/{item_id}/actions")
-async def create_action(item_id: str, action: ActionCreate, db: Session = Depends(get_db)):
+async def create_action(
+    item_id: str, action: ActionCreate, db: Session = Depends(get_db)
+):
     leak = db.get(LeakItem, item_id)
     if not leak:
         raise HTTPException(status_code=404, detail="Item not found")
-    record = ActionLog(item_id=item_id, action=action.action, actor=action.actor, notes=action.notes)
+    record = ActionLog(
+        item_id=item_id, action=action.action, actor=action.actor, notes=action.notes
+    )
     db.add(record)
     db.flush()
     logger.info("action.recorded", extra={"item_id": item_id, "action": action.action})
@@ -146,7 +150,9 @@ async def create_action(item_id: str, action: ActionCreate, db: Session = Depend
 
 
 @app.post("/items/{item_id}/decrypt")
-async def decrypt_snippet(item_id: str, body: RawSnippetRequest, db: Session = Depends(get_db)):
+async def decrypt_snippet(
+    item_id: str, body: RawSnippetRequest, db: Session = Depends(get_db)
+):
     if body.reviewer_password != os.getenv("REVIEWER_PASSWORD"):
         raise HTTPException(status_code=403, detail="Invalid reviewer password")
     leak = db.get(LeakItem, item_id)
@@ -177,4 +183,3 @@ async def healthz(db: Session = Depends(get_db)):
 @app.get("/metrics")
 async def metrics():
     return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
-

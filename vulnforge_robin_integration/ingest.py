@@ -17,11 +17,17 @@ from .normalizer import normalize_robin_output
 
 logger = logging.getLogger(__name__)
 
-INGEST_COUNTER = Counter("robin_ingest_total", "Total items accepted for processing", ["source"])
-BACKLOG_GAUGE = Gauge("robin_ingest_backlog", "Approximate queued items awaiting worker")
+INGEST_COUNTER = Counter(
+    "robin_ingest_total", "Total items accepted for processing", ["source"]
+)
+BACKLOG_GAUGE = Gauge(
+    "robin_ingest_backlog", "Approximate queued items awaiting worker"
+)
 
 
-def ingest_payload(payload: str | bytes | dict | list, source: str = "webhook") -> List[str]:
+def ingest_payload(
+    payload: str | bytes | dict | list, source: str = "webhook"
+) -> List[str]:
     """Normalize and persist payload, returning IDs for worker processing."""
     if isinstance(payload, (bytes, bytearray)):
         payload = payload.decode("utf-8", errors="ignore")
@@ -49,7 +55,9 @@ def ingest_payload(payload: str | bytes | dict | list, source: str = "webhook") 
         ).hexdigest()
 
         with get_session() as session:
-            existing = session.query(LeakItem).filter_by(hash_key=hash_key).one_or_none()
+            existing = (
+                session.query(LeakItem).filter_by(hash_key=hash_key).one_or_none()
+            )
             if existing:
                 existing.raw_ciphertext = ciphertext
                 existing.raw_nonce = nonce
@@ -89,7 +97,10 @@ def ingest_payload(payload: str | bytes | dict | list, source: str = "webhook") 
 
         process_item.delay(leak_id)
         stored_ids.append(leak_id)
-        logger.info("ingest.enqueue", extra={"module": "ingest", "item_id": leak_id, "source": source})
+        logger.info(
+            "ingest.enqueue",
+            extra={"module": "ingest", "item_id": leak_id, "source": source},
+        )
     BACKLOG_GAUGE.set(len(stored_ids))
     return stored_ids
 
@@ -111,6 +122,8 @@ class DirectoryWatcher:
                         archive = file.with_suffix(file.suffix + ".processed")
                         file.rename(archive)
                     except Exception as exc:
-                        logger.exception("watcher.error", extra={"module": "ingest", "path": str(file)})
+                        logger.exception(
+                            "watcher.error",
+                            extra={"module": "ingest", "path": str(file)},
+                        )
             time.sleep(self.interval)
-

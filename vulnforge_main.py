@@ -27,7 +27,7 @@ from typing import Optional
 
 from recon_module import EnhancedReconModule
 from ai_integration import AIAnalyzer, OllamaClient
-from ai_orchestrator import AIOrchestrator # New Import
+from ai_orchestrator import AIOrchestrator  # New Import
 from modules.darkweb import (
     run_darkweb_osint,
     ROBIN_DEFAULT_MODEL,
@@ -135,8 +135,12 @@ class VulnForge:
                 self.logger.info("Installing %s...", tool)
                 try:
                     # SECURITY FIX: Use full executable path and handle subprocess failures
-                    result = subprocess.run(["/usr/bin/go", "install", package], 
-                                          capture_output=True, text=True, check=True)
+                    result = subprocess.run(
+                        ["/usr/bin/go", "install", package],
+                        capture_output=True,
+                        text=True,
+                        check=True,
+                    )
                     self.logger.info("Successfully installed %s", tool)
                 except subprocess.CalledProcessError as e:
                     self.logger.error("Failed to install %s: %s", tool, e)
@@ -150,7 +154,9 @@ class VulnForge:
 
     async def run_recon(self, target: str, output_dir: Optional[Path] = None):
         """Run reconnaissance on target"""
-        recon = EnhancedReconModule(self.base_dir, self.ai_analyzer, config_path="configs/tools.json")
+        recon = EnhancedReconModule(
+            self.base_dir, self.ai_analyzer, config_path="configs/tools.json"
+        )
         return await recon.run_recon(target, output_dir)
 
     def ask_ai(self, question: str):
@@ -389,7 +395,7 @@ Key Features:
 
 For detailed documentation, visit: https://github.com/Arunking9/VulnForge
 """,
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("--target", "-t", help="Target domain or IP")
     parser.add_argument(
@@ -425,57 +431,83 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
         "--stealth", "-s", action="store_true", help="Enable stealth mode"
     )
     parser.add_argument(
-        "--ai-pipeline", action="store_true", help="Enable the advanced multi-prompt AI pipeline."
+        "--ai-pipeline",
+        action="store_true",
+        help="Enable the advanced multi-prompt AI pipeline.",
     )
     parser.add_argument(
-        "--prompt-dir", help="Directory for the AI pipeline prompts.", default="AI_Propmt/system-prompts-and-models-of-ai-tools"
+        "--prompt-dir",
+        help="Directory for the AI pipeline prompts.",
+        default="AI_Propmt/system-prompts-and-models-of-ai-tools",
     )
     parser.add_argument(
-        "--uninstall", action="store_true", help="Uninstall VulnForge and its components"
+        "--uninstall",
+        action="store_true",
+        help="Uninstall VulnForge and its components",
     )
 
     # Add subparsers for commands
-    subparsers = parser.add_subparsers(dest='command', help='Available commands')
-    
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+
     # Ask AI command
-    ask_ai_parser = subparsers.add_parser('ask-ai', help='Ask the AI assistant a question')
-    ask_ai_parser.add_argument('question', help='The question to ask the AI')
-    ask_ai_parser.add_argument('--verbose', action='store_true', help='Show detailed model logs')
-    ask_ai_parser.add_argument('--dangerous', action='store_true', help='Enable dangerous mode')
-    ask_ai_parser.add_argument('--confirm-danger', action='store_true', help='Confirm dangerous mode')
-    
+    ask_ai_parser = subparsers.add_parser(
+        "ask-ai", help="Ask the AI assistant a question"
+    )
+    ask_ai_parser.add_argument("question", help="The question to ask the AI")
+    ask_ai_parser.add_argument(
+        "--verbose", action="store_true", help="Show detailed model logs"
+    )
+    ask_ai_parser.add_argument(
+        "--dangerous", action="store_true", help="Enable dangerous mode"
+    )
+    ask_ai_parser.add_argument(
+        "--confirm-danger", action="store_true", help="Confirm dangerous mode"
+    )
+
     # Generate tool command
-    generate_tool_parser = subparsers.add_parser('generate-tool', help='Generate a custom tool')
-    generate_tool_parser.add_argument('description', help='Description of the tool to generate')
-    generate_tool_parser.add_argument('--verbose', action='store_true', help='Show detailed generation logs')
-    
+    generate_tool_parser = subparsers.add_parser(
+        "generate-tool", help="Generate a custom tool"
+    )
+    generate_tool_parser.add_argument(
+        "description", help="Description of the tool to generate"
+    )
+    generate_tool_parser.add_argument(
+        "--verbose", action="store_true", help="Show detailed generation logs"
+    )
+
     # List tools command
-    list_tools_parser = subparsers.add_parser('list-tools', help='List all custom tools')
-    list_tools_parser.add_argument('--verbose', action='store_true', help='Show detailed tool information')
+    list_tools_parser = subparsers.add_parser(
+        "list-tools", help="List all custom tools"
+    )
+    list_tools_parser.add_argument(
+        "--verbose", action="store_true", help="Show detailed tool information"
+    )
 
     # Dark web OSINT command (Robin integration)
     darkweb_parser = subparsers.add_parser(
-        'darkweb', help='Run the Robin dark web OSINT workflow'
+        "darkweb", help="Run the Robin dark web OSINT workflow"
     )
-    darkweb_parser.add_argument('--query', '-q', required=True, help='Dark web search query')
     darkweb_parser.add_argument(
-        '--model',
-        '-m',
+        "--query", "-q", required=True, help="Dark web search query"
+    )
+    darkweb_parser.add_argument(
+        "--model",
+        "-m",
         choices=get_robin_model_choices(),
         default=ROBIN_DEFAULT_MODEL,
-        help='LLM model to use for refinement/filtering',
+        help="LLM model to use for refinement/filtering",
     )
     darkweb_parser.add_argument(
-        '--threads',
-        '-t',
+        "--threads",
+        "-t",
         type=int,
         default=5,
-        help='Number of concurrent requests for search/scrape',
+        help="Number of concurrent requests for search/scrape",
     )
     darkweb_parser.add_argument(
-        '--output',
-        '-o',
-        help='Optional output file or directory for the markdown report',
+        "--output",
+        "-o",
+        help="Optional output file or directory for the markdown report",
     )
 
     args = parser.parse_args()
@@ -488,11 +520,11 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
     if args.uninstall:
         script_dir = Path(__file__).parent
         uninstall_script = script_dir / "uninstall_script.sh"
-        
+
         if not uninstall_script.exists():
             print(f"Error: Uninstall script not found at {uninstall_script}")
             return
-        
+
         try:
             subprocess.run([str(uninstall_script)], check=True)
         except subprocess.CalledProcessError as e:
@@ -504,14 +536,16 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
     # Handle AI Pipeline Mode
     if args.ai_pipeline:
         if not args.target:
-            print("Error: A target is required for AI pipeline mode, e.g., --target 'scan example.com'")
+            print(
+                "Error: A target is required for AI pipeline mode, e.g., --target 'scan example.com'"
+            )
             return
-        
+
         prompt_path = Path(args.prompt_dir)
         if not prompt_path.exists():
             print(f"Error: Prompt directory not found at '{prompt_path}'")
             return
-            
+
         orchestrator = AIOrchestrator(prompt_path)
         orchestrator.execute_task(f"Perform a security scan on {args.target}")
         return
@@ -644,6 +678,7 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
 def main():
     """Synchronous entrypoint for console_scripts."""
     asyncio.run(_async_main())
+
 
 if __name__ == "__main__":
     main()

@@ -35,7 +35,9 @@ async def call_with_retries(func, *args, **kwargs):
             delay *= 2
 
 
-async def hibp_lookup(client: httpx.AsyncClient, email: str, settings: EnrichmentSettings):
+async def hibp_lookup(
+    client: httpx.AsyncClient, email: str, settings: EnrichmentSettings
+):
     if not settings.hibp_api_key or "@" not in email:
         return {"enabled": False}
     headers = {"hibp-api-key": settings.hibp_api_key}
@@ -50,7 +52,9 @@ async def hibp_lookup(client: httpx.AsyncClient, email: str, settings: Enrichmen
     return {"found": True, "breaches": resp.json()}
 
 
-async def shodan_lookup(client: httpx.AsyncClient, target: str, settings: EnrichmentSettings):
+async def shodan_lookup(
+    client: httpx.AsyncClient, target: str, settings: EnrichmentSettings
+):
     if not settings.shodan_api_key:
         return {"enabled": False}
     resp = await client.get(
@@ -63,7 +67,9 @@ async def shodan_lookup(client: httpx.AsyncClient, target: str, settings: Enrich
     return {"matches": data.get("matches", [])[:5]}
 
 
-async def censys_lookup(client: httpx.AsyncClient, target: str, settings: EnrichmentSettings):
+async def censys_lookup(
+    client: httpx.AsyncClient, target: str, settings: EnrichmentSettings
+):
     if not settings.censys_id or not settings.censys_secret:
         return {"enabled": False}
     resp = await client.get(
@@ -76,7 +82,9 @@ async def censys_lookup(client: httpx.AsyncClient, target: str, settings: Enrich
     return resp.json()
 
 
-async def passive_dns_lookup(client: httpx.AsyncClient, target: str, settings: EnrichmentSettings):
+async def passive_dns_lookup(
+    client: httpx.AsyncClient, target: str, settings: EnrichmentSettings
+):
     if not settings.passive_dns_endpoint:
         return {"enabled": False}
     headers = {}
@@ -92,7 +100,9 @@ async def passive_dns_lookup(client: httpx.AsyncClient, target: str, settings: E
     return resp.json()
 
 
-async def enrich(structured_fields: Dict[str, Any], target_value: str) -> Dict[str, Any]:
+async def enrich(
+    structured_fields: Dict[str, Any], target_value: str
+) -> Dict[str, Any]:
     settings = EnrichmentSettings()
     async with httpx.AsyncClient() as client:
         tasks = []
@@ -100,7 +110,9 @@ async def enrich(structured_fields: Dict[str, Any], target_value: str) -> Dict[s
         tasks.append(call_with_retries(hibp_lookup, client, email or "", settings))
         tasks.append(call_with_retries(shodan_lookup, client, target_value, settings))
         tasks.append(call_with_retries(censys_lookup, client, target_value, settings))
-        tasks.append(call_with_retries(passive_dns_lookup, client, target_value, settings))
+        tasks.append(
+            call_with_retries(passive_dns_lookup, client, target_value, settings)
+        )
         results = await asyncio.gather(*tasks)
 
     return {
@@ -109,4 +121,3 @@ async def enrich(structured_fields: Dict[str, Any], target_value: str) -> Dict[s
         "censys": results[2],
         "passive_dns": results[3],
     }
-

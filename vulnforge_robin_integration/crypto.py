@@ -18,7 +18,9 @@ def _load_key() -> bytes:
     return key
 
 
-def encrypt_raw_snippet(plaintext: bytes, aad: bytes | None = None) -> Tuple[bytes, bytes, bytes]:
+def encrypt_raw_snippet(
+    plaintext: bytes, aad: bytes | None = None
+) -> Tuple[bytes, bytes, bytes]:
     key = _load_key()
     aes = AESGCM(key)
     nonce = os.urandom(12)
@@ -28,8 +30,9 @@ def encrypt_raw_snippet(plaintext: bytes, aad: bytes | None = None) -> Tuple[byt
     return body, nonce, tag
 
 
-def decrypt_raw_snippet(ciphertext: bytes, nonce: bytes, tag: bytes, aad: bytes | None = None) -> bytes:
+def decrypt_raw_snippet(
+    ciphertext: bytes, nonce: bytes, tag: bytes, aad: bytes | None = None
+) -> bytes:
     key = _load_key()
     aes = AESGCM(key)
     return aes.decrypt(nonce, ciphertext + tag, aad)
-

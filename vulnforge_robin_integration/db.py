@@ -6,7 +6,20 @@ from contextlib import contextmanager
 from datetime import datetime
 from typing import Dict, Generator, Optional
 
-from sqlalchemy import JSON, Column, DateTime, Float, ForeignKey, Integer, LargeBinary, String, Text, create_engine, func, select
+from sqlalchemy import (
+    JSON,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    LargeBinary,
+    String,
+    Text,
+    create_engine,
+    func,
+    select,
+)
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, relationship, scoped_session, sessionmaker
@@ -18,14 +31,20 @@ logger = logging.getLogger(__name__)
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./data/vulnforge_robin.db")
 
 engine = create_engine(DATABASE_URL, future=True)
-SessionLocal = scoped_session(sessionmaker(bind=engine, autoflush=False, autocommit=False))
+SessionLocal = scoped_session(
+    sessionmaker(bind=engine, autoflush=False, autocommit=False)
+)
 Base = declarative_base()
 
 
 class LeakItem(Base):
     __tablename__ = "leak_items"
 
-    id = Column(PGUUID(as_uuid=True) if "postgres" in DATABASE_URL else String, primary_key=True, default=uuid4)
+    id = Column(
+        PGUUID(as_uuid=True) if "postgres" in DATABASE_URL else String,
+        primary_key=True,
+        default=uuid4,
+    )
     target_type = Column(String(64), nullable=False)
     target_value = Column(String(512), nullable=False, index=True)
     leak_type = Column(String(128), nullable=False)
@@ -42,10 +61,14 @@ class LeakItem(Base):
     score = Column(Integer, default=0)
     notes = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now(), server_default=func.now())
+    updated_at = Column(
+        DateTime(timezone=True), onupdate=func.now(), server_default=func.now()
+    )
     hash_key = Column(String(128), unique=True, index=True)
 
-    actions = relationship("ActionLog", back_populates="item", cascade="all,delete-orphan")
+    actions = relationship(
+        "ActionLog", back_populates="item", cascade="all,delete-orphan"
+    )
 
 
 class ActionLog(Base):
@@ -62,7 +85,11 @@ class ActionLog(Base):
     notes = Column(Text)
     timestamp = Column(DateTime(timezone=True), default=datetime.utcnow)
 
-    item = relationship("LeakItem", back_populates="actions", primaryjoin="ActionLog.item_id==LeakItem.id")
+    item = relationship(
+        "LeakItem",
+        back_populates="actions",
+        primaryjoin="ActionLog.item_id==LeakItem.id",
+    )
 
 
 def init_db() -> None:
@@ -81,4 +108,3 @@ def get_session() -> Generator[Session, None, None]:
         raise
     finally:
         session.close()
-
