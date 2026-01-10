@@ -101,9 +101,7 @@ def filter_results(llm, query, results):
 
     # Remove duplicates while preserving order
     seen = set()
-    parsed_indices = [
-        i for i in parsed_indices if not (i in seen or seen.add(i))
-    ]
+    parsed_indices = [i for i in parsed_indices if not (i in seen or seen.add(i))]
 
     if not parsed_indices:
         logging.warning(

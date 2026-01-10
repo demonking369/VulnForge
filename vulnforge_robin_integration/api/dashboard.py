@@ -100,4 +100,3 @@ DASHBOARD_HTML = """
 
 def render_dashboard() -> str:
     return DASHBOARD_HTML
-

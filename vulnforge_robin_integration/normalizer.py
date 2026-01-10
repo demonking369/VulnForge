@@ -19,9 +19,13 @@ def _parse_markdown(content: str) -> Dict[str, Any]:
         target_value = target_match.group("value").strip()
     else:
         target_value = "unknown"
-    leak_type_match = re.search(r"Leak Type\s*[:\-]\s*(?P<lt>[^\n]+)", content, re.IGNORECASE)
+    leak_type_match = re.search(
+        r"Leak Type\s*[:\-]\s*(?P<lt>[^\n]+)", content, re.IGNORECASE
+    )
     leak_type = leak_type_match.group("lt").strip() if leak_type_match else "unknown"
-    source_match = re.search(r"Source\s*[:\-]\s*(?P<src>[^\n]+)", content, re.IGNORECASE)
+    source_match = re.search(
+        r"Source\s*[:\-]\s*(?P<src>[^\n]+)", content, re.IGNORECASE
+    )
     source = source_match.group("src").strip() if source_match else "robin"
 
     first_seen = _extract_date(content, "First Seen")
@@ -57,7 +61,7 @@ def _extract_sections(content: str) -> Dict[str, str]:
 
 
 def _extract_date(content: str, label: str) -> Optional[datetime]:
-    pattern = re.compile(fr"{label}\s*[:\-]\s*(?P<date>[^\n]+)", re.IGNORECASE)
+    pattern = re.compile(rf"{label}\s*[:\-]\s*(?P<date>[^\n]+)", re.IGNORECASE)
     match = pattern.search(content)
     if not match:
         return None
@@ -122,4 +126,3 @@ def _normalize_dict(obj: Dict[str, Any]) -> Dict[str, Any]:
         "raw": (obj.get("raw_snippet") or obj.get("raw") or ""),
         "notes": obj.get("notes"),
     }
-
