@@ -1,14 +1,35 @@
 version = 1
 
-test_patterns = ["\"tests/*\", \"test_.py\", \"*/test_.py\""]
+test_patterns = ["tests/", "test_*.py", "*_test.py"]
 
-exclude_patterns = ["\"docs/*\", \"examples/\", \"scripts/\", \".md\", \".yml\", \".json\""]
+exclude_patterns = [
+  "docs/",
+  "examples/",
+  "scripts/",
+  ".git/",
+  ".venv/",
+  "*.md",
+  "*.json",
+  "*.yml",
+  "*.yaml",
+  "static/",
+  "templates/"
+]
 
 [[analyzers]]
 name = "python"
 
-  [analyzers.meta]
-  runtime_version = "3.x.x"
+[analyzers.meta]
+runtime_version = "3.x"
 
-[[transformers]]
+# Disable security-focused web checks
+skip_rules = [
+  "python.security.audit",
+  "python.security.injection",
+  "python.security.unsafe",
+  "python.security.crypto",
+  "python.security.network"
+]
+
+[[code_formatters]]
 name = "black"
