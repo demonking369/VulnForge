@@ -25,14 +25,20 @@ from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from typing import Optional
 
+# SECURITY: Import security utilities
+from utils.security_utils import (
+    SecurityValidator,
+    RateLimiter,
+    FilePermissionManager,
+    validate_target,
+    sanitize_filename
+)
+from utils.auth import get_auth_manager, Permission
+
 from recon_module import EnhancedReconModule
 from ai_integration import AIAnalyzer, OllamaClient
 from ai_orchestrator import AIOrchestrator # New Import
-from modules.darkweb import (
-    run_darkweb_osint,
-    ROBIN_DEFAULT_MODEL,
-    get_robin_model_choices,
-)
+import modules.darkweb as darkweb_module
 
 
 class VulnForge:
@@ -168,26 +174,34 @@ class VulnForge:
                 "[bold red]Error: Could not get response from AI[/bold red]"
             )
 
-    def generate_tool(self, description: str):
-        """Generate a custom tool using AI and save it to custom_tools directory."""
+    @RateLimiter(max_calls=5, time_window=60)
+    def generate_tool(self, description: str, identifier: str = 'default'):
+        """Generate a custom tool using AI and save it to custom_tools directory.
+        
+        Args:
+            description: Tool description
+            identifier: Rate limit identifier (username/session)
+        """
         try:
+            # SECURITY: Sanitize description input
+            if not description or not isinstance(description, str):
+                self.logger.error("Invalid tool description")
+                return
+            
+            # SECURITY: Limit description length
+            if len(description) > 500:
+                self.logger.error("Tool description too long (max 500 chars)")
+                return
+            
             # Use os.path.expanduser to properly handle home directory
-            tool_dir = os.path.expanduser("~/.vulnforge/custom_tools")
+            tool_dir = Path.home() / ".vulnforge" / "custom_tools"
             self.console.print(
                 f"[bold blue]Resolved custom_tools directory:[/bold blue] {tool_dir}"
             )
 
-            # Create directory with proper permissions
-            try:
-                os.makedirs(tool_dir, mode=0o755, exist_ok=True)
-                self.console.print(
-                    f"[bold green]✓ Directory created/verified:[/bold green] {tool_dir}"
-                )
-            except PermissionError as e:
-                self.logger.error("Permission error creating directory: %s", e)
-                return
-            except Exception as e:
-                self.logger.error("Error creating directory: %s", e)
+            # SECURITY: Create directory with secure permissions (0o700)
+            if not FilePermissionManager.create_secure_directory(tool_dir, mode=0o700):
+                self.logger.error("Failed to create secure directory")
                 return
 
             metadata_path = os.path.join(tool_dir, "metadata.json")
@@ -206,21 +220,26 @@ class VulnForge:
                 )
                 return
 
-            # Extract a reasonable filename from the description
+            # SECURITY: Extract and sanitize filename
             import re
 
             base_name = re.sub(r"[^a-zA-Z0-9]+", "_", description.strip().lower())[
                 :32
             ].strip("_")
-            filename = f"{base_name or 'custom_tool'}_{int(time.time())}.py"
-            tool_path = os.path.join(tool_dir, filename)
+            filename = sanitize_filename(f"{base_name or 'custom_tool'}_{int(time.time())}.py")
+            
+            # SECURITY: Validate path to prevent traversal
+            tool_path = SecurityValidator.sanitize_path(str(tool_dir / filename), base_dir=tool_dir)
+            if not tool_path:
+                self.logger.error("Invalid tool path")
+                return
 
             # Write the generated tool to file
             with open(tool_path, "w", encoding="utf-8") as f:
                 f.write(response)
-            # SECURITY FIX: Set secure file permissions (0o600) for generated tool files
-            # This ensures only the owner can read/write the file
-            os.chmod(tool_path, 0o600)
+            
+            # SECURITY: Set secure file permissions (0o600) for generated tool files
+            FilePermissionManager.set_secure_permissions(tool_path, mode=0o600)
             self.console.print(
                 f"[bold green]✓ Tool generated and saved to:[/bold green] {tool_path}"
             )
@@ -262,16 +281,24 @@ class VulnForge:
     def list_custom_tools(self):
         """List all custom tools in the custom_tools directory."""
         try:
-            tool_dir = os.path.expanduser("~/.vulnforge/custom_tools")
-            metadata_path = os.path.join(tool_dir, "metadata.json")
+            # SECURITY: Use Path and validate directory
+            tool_dir = Path.home() / ".vulnforge" / "custom_tools"
+            
+            # SECURITY: Validate path
+            tool_dir = SecurityValidator.sanitize_path(str(tool_dir))
+            if not tool_dir:
+                self.logger.error("Invalid tool directory path")
+                return
+            
+            metadata_path = tool_dir / "metadata.json"
 
-            if not os.path.exists(tool_dir):
+            if not tool_dir.exists():
                 self.console.print(
                     "[bold yellow]No custom tools directory found.[/bold yellow]"
                 )
                 return
 
-            if not os.path.exists(metadata_path):
+            if not metadata_path.exists():
                 self.console.print(
                     "[bold yellow]No custom tools metadata found.[/bold yellow]"
                 )
@@ -433,6 +460,15 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
     parser.add_argument(
         "--uninstall", action="store_true", help="Uninstall VulnForge and its components"
     )
+    parser.add_argument(
+        "--webmod", action="store_true", help="Launch VulnForge web interface (Streamlit UI)"
+    )
+    parser.add_argument(
+        "--web-host", default="localhost", help="Web interface host (default: localhost)"
+    )
+    parser.add_argument(
+        "--web-port", type=int, default=8501, help="Web interface port (default: 8501)"
+    )
 
     # Add subparsers for commands
     subparsers = parser.add_subparsers(dest='command', help='Available commands')
@@ -461,8 +497,8 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
     darkweb_parser.add_argument(
         '--model',
         '-m',
-        choices=get_robin_model_choices(),
-        default=ROBIN_DEFAULT_MODEL,
+        choices=darkweb_module.get_robin_model_choices(),
+        default=darkweb_module.ROBIN_DEFAULT_MODEL,
         help='LLM model to use for refinement/filtering',
     )
     darkweb_parser.add_argument(
@@ -484,6 +520,61 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
     vf = VulnForge()
     vf.banner()
 
+    # Handle web mode
+    if args.webmod:
+        print("🌐 Launching VulnForge Web Interface...")
+        
+        # Check if Robin module is available
+        if not darkweb_module.ROBIN_AVAILABLE:
+            print("❌ Error: Robin module dependencies not installed.")
+            print("\nInstall required packages:")
+            print("  pip install langchain-core langchain-openai langchain-ollama")
+            print("  pip install langchain-anthropic langchain-google-genai langchain-community")
+            print("\nOr install all requirements:")
+            print("  pip install -r requirements.txt")
+            return
+        
+        print(f"📍 Access the UI at: http://{args.web_host}:{args.web_port}")
+        print("⚠️  Press Ctrl+C to stop the server\n")
+        
+        try:
+            # Import streamlit CLI
+            from streamlit.web import cli as stcli
+            import sys
+            
+            # Get the UI file path
+            ui_file = Path(__file__).parent / "modules" / "darkweb" / "robin" / "ui.py"
+            
+            if not ui_file.exists():
+                print(f"❌ Error: Web UI file not found at {ui_file}")
+                print("Please ensure the Robin module is installed correctly.")
+                return
+            
+            # Prepare streamlit arguments
+            sys.argv = [
+                "streamlit",
+                "run",
+                str(ui_file),
+                "--server.port", str(args.web_port),
+                "--server.address", args.web_host,
+                "--server.headless", "true",
+                "--browser.gatherUsageStats", "false"
+            ]
+            
+            # Launch streamlit
+            sys.exit(stcli.main())
+            
+        except ImportError:
+            print("❌ Error: Streamlit is not installed.")
+            print("Install it with: pip install streamlit")
+            return
+        except KeyboardInterrupt:
+            print("\n\n👋 Web interface stopped.")
+            return
+        except Exception as e:
+            print(f"❌ Error launching web interface: {e}")
+            return
+    
     # Handle uninstall
     if args.uninstall:
         script_dir = Path(__file__).parent
@@ -534,7 +625,13 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
         vf.list_custom_tools()
         return
     elif args.command == "darkweb":
-        run_darkweb_osint(
+        # Check if Robin is available
+        if not darkweb_module.ROBIN_AVAILABLE:
+            print("❌ Error: Robin module dependencies not installed.")
+            print("Install with: pip install langchain-core langchain-openai langchain-ollama")
+            return
+        
+        darkweb_module.run_darkweb_osint(
             args.query,
             model=args.model,
             threads=args.threads,
@@ -564,6 +661,12 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
             "Use --target to specify a domain or IP address you own or have authorization to test"
         )
         return
+    
+    # SECURITY: Validate target input
+    if not validate_target(args.target):
+        print(f"Error: Invalid target format: {args.target}")
+        print("Target must be a valid domain name or IP address")
+        return
 
     # Remove authorization prompt and disclaimer
     # Verify authorization
@@ -579,10 +682,17 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
         "No explicit authorization prompt. User is responsible for legal/ethical use."
     )
 
-    # Create session directory
+    # SECURITY: Create session directory with secure permissions
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    session_dir = vf.base_dir / "sessions" / args.target / timestamp
-    session_dir.mkdir(parents=True, exist_ok=True)
+    
+    # SECURITY: Sanitize target for use in path
+    safe_target = sanitize_filename(args.target)
+    session_dir = vf.base_dir / "sessions" / safe_target / timestamp
+    
+    # SECURITY: Create with restricted permissions
+    if not FilePermissionManager.create_secure_directory(session_dir, mode=0o700):
+        print("Error: Failed to create secure session directory")
+        return
 
     # Initialize AI controller if needed
     if args.ai_only or args.ai_debug:

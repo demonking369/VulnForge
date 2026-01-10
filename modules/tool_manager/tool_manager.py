@@ -4,6 +4,7 @@ VulnForge Tool Manager Module
 Manages installation and updates of security tools
 """
 
+import os
 import json
 import logging
 import subprocess

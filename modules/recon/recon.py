@@ -384,4 +384,12 @@ class ReconModule:
             with open("/tmp/vulnforge_subfinder_debug.log", "a") as f:
                 f.write(debug_info)
             if stderr:
-                self.logger.warning("Command stderr: %s", stderr.decode()) 
+                self.logger.warning("Command stderr: %s", stderr.decode())
+            
+            return stdout.decode().strip()
+            
+        except Exception as e:
+            self.logger.error("Error running command '%s': %s", command, e)
+            with open("/tmp/vulnforge_subfinder_debug.log", "a") as f:
+                f.write(f"[ERROR] Command failed: {command}\n[ERROR] {e}\n")
+            return "" 

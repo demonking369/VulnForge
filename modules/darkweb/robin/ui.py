@@ -1,13 +1,31 @@
 import base64
 from datetime import datetime
 from pathlib import Path
+import sys
 
 import streamlit as st
 
-from .scrape import scrape_multiple
-from .search import get_search_results
-from .llm_utils import BufferedStreamingHandler, get_model_choices
-from .llm import get_llm, refine_query, filter_results, generate_summary
+# Fix imports to work both as module and when run directly
+try:
+    # Try relative imports first (when run as module)
+    from .scrape import scrape_multiple
+    from .search import get_search_results
+    from .llm_utils import BufferedStreamingHandler, get_model_choices
+    from .llm import get_llm, refine_query, filter_results, generate_summary
+    from .config import OLLAMA_MAIN_MODEL
+except ImportError:
+    # Fall back to absolute imports (when run directly by Streamlit)
+    import os
+    # Add parent directory to path
+    current_dir = Path(__file__).parent
+    if str(current_dir) not in sys.path:
+        sys.path.insert(0, str(current_dir))
+    
+    from scrape import scrape_multiple
+    from search import get_search_results
+    from llm_utils import BufferedStreamingHandler, get_model_choices
+    from llm import get_llm, refine_query, filter_results, generate_summary
+    from config import OLLAMA_MAIN_MODEL
 
 
 # Cache expensive backend calls
@@ -21,12 +39,8 @@ def cached_scrape_multiple(filtered: list, threads: int):
     return scrape_multiple(filtered, max_workers=threads)
 
 
-# Streamlit page configuration
-st.set_page_config(
-    page_title="Robin: AI-Powered Dark Web OSINT Tool",
-    page_icon="🕵️‍♂️",
-    initial_sidebar_state="expanded",
-)
+# --- UI Setup ---
+st.set_page_config(page_title="Robin - AI Dark Web OSINT", layout="wide")
 
 # Custom CSS for styling
 st.markdown(
@@ -62,14 +76,18 @@ st.sidebar.markdown(
 )
 st.sidebar.subheader("Settings")
 model_options = get_model_choices()
+
+# Set default model based on .env OLLAMA_MAIN_MODEL
+default_model = OLLAMA_MAIN_MODEL or "gpt-5-mini"
 default_model_index = (
     next(
-        (idx for idx, name in enumerate(model_options) if name.lower() == "gpt4o"),
+        (idx for idx, name in enumerate(model_options) if name.lower() == default_model.lower()),
         0,
     )
     if model_options
     else 0
 )
+
 model = st.sidebar.selectbox(
     "Select LLM Model",
     model_options,

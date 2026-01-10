@@ -1,3 +1,7 @@
+"""
+LLM utility functions and handlers for Robin
+"""
+
 from typing import Callable, Optional, List
 from urllib.parse import urljoin
 
@@ -8,7 +12,19 @@ from langchain_anthropic import ChatAnthropic
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.callbacks.base import BaseCallbackHandler
 
-from .config import OLLAMA_BASE_URL
+# Fix imports to work both as module and when run directly
+try:
+    from .config import (
+        OLLAMA_BASE_URL,
+        OLLAMA_MAIN_MODEL,
+        OLLAMA_ASSISTANT_MODEL
+    )
+except ImportError:
+    from config import (
+        OLLAMA_BASE_URL,
+        OLLAMA_MAIN_MODEL,
+        OLLAMA_ASSISTANT_MODEL
+    )
 
 
 class BufferedStreamingHandler(BaseCallbackHandler):
@@ -33,6 +49,17 @@ class BufferedStreamingHandler(BaseCallbackHandler):
             self.buffer = ""
 
 
+
+def _normalize_model_name(name: str) -> str:
+    return name.strip().lower()
+
+
+def _get_ollama_base_url() -> str:
+    # Default to localhost if not specified
+    url = OLLAMA_BASE_URL or "http://localhost:11434"
+    return url.rstrip("/") + "/"
+
+
 # --- Configuration Data ---
 # Instantiate common dependencies once
 _common_callbacks = [BufferedStreamingHandler(buffer_limit=60)]
@@ -47,6 +74,10 @@ _common_llm_params = {
 # Map input model choices (lowercased) to their configuration
 # Each config includes the class and any model-specific constructor parameters
 _llm_config_map = {
+    'gpt-4o': { 
+        'class': ChatOpenAI,
+        'constructor_params': {'model_name': 'gpt-4o'} 
+    },
     'gpt-4.1': { 
         'class': ChatOpenAI,
         'constructor_params': {'model_name': 'gpt-4.1'} 
@@ -62,6 +93,10 @@ _llm_config_map = {
     'gpt-5-nano': { 
         'class': ChatOpenAI,
         'constructor_params': {'model_name': 'gpt-5-nano'} 
+    },
+    'claude-3-5-sonnet-latest': {
+        'class': ChatAnthropic,
+        'constructor_params': {'model': 'claude-3-5-sonnet-latest'}
     },
     'claude-sonnet-4-5': {
         'class': ChatAnthropic,
@@ -85,19 +120,19 @@ _llm_config_map = {
     },
     'llama3.2': { 
         'class': ChatOllama,
-        'constructor_params': {'model': 'llama3.2:latest', 'base_url': OLLAMA_BASE_URL}
+        'constructor_params': {'model': 'llama3.2:latest', 'base_url': _get_ollama_base_url()}
     },
     'llama3.1': { 
         'class': ChatOllama,
-        'constructor_params': {'model': 'llama3.1:latest', 'base_url': OLLAMA_BASE_URL}
+        'constructor_params': {'model': 'llama3.1:latest', 'base_url': _get_ollama_base_url()}
     },
     'gemma3': { 
         'class': ChatOllama,
-        'constructor_params': {'model': 'gemma3:latest', 'base_url': OLLAMA_BASE_URL}
+        'constructor_params': {'model': 'gemma3:latest', 'base_url': _get_ollama_base_url()}
     },
     'deepseek-r1': { 
         'class': ChatOllama,
-        'constructor_params': {'model': 'deepseek-r1:latest', 'base_url': OLLAMA_BASE_URL}
+        'constructor_params': {'model': 'deepseek-r1:latest', 'base_url': _get_ollama_base_url()}
     }
     
     # Add more models here easily:
@@ -110,17 +145,6 @@ _llm_config_map = {
     #      'constructor_params': {'model_name': 'gpt-3.5-turbo', 'base_url': OLLAMA_BASE_URL}
     # }
 }
-
-
-def _normalize_model_name(name: str) -> str:
-    return name.strip().lower()
-
-
-def _get_ollama_base_url() -> Optional[str]:
-    if not OLLAMA_BASE_URL:
-        return None
-    return OLLAMA_BASE_URL.rstrip("/") + "/"
-
 
 def fetch_ollama_models() -> List[str]:
     """
@@ -153,6 +177,14 @@ def get_model_choices() -> List[str]:
     dynamic_models = fetch_ollama_models()
 
     normalized = {_normalize_model_name(m): m for m in base_models}
+    
+    # Add models from .env if they aren't already there
+    for env_model in [OLLAMA_MAIN_MODEL, OLLAMA_ASSISTANT_MODEL]:
+        if env_model:
+            key = _normalize_model_name(env_model)
+            if key not in normalized:
+                normalized[key] = env_model
+
     for dm in dynamic_models:
         key = _normalize_model_name(dm)
         if key not in normalized:
@@ -176,11 +208,20 @@ def resolve_model_config(model_choice: str):
     if config:
         return config
 
+    # Check if it matches any of the models from .env
+    for env_model in [OLLAMA_MAIN_MODEL, OLLAMA_ASSISTANT_MODEL]:
+        if env_model and _normalize_model_name(env_model) == model_choice_lower:
+            return {
+                "class": ChatOllama,
+                "constructor_params": {"model": env_model, "base_url": _get_ollama_base_url()},
+            }
+
+    # Check against dynamic models from Ollama API
     for ollama_model in fetch_ollama_models():
         if _normalize_model_name(ollama_model) == model_choice_lower:
             return {
                 "class": ChatOllama,
-                "constructor_params": {"model": ollama_model, "base_url": OLLAMA_BASE_URL},
+                "constructor_params": {"model": ollama_model, "base_url": _get_ollama_base_url()},
             }
 
     return None

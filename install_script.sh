@@ -127,7 +127,11 @@ if check_command ollama; then
     echo -e "Main Model: $MAIN_MODEL"
     echo -e "Assistant Model: $ASSISTANT_MODEL"
     
-    # Save to .env
+    # Save to .env (remove if it's a directory)
+    if [ -d ".env" ]; then
+        echo -e "${YELLOW}[!] .env is a directory, removing it...${NC}"
+        rm -rf .env
+    fi
     echo "OLLAMA_MAIN_MODEL=$MAIN_MODEL" > .env
     echo "OLLAMA_ASSISTANT_MODEL=$ASSISTANT_MODEL" >> .env
     echo -e "${GREEN}[✓] Saved model configuration to .env${NC}"
@@ -170,18 +174,25 @@ else
     # Prefer pipx if available to avoid PEP 668 restrictions
     if command -v pipx &> /dev/null; then
         echo -e "${YELLOW}Using pipx to install in an isolated venv...${NC}"
-        # Install runtime deps first (pipx does not support -r directly for local dirs)
-        pipx runpip vulnforge install -r requirements.txt || true
-        # Install the app itself
-        pipx install --force .
+        
+        # Uninstall first if exists
+        pipx uninstall vulnforge 2>/dev/null || true
+        
+        # Install the app with all dependencies
+        pipx install . --force
+        
         # Ensure shim is linked
         pipx ensurepath || true
+        
+        echo -e "${GREEN}[✓] Installed via pipx${NC}"
     else
+        echo -e "${YELLOW}pipx not found, using pip with --break-system-packages...${NC}"
         # Fallback to user installation, with --break-system-packages for PEP 668 distros (Kali/Debian)
-        python3 -m pip install --user --upgrade pip setuptools wheel --break-system-packages || true
-        python3 -m pip install --user -r requirements.txt --break-system-packages || true
-        python3 -m pip install --user -r requirements-test.txt --break-system-packages || true
-        python3 -m pip install --user . --break-system-packages || true
+        python3 -m pip install --user --upgrade pip setuptools wheel --break-system-packages 2>/dev/null || python3 -m pip install --user --upgrade pip setuptools wheel
+        python3 -m pip install --user -r requirements.txt --break-system-packages 2>/dev/null || python3 -m pip install --user -r requirements.txt
+        python3 -m pip install --user -r requirements-test.txt --break-system-packages 2>/dev/null || python3 -m pip install --user -r requirements-test.txt
+        python3 -m pip install --user . --break-system-packages 2>/dev/null || python3 -m pip install --user .
+        echo -e "${GREEN}[✓] Installed via pip --user${NC}"
     fi
 
     # Ensure ~/.local/bin is on PATH for bash and zsh
@@ -276,9 +287,46 @@ if [[ $INSTALL_AI =~ ^[Yy]$ ]]; then
     ollama pull mistral:7b-instruct-v0.2-q4_0
 fi
 
-# Create necessary directories
+# Setting up VulnForge directories...
 echo -e "\n${BLUE}Setting up VulnForge directories...${NC}"
-mkdir -p ~/.vulnforge/{configs,sessions,custom_tools}
+mkdir -p ~/.vulnforge/{results,tools,sessions}
+
+# Create global wrapper script and symlink
+echo -e "${BLUE}Creating global command...${NC}"
+INSTALL_DIR="$(pwd)"
+cat > vulnforge << 'EOF'
+#!/bin/bash
+# VulnForge Global Wrapper Script
+
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Activate virtual environment if it exists
+if [ -f "$SCRIPT_DIR/.venv/bin/activate" ]; then
+    source "$SCRIPT_DIR/.venv/bin/activate"
+    exec python3 "$SCRIPT_DIR/vulnforge_main.py" "$@"
+else
+    # Fallback to direct execution
+    exec python3 "$SCRIPT_DIR/vulnforge_main.py" "$@"
+fi
+EOF
+
+chmod +x vulnforge
+
+# Try to create symlink in /usr/local/bin
+if command -v sudo &> /dev/null; then
+    if sudo -n true 2>/dev/null; then
+        sudo ln -sf "$INSTALL_DIR/vulnforge" /usr/local/bin/vulnforge
+        echo -e "${GREEN}[✓] Created global command: vulnforge${NC}"
+    else
+        echo -e "${YELLOW}[!] Creating global symlink (requires sudo)...${NC}"
+        sudo ln -sf "$INSTALL_DIR/vulnforge" /usr/local/bin/vulnforge && \
+            echo -e "${GREEN}[✓] Created global command: vulnforge${NC}" || \
+            echo -e "${YELLOW}[!] Could not create symlink. Run manually: sudo ln -sf $INSTALL_DIR/vulnforge /usr/local/bin/vulnforge${NC}"
+    fi
+else
+    echo -e "${YELLOW}[!] sudo not available. Add to PATH manually: export PATH=\"$INSTALL_DIR:\$PATH\"${NC}"
+fi
 
 # Create initial config files
 echo -e "${BLUE}Creating configuration files...${NC}"

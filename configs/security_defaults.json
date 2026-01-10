@@ -1,0 +1,104 @@
+{
+    "security": {
+        "file_permissions": {
+            "sensitive_files": "0o600",
+            "config_files": "0o600",
+            "session_files": "0o600",
+            "directories": "0o700",
+            "generated_tools": "0o600"
+        },
+        "authentication": {
+            "enabled": true,
+            "session_duration": 86400,
+            "session_timeout": 3600,
+            "default_role": "user"
+        },
+        "rate_limiting": {
+            "enabled": true,
+            "max_calls": 10,
+            "time_window": 60,
+            "ai_operations": {
+                "max_calls": 5,
+                "time_window": 60
+            }
+        },
+        "encryption": {
+            "enabled": true,
+            "algorithm": "fernet",
+            "credential_storage": "encrypted"
+        },
+        "input_validation": {
+            "enabled": true,
+            "sanitize_paths": true,
+            "sanitize_commands": true,
+            "sanitize_html": true,
+            "sanitize_logs": true
+        },
+        "headers": {
+            "profile": "strict",
+            "hsts_enabled": true,
+            "csp_enabled": true,
+            "x_frame_options": "DENY"
+        }
+    },
+    "ai": {
+        "preferred_model": "deepseek-coder-v2:16b-lite-base-q4_0",
+        "assistant_model": "mistral:7b-instruct-v0.2-q4_0",
+        "timeout": 300,
+        "max_retries": 3,
+        "retry_delay": 5,
+        "temperature": 0.5,
+        "max_tokens": 4096,
+        "context_window": 16384
+    },
+    "scanning": {
+        "max_threads": 10,
+        "timeout": 300,
+        "user_agent_rotation": true,
+        "random_delays": true,
+        "respect_robots_txt": true
+    },
+    "stealth": {
+        "enabled": false,
+        "min_delay": 1,
+        "max_delay": 5,
+        "rotate_user_agents": true,
+        "use_proxies": false
+    },
+    "reporting": {
+        "default_format": "all",
+        "sanitize_output": true,
+        "include_timestamps": true,
+        "include_metadata": true
+    },
+    "logging": {
+        "level": "INFO",
+        "sanitize_inputs": true,
+        "log_file": "vulnforge.log",
+        "max_size": 10485760,
+        "backup_count": 5
+    },
+    "tools": {
+        "nmap": {
+            "enabled": true,
+            "default_args": [
+                "-sV",
+                "-sC"
+            ],
+            "timeout": 600
+        },
+        "subfinder": {
+            "enabled": true,
+            "timeout": 300
+        },
+        "httpx": {
+            "enabled": true,
+            "timeout": 30
+        },
+        "nuclei": {
+            "enabled": true,
+            "timeout": 600,
+            "templates_dir": "nuclei-templates"
+        }
+    }
+}

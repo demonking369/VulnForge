@@ -1,20 +1,27 @@
+
+
 import re
 import logging
-
 import openai
+import warnings
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
-from .llm_utils import (
-    _common_llm_params,
-    resolve_model_config,
-    get_model_choices,
-)
-
-import warnings
+# Fix imports to work both as module and when run directly
+try:
+    from .llm_utils import (
+        resolve_model_config,
+        _common_llm_params,
+        get_model_choices,
+    )
+except ImportError:
+    from llm_utils import (
+        resolve_model_config,
+        _common_llm_params,
+        get_model_choices,
+    )
 
 warnings.filterwarnings("ignore")
-
 
 def get_llm(model_choice):
     # Look up the configuration (cloud or local Ollama)

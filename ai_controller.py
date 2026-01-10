@@ -12,6 +12,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 
+# SECURITY: Import security utilities
+from utils.security_utils import SecurityValidator, RateLimiter
+from utils.auth import get_auth_manager, Permission
+
 from utils.report_generator import ReportGenerator
 from utils.logger import setup_logger
 from utils.config_manager import ConfigManager
@@ -47,26 +51,47 @@ class AIController:
             "errors": []
         }
 
-    async def process_query(self, query: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """Process an AI query.
+    @RateLimiter(max_calls=5, time_window=60)
+    async def process_query(self, query: str, context: Optional[Dict[str, Any]] = None, 
+                           session_id: Optional[str] = None, identifier: str = 'default') -> Dict[str, Any]:
+        """Process an AI query with authentication and rate limiting.
         
         Args:
             query: The query to process
             context: Optional context data
+            session_id: Optional session ID for authentication
+            identifier: Rate limit identifier
             
         Returns:
             Dictionary containing the response and metadata
+            
+        Raises:
+            PermissionError: If authentication fails
         """
-        # Validate input
+        # SECURITY: Validate input
         if not isinstance(query, str) or not query.strip():
             raise ValueError("Query must be a non-empty string")
-
-        self.logger.info("Processing AI query: %s", query)
+        
+        # SECURITY: Limit query length to prevent abuse
+        if len(query) > 5000:
+            raise ValueError("Query too long (max 5000 characters)")
+        
+        # SECURITY: Sanitize query for logging
+        safe_query = SecurityValidator.sanitize_log_input(query[:100])
+        self.logger.info("Processing AI query: %s...", safe_query)
+        
+        # SECURITY: Check authentication if session_id provided
+        if session_id:
+            auth_manager = get_auth_manager()
+            auth_manager.require_permission(session_id, Permission.AI_QUERY)
         
         try:
             # Prepare context
             context_str = ""
             if context:
+                # SECURITY: Validate context is a dict
+                if not isinstance(context, dict):
+                    raise ValueError("Context must be a dictionary")
                 context_str = json.dumps(context, indent=2)
             
             # Create prompt
@@ -99,24 +124,37 @@ Provide a detailed response:"""
                 "prompt": prompt
             }
             
-        except Exception as e:
-            self.logger.error("Error processing query: %s", str(e))
+        except ValueError as e:
+            # SECURITY: Don't expose internal errors
+            self.logger.error("Validation error: %s", str(e))
             raise
+        except Exception as e:
+            # SECURITY: Log but don't expose detailed error
+            self.logger.error("Error processing query: %s", str(e))
+            raise RuntimeError("Failed to process query")
 
     async def _get_ai_response(self, prompt: str) -> str:
-        """Get response from AI model.
+        """Get response from AI model with timeout.
         
         Args:
             prompt: The prompt to send to the AI
             
         Returns:
             The AI's response
+            
+        Raises:
+            TimeoutError: If request times out
         """
         try:
-            # TODO: Implement actual AI model call
-            # For now, return a placeholder response
-            return "This is a placeholder response. AI integration pending."
+            # SECURITY: Implement timeout for AI requests
+            async with asyncio.timeout(300):  # 5 minute timeout
+                # TODO: Implement actual AI model call
+                # For now, return a placeholder response
+                return "This is a placeholder response. AI integration pending."
             
+        except asyncio.TimeoutError:
+            self.logger.error("AI request timed out")
+            raise TimeoutError("AI request timed out after 300 seconds")
         except Exception as e:
             self.logger.error("Error getting AI response: %s", str(e))
             raise

@@ -1,12 +1,18 @@
 from datetime import datetime
-
 import click
 from yaspin import yaspin
 
-from .scrape import scrape_multiple
-from .search import get_search_results
-from .llm import get_llm, refine_query, filter_results, generate_summary
-from .llm_utils import get_model_choices
+# Fix imports to work both as module and when run directly
+try:
+    from .scrape import scrape_multiple
+    from .search import get_search_results
+    from .llm import get_llm, refine_query, filter_results, generate_summary
+    from .llm_utils import get_model_choices
+except ImportError:
+    from scrape import scrape_multiple
+    from search import get_search_results
+    from llm import get_llm, refine_query, filter_results, generate_summary
+    from llm_utils import get_model_choices
 
 MODEL_CHOICES = get_model_choices()
 

@@ -12,15 +12,27 @@ from typing import Optional, Dict, Any
 from rich.console import Console
 from rich.panel import Panel
 
-from .llm import (
-    get_llm,
-    refine_query,
-    filter_results,
-    generate_summary,
-)
-from .llm_utils import get_model_choices
-from .search import get_search_results
-from .scrape import scrape_multiple
+# Fix imports to work both as module and when run directly
+try:
+    from .llm import (
+        get_llm,
+        refine_query,
+        filter_results,
+        generate_summary,
+    )
+    from .llm_utils import get_model_choices
+    from .search import get_search_results
+    from .scrape import scrape_multiple
+except ImportError:
+    from llm import (
+        get_llm,
+        refine_query,
+        filter_results,
+        generate_summary,
+    )
+    from llm_utils import get_model_choices
+    from search import get_search_results
+    from scrape import scrape_multiple
 
 ROBIN_DEFAULT_MODEL = "gpt-5-mini"
 REPORT_DIR = Path.home() / ".vulnforge" / "darkweb_reports"
