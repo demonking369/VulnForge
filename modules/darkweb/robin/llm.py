@@ -1,5 +1,3 @@
-
-
 import re
 import logging
 import openai
@@ -22,6 +20,7 @@ except ImportError:
     )
 
 warnings.filterwarnings("ignore")
+
 
 def get_llm(model_choice):
     # Look up the configuration (cloud or local Ollama)
@@ -108,9 +107,7 @@ def filter_results(llm, query, results):
 
     # Remove duplicates while preserving order
     seen = set()
-    parsed_indices = [
-        i for i in parsed_indices if not (i in seen or seen.add(i))
-    ]
+    parsed_indices = [i for i in parsed_indices if not (i in seen or seen.add(i))]
 
     if not parsed_indices:
         logging.warning(

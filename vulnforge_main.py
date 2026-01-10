@@ -31,13 +31,13 @@ from utils.security_utils import (
     RateLimiter,
     FilePermissionManager,
     validate_target,
-    sanitize_filename
+    sanitize_filename,
 )
 from utils.auth import get_auth_manager, Permission
 
 from recon_module import EnhancedReconModule
 from ai_integration import AIAnalyzer, OllamaClient
-from ai_orchestrator import AIOrchestrator # New Import
+from ai_orchestrator import AIOrchestrator  # New Import
 import modules.darkweb as darkweb_module
 
 
@@ -141,8 +141,12 @@ class VulnForge:
                 self.logger.info("Installing %s...", tool)
                 try:
                     # SECURITY FIX: Use full executable path and handle subprocess failures
-                    result = subprocess.run(["/usr/bin/go", "install", package], 
-                                          capture_output=True, text=True, check=True)
+                    result = subprocess.run(
+                        ["/usr/bin/go", "install", package],
+                        capture_output=True,
+                        text=True,
+                        check=True,
+                    )
                     self.logger.info("Successfully installed %s", tool)
                 except subprocess.CalledProcessError as e:
                     self.logger.error("Failed to install %s: %s", tool, e)
@@ -156,7 +160,9 @@ class VulnForge:
 
     async def run_recon(self, target: str, output_dir: Optional[Path] = None):
         """Run reconnaissance on target"""
-        recon = EnhancedReconModule(self.base_dir, self.ai_analyzer, config_path="configs/tools.json")
+        recon = EnhancedReconModule(
+            self.base_dir, self.ai_analyzer, config_path="configs/tools.json"
+        )
         return await recon.run_recon(target, output_dir)
 
     def ask_ai(self, question: str):
@@ -175,9 +181,9 @@ class VulnForge:
             )
 
     @RateLimiter(max_calls=5, time_window=60)
-    def generate_tool(self, description: str, identifier: str = 'default'):
+    def generate_tool(self, description: str, identifier: str = "default"):
         """Generate a custom tool using AI and save it to custom_tools directory.
-        
+
         Args:
             description: Tool description
             identifier: Rate limit identifier (username/session)
@@ -187,12 +193,12 @@ class VulnForge:
             if not description or not isinstance(description, str):
                 self.logger.error("Invalid tool description")
                 return
-            
+
             # SECURITY: Limit description length
             if len(description) > 500:
                 self.logger.error("Tool description too long (max 500 chars)")
                 return
-            
+
             # Use os.path.expanduser to properly handle home directory
             tool_dir = Path.home() / ".vulnforge" / "custom_tools"
             self.console.print(
@@ -226,10 +232,14 @@ class VulnForge:
             base_name = re.sub(r"[^a-zA-Z0-9]+", "_", description.strip().lower())[
                 :32
             ].strip("_")
-            filename = sanitize_filename(f"{base_name or 'custom_tool'}_{int(time.time())}.py")
-            
+            filename = sanitize_filename(
+                f"{base_name or 'custom_tool'}_{int(time.time())}.py"
+            )
+
             # SECURITY: Validate path to prevent traversal
-            tool_path = SecurityValidator.sanitize_path(str(tool_dir / filename), base_dir=tool_dir)
+            tool_path = SecurityValidator.sanitize_path(
+                str(tool_dir / filename), base_dir=tool_dir
+            )
             if not tool_path:
                 self.logger.error("Invalid tool path")
                 return
@@ -237,7 +247,7 @@ class VulnForge:
             # Write the generated tool to file
             with open(tool_path, "w", encoding="utf-8") as f:
                 f.write(response)
-            
+
             # SECURITY: Set secure file permissions (0o600) for generated tool files
             FilePermissionManager.set_secure_permissions(tool_path, mode=0o600)
             self.console.print(
@@ -283,13 +293,13 @@ class VulnForge:
         try:
             # SECURITY: Use Path and validate directory
             tool_dir = Path.home() / ".vulnforge" / "custom_tools"
-            
+
             # SECURITY: Validate path
             tool_dir = SecurityValidator.sanitize_path(str(tool_dir))
             if not tool_dir:
                 self.logger.error("Invalid tool directory path")
                 return
-            
+
             metadata_path = tool_dir / "metadata.json"
 
             if not tool_dir.exists():
@@ -416,7 +426,7 @@ Key Features:
 
 For detailed documentation, visit: https://github.com/Arunking9/VulnForge
 """,
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("--target", "-t", help="Target domain or IP")
     parser.add_argument(
@@ -452,66 +462,96 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
         "--stealth", "-s", action="store_true", help="Enable stealth mode"
     )
     parser.add_argument(
-        "--ai-pipeline", action="store_true", help="Enable the advanced multi-prompt AI pipeline."
+        "--ai-pipeline",
+        action="store_true",
+        help="Enable the advanced multi-prompt AI pipeline.",
     )
     parser.add_argument(
-        "--prompt-dir", help="Directory for the AI pipeline prompts.", default="AI_Propmt/system-prompts-and-models-of-ai-tools"
+        "--prompt-dir",
+        help="Directory for the AI pipeline prompts.",
+        default="AI_Propmt/system-prompts-and-models-of-ai-tools",
     )
     parser.add_argument(
-        "--uninstall", action="store_true", help="Uninstall VulnForge and its components"
+        "--uninstall",
+        action="store_true",
+        help="Uninstall VulnForge and its components",
     )
     parser.add_argument(
-        "--webmod", action="store_true", help="Launch VulnForge web interface (Streamlit UI)"
+        "--webmod",
+        action="store_true",
+        help="Launch VulnForge web interface (Streamlit UI)",
     )
     parser.add_argument(
-        "--web-host", default="localhost", help="Web interface host (default: localhost)"
+        "--web-host",
+        default="localhost",
+        help="Web interface host (default: localhost)",
     )
     parser.add_argument(
         "--web-port", type=int, default=8501, help="Web interface port (default: 8501)"
     )
 
     # Add subparsers for commands
-    subparsers = parser.add_subparsers(dest='command', help='Available commands')
-    
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+
     # Ask AI command
-    ask_ai_parser = subparsers.add_parser('ask-ai', help='Ask the AI assistant a question')
-    ask_ai_parser.add_argument('question', help='The question to ask the AI')
-    ask_ai_parser.add_argument('--verbose', action='store_true', help='Show detailed model logs')
-    ask_ai_parser.add_argument('--dangerous', action='store_true', help='Enable dangerous mode')
-    ask_ai_parser.add_argument('--confirm-danger', action='store_true', help='Confirm dangerous mode')
-    
+    ask_ai_parser = subparsers.add_parser(
+        "ask-ai", help="Ask the AI assistant a question"
+    )
+    ask_ai_parser.add_argument("question", help="The question to ask the AI")
+    ask_ai_parser.add_argument(
+        "--verbose", action="store_true", help="Show detailed model logs"
+    )
+    ask_ai_parser.add_argument(
+        "--dangerous", action="store_true", help="Enable dangerous mode"
+    )
+    ask_ai_parser.add_argument(
+        "--confirm-danger", action="store_true", help="Confirm dangerous mode"
+    )
+
     # Generate tool command
-    generate_tool_parser = subparsers.add_parser('generate-tool', help='Generate a custom tool')
-    generate_tool_parser.add_argument('description', help='Description of the tool to generate')
-    generate_tool_parser.add_argument('--verbose', action='store_true', help='Show detailed generation logs')
-    
+    generate_tool_parser = subparsers.add_parser(
+        "generate-tool", help="Generate a custom tool"
+    )
+    generate_tool_parser.add_argument(
+        "description", help="Description of the tool to generate"
+    )
+    generate_tool_parser.add_argument(
+        "--verbose", action="store_true", help="Show detailed generation logs"
+    )
+
     # List tools command
-    list_tools_parser = subparsers.add_parser('list-tools', help='List all custom tools')
-    list_tools_parser.add_argument('--verbose', action='store_true', help='Show detailed tool information')
+    list_tools_parser = subparsers.add_parser(
+        "list-tools", help="List all custom tools"
+    )
+    list_tools_parser.add_argument(
+        "--verbose", action="store_true", help="Show detailed tool information"
+    )
 
     # Dark web OSINT command (Robin integration)
     darkweb_parser = subparsers.add_parser(
-        'darkweb', help='Run the Robin dark web OSINT workflow'
+        "darkweb", help="Run the Robin dark web OSINT workflow"
     )
-    darkweb_parser.add_argument('--query', '-q', required=True, help='Dark web search query')
     darkweb_parser.add_argument(
-        '--model',
-        '-m',
+        "--query", "-q", required=True, help="Dark web search query"
+    )
+    darkweb_parser.add_argument(
+        "--model",
+        "-m",
         choices=darkweb_module.get_robin_model_choices(),
         default=darkweb_module.ROBIN_DEFAULT_MODEL,
-        help='LLM model to use for refinement/filtering',
+        help="LLM model to use for refinement/filtering",
     )
     darkweb_parser.add_argument(
-        '--threads',
-        '-t',
+        "--threads",
+        "-t",
         type=int,
         default=5,
-        help='Number of concurrent requests for search/scrape',
+        help="Number of concurrent requests for search/scrape",
     )
     darkweb_parser.add_argument(
-        '--output',
-        '-o',
-        help='Optional output file or directory for the markdown report',
+        "--output",
+        "-o",
+        help="Optional output file or directory for the markdown report",
     )
 
     args = parser.parse_args()
@@ -523,47 +563,53 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
     # Handle web mode
     if args.webmod:
         print("🌐 Launching VulnForge Web Interface...")
-        
+
         # Check if Robin module is available
         if not darkweb_module.ROBIN_AVAILABLE:
             print("❌ Error: Robin module dependencies not installed.")
             print("\nInstall required packages:")
             print("  pip install langchain-core langchain-openai langchain-ollama")
-            print("  pip install langchain-anthropic langchain-google-genai langchain-community")
+            print(
+                "  pip install langchain-anthropic langchain-google-genai langchain-community"
+            )
             print("\nOr install all requirements:")
             print("  pip install -r requirements.txt")
             return
-        
+
         print(f"📍 Access the UI at: http://{args.web_host}:{args.web_port}")
         print("⚠️  Press Ctrl+C to stop the server\n")
-        
+
         try:
             # Import streamlit CLI
             from streamlit.web import cli as stcli
             import sys
-            
+
             # Get the UI file path
             ui_file = Path(__file__).parent / "modules" / "darkweb" / "robin" / "ui.py"
-            
+
             if not ui_file.exists():
                 print(f"❌ Error: Web UI file not found at {ui_file}")
                 print("Please ensure the Robin module is installed correctly.")
                 return
-            
+
             # Prepare streamlit arguments
             sys.argv = [
                 "streamlit",
                 "run",
                 str(ui_file),
-                "--server.port", str(args.web_port),
-                "--server.address", args.web_host,
-                "--server.headless", "true",
-                "--browser.gatherUsageStats", "false"
+                "--server.port",
+                str(args.web_port),
+                "--server.address",
+                args.web_host,
+                "--server.headless",
+                "true",
+                "--browser.gatherUsageStats",
+                "false",
             ]
-            
+
             # Launch streamlit
             sys.exit(stcli.main())
-            
+
         except ImportError:
             print("❌ Error: Streamlit is not installed.")
             print("Install it with: pip install streamlit")
@@ -574,16 +620,16 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
         except Exception as e:
             print(f"❌ Error launching web interface: {e}")
             return
-    
+
     # Handle uninstall
     if args.uninstall:
         script_dir = Path(__file__).parent
         uninstall_script = script_dir / "uninstall_script.sh"
-        
+
         if not uninstall_script.exists():
             print(f"Error: Uninstall script not found at {uninstall_script}")
             return
-        
+
         try:
             subprocess.run([str(uninstall_script)], check=True)
         except subprocess.CalledProcessError as e:
@@ -595,14 +641,16 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
     # Handle AI Pipeline Mode
     if args.ai_pipeline:
         if not args.target:
-            print("Error: A target is required for AI pipeline mode, e.g., --target 'scan example.com'")
+            print(
+                "Error: A target is required for AI pipeline mode, e.g., --target 'scan example.com'"
+            )
             return
-        
+
         prompt_path = Path(args.prompt_dir)
         if not prompt_path.exists():
             print(f"Error: Prompt directory not found at '{prompt_path}'")
             return
-            
+
         orchestrator = AIOrchestrator(prompt_path)
         orchestrator.execute_task(f"Perform a security scan on {args.target}")
         return
@@ -628,9 +676,11 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
         # Check if Robin is available
         if not darkweb_module.ROBIN_AVAILABLE:
             print("❌ Error: Robin module dependencies not installed.")
-            print("Install with: pip install langchain-core langchain-openai langchain-ollama")
+            print(
+                "Install with: pip install langchain-core langchain-openai langchain-ollama"
+            )
             return
-        
+
         darkweb_module.run_darkweb_osint(
             args.query,
             model=args.model,
@@ -661,7 +711,7 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
             "Use --target to specify a domain or IP address you own or have authorization to test"
         )
         return
-    
+
     # SECURITY: Validate target input
     if not validate_target(args.target):
         print(f"Error: Invalid target format: {args.target}")
@@ -684,11 +734,11 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
 
     # SECURITY: Create session directory with secure permissions
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    
+
     # SECURITY: Sanitize target for use in path
     safe_target = sanitize_filename(args.target)
     session_dir = vf.base_dir / "sessions" / safe_target / timestamp
-    
+
     # SECURITY: Create with restricted permissions
     if not FilePermissionManager.create_secure_directory(session_dir, mode=0o700):
         print("Error: Failed to create secure session directory")
@@ -754,6 +804,7 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
 def main():
     """Synchronous entrypoint for console_scripts."""
     asyncio.run(_async_main())
+
 
 if __name__ == "__main__":
     main()

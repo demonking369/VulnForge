@@ -14,21 +14,17 @@ from langchain_core.callbacks.base import BaseCallbackHandler
 
 # Fix imports to work both as module and when run directly
 try:
-    from .config import (
-        OLLAMA_BASE_URL,
-        OLLAMA_MAIN_MODEL,
-        OLLAMA_ASSISTANT_MODEL
-    )
+    from .config import OLLAMA_BASE_URL, OLLAMA_MAIN_MODEL, OLLAMA_ASSISTANT_MODEL
 except ImportError:
-    from config import (
-        OLLAMA_BASE_URL,
-        OLLAMA_MAIN_MODEL,
-        OLLAMA_ASSISTANT_MODEL
-    )
+    from config import OLLAMA_BASE_URL, OLLAMA_MAIN_MODEL, OLLAMA_ASSISTANT_MODEL
 
 
 class BufferedStreamingHandler(BaseCallbackHandler):
-    def __init__(self, buffer_limit: int = 60, ui_callback: Optional[Callable[[str], None]] = None):
+    def __init__(
+        self,
+        buffer_limit: int = 60,
+        ui_callback: Optional[Callable[[str], None]] = None,
+    ):
         self.buffer = ""
         self.buffer_limit = buffer_limit
         self.ui_callback = ui_callback
@@ -47,7 +43,6 @@ class BufferedStreamingHandler(BaseCallbackHandler):
             if self.ui_callback:
                 self.ui_callback(self.buffer)
             self.buffer = ""
-
 
 
 def _normalize_model_name(name: str) -> str:
@@ -74,67 +69,69 @@ _common_llm_params = {
 # Map input model choices (lowercased) to their configuration
 # Each config includes the class and any model-specific constructor parameters
 _llm_config_map = {
-    'gpt-4o': { 
-        'class': ChatOpenAI,
-        'constructor_params': {'model_name': 'gpt-4o'} 
+    "gpt-4o": {"class": ChatOpenAI, "constructor_params": {"model_name": "gpt-4o"}},
+    "gpt-4.1": {"class": ChatOpenAI, "constructor_params": {"model_name": "gpt-4.1"}},
+    "gpt-5.1": {"class": ChatOpenAI, "constructor_params": {"model_name": "gpt-5.1"}},
+    "gpt-5-mini": {
+        "class": ChatOpenAI,
+        "constructor_params": {"model_name": "gpt-5-mini"},
     },
-    'gpt-4.1': { 
-        'class': ChatOpenAI,
-        'constructor_params': {'model_name': 'gpt-4.1'} 
+    "gpt-5-nano": {
+        "class": ChatOpenAI,
+        "constructor_params": {"model_name": "gpt-5-nano"},
     },
-    'gpt-5.1': { 
-        'class': ChatOpenAI,
-        'constructor_params': {'model_name': 'gpt-5.1'} 
+    "claude-3-5-sonnet-latest": {
+        "class": ChatAnthropic,
+        "constructor_params": {"model": "claude-3-5-sonnet-latest"},
     },
-    'gpt-5-mini': { 
-        'class': ChatOpenAI,
-        'constructor_params': {'model_name': 'gpt-5-mini'} 
+    "claude-sonnet-4-5": {
+        "class": ChatAnthropic,
+        "constructor_params": {"model": "claude-sonnet-4-5"},
     },
-    'gpt-5-nano': { 
-        'class': ChatOpenAI,
-        'constructor_params': {'model_name': 'gpt-5-nano'} 
+    "claude-sonnet-4-0": {
+        "class": ChatAnthropic,
+        "constructor_params": {"model": "claude-sonnet-4-0"},
     },
-    'claude-3-5-sonnet-latest': {
-        'class': ChatAnthropic,
-        'constructor_params': {'model': 'claude-3-5-sonnet-latest'}
+    "gemini-2.5-flash": {
+        "class": ChatGoogleGenerativeAI,
+        "constructor_params": {"model": "gemini-2.5-flash"},
     },
-    'claude-sonnet-4-5': {
-        'class': ChatAnthropic,
-        'constructor_params': {'model': 'claude-sonnet-4-5'}
+    "gemini-2.5-flash-lite": {
+        "class": ChatGoogleGenerativeAI,
+        "constructor_params": {"model": "gemini-2.5-flash-lite"},
     },
-    'claude-sonnet-4-0': {
-        'class': ChatAnthropic,
-        'constructor_params': {'model': 'claude-sonnet-4-0'}
+    "gemini-2.5-pro": {
+        "class": ChatGoogleGenerativeAI,
+        "constructor_params": {"model": "gemini-2.5-pro"},
     },
-    'gemini-2.5-flash': {
-        'class': ChatGoogleGenerativeAI,
-        'constructor_params': {'model': 'gemini-2.5-flash'}
+    "llama3.2": {
+        "class": ChatOllama,
+        "constructor_params": {
+            "model": "llama3.2:latest",
+            "base_url": _get_ollama_base_url(),
+        },
     },
-    'gemini-2.5-flash-lite': {
-        'class': ChatGoogleGenerativeAI,
-        'constructor_params': {'model': 'gemini-2.5-flash-lite'}
+    "llama3.1": {
+        "class": ChatOllama,
+        "constructor_params": {
+            "model": "llama3.1:latest",
+            "base_url": _get_ollama_base_url(),
+        },
     },
-    'gemini-2.5-pro': {
-        'class': ChatGoogleGenerativeAI,
-        'constructor_params': {'model': 'gemini-2.5-pro'}
+    "gemma3": {
+        "class": ChatOllama,
+        "constructor_params": {
+            "model": "gemma3:latest",
+            "base_url": _get_ollama_base_url(),
+        },
     },
-    'llama3.2': { 
-        'class': ChatOllama,
-        'constructor_params': {'model': 'llama3.2:latest', 'base_url': _get_ollama_base_url()}
+    "deepseek-r1": {
+        "class": ChatOllama,
+        "constructor_params": {
+            "model": "deepseek-r1:latest",
+            "base_url": _get_ollama_base_url(),
+        },
     },
-    'llama3.1': { 
-        'class': ChatOllama,
-        'constructor_params': {'model': 'llama3.1:latest', 'base_url': _get_ollama_base_url()}
-    },
-    'gemma3': { 
-        'class': ChatOllama,
-        'constructor_params': {'model': 'gemma3:latest', 'base_url': _get_ollama_base_url()}
-    },
-    'deepseek-r1': { 
-        'class': ChatOllama,
-        'constructor_params': {'model': 'deepseek-r1:latest', 'base_url': _get_ollama_base_url()}
-    }
-    
     # Add more models here easily:
     # 'mistral7b': {
     #     'class': ChatOllama,
@@ -145,6 +142,7 @@ _llm_config_map = {
     #      'constructor_params': {'model_name': 'gpt-3.5-turbo', 'base_url': OLLAMA_BASE_URL}
     # }
 }
+
 
 def fetch_ollama_models() -> List[str]:
     """
@@ -177,7 +175,7 @@ def get_model_choices() -> List[str]:
     dynamic_models = fetch_ollama_models()
 
     normalized = {_normalize_model_name(m): m for m in base_models}
-    
+
     # Add models from .env if they aren't already there
     for env_model in [OLLAMA_MAIN_MODEL, OLLAMA_ASSISTANT_MODEL]:
         if env_model:
@@ -213,7 +211,10 @@ def resolve_model_config(model_choice: str):
         if env_model and _normalize_model_name(env_model) == model_choice_lower:
             return {
                 "class": ChatOllama,
-                "constructor_params": {"model": env_model, "base_url": _get_ollama_base_url()},
+                "constructor_params": {
+                    "model": env_model,
+                    "base_url": _get_ollama_base_url(),
+                },
             }
 
     # Check against dynamic models from Ollama API
@@ -221,7 +222,10 @@ def resolve_model_config(model_choice: str):
         if _normalize_model_name(ollama_model) == model_choice_lower:
             return {
                 "class": ChatOllama,
-                "constructor_params": {"model": ollama_model, "base_url": _get_ollama_base_url()},
+                "constructor_params": {
+                    "model": ollama_model,
+                    "base_url": _get_ollama_base_url(),
+                },
             }
 
     return None
