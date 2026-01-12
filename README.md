@@ -43,6 +43,7 @@ A powerful, AI-driven security testing framework designed for authorized penetra
 - **Real-time Updates**: Live progress tracking and status updates
 
 ### 🌐 **Dark Web OSINT Integration (Robin)**
+- **Integrated UI**: Seamless management of Robin findings via the VulnForge Dashboard
 - **Production-Ready Integration**: Complete Docker-based stack for Robin findings
 - **Secure Storage**: AES-GCM encryption for sensitive data at rest
 - **Automated Enrichment**: Background processing with HIBP, Shodan, Censys integration
@@ -90,8 +91,13 @@ pip install -r requirements.txt
 # Run installation script
 bash install_script.sh
 
-# Start using VulnForge
+# Start using VulnForge (CLI)
 python3 vulnforge_main.py --help
+
+# Launch VulnForge Premium Dashboard (Web UI)
+bash start_webmod.sh
+# OR
+python3 vulnforge_main.py --webmod
 ```
 
 ### **System Requirements**
@@ -110,6 +116,9 @@ python3 vulnforge_main.py --target "example.com" --mode recon
 
 # Generate detailed report
 python3 vulnforge_main.py --target "example.com" --mode recon --output-format all
+
+# Access Web Dashboard for visual recon management
+python3 vulnforge_main.py --webmod --target "example.com"
 ```
 
 ### **AI-Powered Operations**
@@ -122,6 +131,9 @@ python3 vulnforge_main.py generate-tool "A port scanner for web services"
 
 # Use advanced AI pipeline
 python3 vulnforge_main.py --ai-pipeline --target "example.com" --prompt-dir AI_Propmt
+
+# Interactive AI Security Assistant in Web Dashboard
+# Launch --webmod and navigate to 'AI Assistant' tab
 ```
 
 ### **Dark Web OSINT (Robin Integration)**
@@ -288,12 +300,16 @@ Impact factors:
 
 #### **Dashboard Features**
 
-Access the dashboard at `http://localhost:8080`:
-- **Item List**: View all findings with scores, tags, and enrichment status
-- **Filtering**: Filter by score, leak type, tags, or date range
-- **Details View**: View full item details including structured fields
-- **Actions**: Approve, archive, or notify for each finding
-- **Audit Trail**: View complete action history
+VulnForge now features a **Premium Multi-Module Dashboard** built with Streamlit, accessible via `bash start_webmod.sh` or `python3 vulnforge_main.py --webmod`.
+
+**Key Dashboard Modules:**
+- **🏠 Overview**: Real-time system health and recent security activity monitoring.
+- **🔍 Reconnaissance**: Visual interface for target scanning with AI-powered analysis.
+- **🕷️ Dark Web (Robin)**: Full integration of the Robin OSINT engine for dark web investigation.
+- **🛠️ Tool Manager**: Management and verification of required security tools (Nmap, Nuclei, etc.).
+- **🤖 AI Assistant**: Interactive chat interface for security consulting and vulnerability analysis.
+- **📑 Intelligence Reports**: Easy access and download of all generated security reports.
+- **⚙️ Settings**: Configuration of Ollama, API keys, and framework parameters.
 
 #### **Monitoring & Health**
 
