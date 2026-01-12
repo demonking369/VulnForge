@@ -35,6 +35,9 @@ class EnhancedReconModule:
                 "threads": 50,
                 "timeout": 10,
                 "follow_redirects": True
+            },
+            "nuclei": {
+                "severity": ["critical", "high", "medium"]
             }
         }
         
