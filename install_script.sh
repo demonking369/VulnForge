@@ -68,73 +68,127 @@ for tool in "${TOOLS[@]}"; do
     fi
 done
 
+# Function to start Ollama in background if not running
+start_ollama_service() {
+    # Check if ollama command exists first
+    if ! command -v ollama &> /dev/null; then
+        return 1
+    fi
+
+    if ! pgrep -x "ollama" > /dev/null; then
+        echo -e "${YELLOW}Starting Ollama service in background...${NC}"
+        ollama serve > /dev/null 2>&1 &
+    fi
+
+    # Wait for service to be responsive (applies even if already running)
+    echo -e "${YELLOW}Waiting for Ollama service to be responsive...${NC}"
+    local retries=0
+    while ! ollama list > /dev/null 2>&1 && [ $retries -lt 15 ]; do
+        sleep 2
+        ((retries++))
+    done
+
+    if [ $retries -eq 15 ]; then
+        echo -e "${RED}[✗] Ollama service not responding. Please start it manually.${NC}"
+        return 1
+    fi
+    echo -e "${GREEN}[✓] Ollama service is responsive.${NC}"
+    return 0
+}
+
 # Check Ollama and configure models
 OLLAMA_INSTALLED=false
 if check_command ollama; then
     OLLAMA_INSTALLED=true
-    echo -e "\n${YELLOW}Checking Ollama Setup...${NC}"
-    
-    # Get available models
-    AVAILABLE_MODELS=$(ollama list | tail -n +2 | awk '{print $1}')
-    
-    if [ -z "$AVAILABLE_MODELS" ]; then
-        echo -e "${YELLOW}[!] No models found installed.${NC}"
+    echo -e "\n${YELLOW}Setting up Ollama Service...${NC}"
+    if start_ollama_service; then
+        echo -e "\n${YELLOW}Fetching available models...${NC}"
+        # Improved fetching: ensure we only get the names and ignore errors
+        AVAILABLE_MODELS=($(ollama list 2>/dev/null | tail -n +2 | awk '{print $1}' | grep -v '^$'))
+        
+        if [ ${#AVAILABLE_MODELS[@]} -eq 0 ]; then
+            echo -e "${YELLOW}[!] No models found installed in Ollama.${NC}"
+        else
+            echo -e "${GREEN}[✓] Successfully fetched ${#AVAILABLE_MODELS[@]} models:${NC}"
+            for m in "${AVAILABLE_MODELS[@]}"; do
+                echo -e " - $m"
+            done
+        fi
     else
-        echo -e "${GREEN}Available models:${NC}"
-        echo "$AVAILABLE_MODELS"
+        OLLAMA_INSTALLED=false
     fi
+    
+    RECOMMENDED_MODELS=(
+        "deepseek-coder-v2:16b-lite-base-q4_0"
+        "mistral:7b-instruct-v0.2-q4_0"
+        "llama3:8b"
+        "codellama:7b"
+        "phi3:mini"
+    )
 
-    # Function to select model
-    select_model() {
+    # Combine and deduplicate
+    ALL_AVAILABLE_MODELS=($(echo "${RECOMMENDED_MODELS[@]} ${AVAILABLE_MODELS[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
+
+    echo -e "\n${BLUE}--- Model Configuration ---${NC}"
+    echo -e "Please select your preferred models by their number:"
+    
+    i=1
+    for m in "${ALL_AVAILABLE_MODELS[@]}"; do
+        status=""
+        if [[ " ${AVAILABLE_MODELS[@]} " =~ " ${m} " ]]; then
+            status="${GREEN}(Installed)${NC}"
+        else
+            status="${YELLOW}(Not Installed)${NC}"
+        fi
+        echo -e "$i) $m $status"
+        ((i++))
+    done
+    CUSTOM_OPTION=$i
+    echo -e "$CUSTOM_OPTION) Enter custom model name"
+
+    # Selection function
+    get_selection() {
         local type=$1
         local default=$2
-        local selection=""
+        local choice
         
-        echo -e "\n${BLUE}Select $type Model:${NC}"
-        echo "1) Use Default ($default)"
-        echo "2) Select from installed models"
-        echo "3) Enter custom model name"
+        read -p "Select $type Model (Number) [Default: $default]: " choice
         
-        read -p "Choice [1]: " choice
-        choice=${choice:-1}
-        
-        case $choice in
-            2)
-                echo -e "\nInstalled models:"
-                select m in $AVAILABLE_MODELS; do
-                    if [ -n "$m" ]; then
-                        selection=$m
-                        break
-                    fi
-                done
-                ;;
-            3)
-                read -p "Enter model name: " selection
-                ;;
-            *)
-                selection=$default
-                ;;
-        esac
-        echo "$selection"
+        if [ -z "$choice" ]; then
+            echo "$default"
+        elif [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -eq "$CUSTOM_OPTION" ]; then
+            read -p "Enter custom model name: " custom_val
+            echo "$custom_val"
+        elif [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -lt "$CUSTOM_OPTION" ]; then
+            echo "${ALL_AVAILABLE_MODELS[$((choice-1))]}"
+        else
+            echo "$default"
+        fi
     }
 
     # Select models
-    echo -e "\n${YELLOW}Configuring AI Models...${NC}"
-    MAIN_MODEL=$(select_model "Main (Logic/Reasoning)" "deepseek-coder-v2:16b-lite-base-q4_0")
-    ASSISTANT_MODEL=$(select_model "Assistant (Fast/Chat)" "mistral:7b-instruct-v0.2-q4_0")
+    MAIN_MODEL=$(get_selection "Main Logic" "deepseek-coder-v2:16b-lite-base-q4_0")
+    ASSISTANT_MODEL=$(get_selection "Assistant/Chat" "mistral:7b-instruct-v0.2-q4_0")
     
-    echo -e "\n${GREEN}Selected Configuration:${NC}"
-    echo -e "Main Model: $MAIN_MODEL"
-    echo -e "Assistant Model: $ASSISTANT_MODEL"
+    echo -e "\n${GREEN}Final Configuration:${NC}"
+    echo -e "Main Model: ${BLUE}$MAIN_MODEL${NC}"
+    echo -e "Assistant Model: ${BLUE}$ASSISTANT_MODEL${NC}"
     
-    # Save to .env (remove if it's a directory)
-    if [ -d ".env" ]; then
-        echo -e "${YELLOW}[!] .env is a directory, removing it...${NC}"
-        rm -rf .env
-    fi
+    # Save to .env
+    if [ -d ".env" ]; then rm -rf .env; fi
     echo "OLLAMA_MAIN_MODEL=$MAIN_MODEL" > .env
     echo "OLLAMA_ASSISTANT_MODEL=$ASSISTANT_MODEL" >> .env
     echo -e "${GREEN}[✓] Saved model configuration to .env${NC}"
+
+    # Pre-pull selected models if they are not installed
+    if ! [[ " ${AVAILABLE_MODELS[@]} " =~ " ${MAIN_MODEL} " ]]; then
+        echo -e "${YELLOW}Pulling $MAIN_MODEL...${NC}"
+        ollama pull "$MAIN_MODEL"
+    fi
+    if ! [[ " ${AVAILABLE_MODELS[@]} " =~ " ${ASSISTANT_MODEL} " ]]; then
+        echo -e "${YELLOW}Pulling $ASSISTANT_MODEL...${NC}"
+        ollama pull "$ASSISTANT_MODEL"
+    fi
 fi
 
 # Installation summary
@@ -148,101 +202,12 @@ echo -e "\n${YELLOW}Installation Options:${NC}"
 read -p "Do you want to install missing tools? (y/N): " INSTALL_TOOLS
 read -p "Do you want to install/update Ollama and AI models? (y/N): " INSTALL_AI
 
-# Install Python dependencies and CLI globally/for user
+# Install Python dependencies and CLI
 echo -e "\n${BLUE}Installing Python dependencies and CLI...${NC}"
 
-# Prefer system-wide install when sudo is available and user consents
-INSTALL_SCOPE="user"
-if command -v sudo &> /dev/null; then
-    read -p "Install system-wide using sudo? (y/N): " INSTALL_SYSTEM
-    if [[ $INSTALL_SYSTEM =~ ^[Yy]$ ]]; then
-        INSTALL_SCOPE="system"
-    fi
-fi
-
-if [ "$INSTALL_SCOPE" = "system" ]; then
-    echo -e "${YELLOW}Using sudo to install system-wide...${NC}"
-    sudo python3 -m pip install --upgrade pip setuptools wheel
-    sudo python3 -m pip install -r requirements.txt
-    sudo python3 -m pip install -r requirements-test.txt
-    sudo python3 -m pip install .
-    # Determine system scripts directory
-    SYSTEM_BIN=$(python3 -c 'import sysconfig; print(sysconfig.get_path("scripts"))' 2>/dev/null || echo "/usr/local/bin")
-else
-    echo -e "${YELLOW}Installing for current user (~/.local) or via pipx...${NC}"
-
-    # Prefer pipx if available to avoid PEP 668 restrictions
-    if command -v pipx &> /dev/null; then
-        echo -e "${YELLOW}Using pipx to install in an isolated venv...${NC}"
-        
-        # Uninstall first if exists
-        pipx uninstall vulnforge 2>/dev/null || true
-        
-        # Install the app with all dependencies
-        pipx install . --force
-        
-        # Ensure shim is linked
-        pipx ensurepath || true
-        
-        echo -e "${GREEN}[✓] Installed via pipx${NC}"
-    else
-        echo -e "${YELLOW}pipx not found, using pip with --break-system-packages...${NC}"
-        # Fallback to user installation, with --break-system-packages for PEP 668 distros (Kali/Debian)
-        python3 -m pip install --user --upgrade pip setuptools wheel --break-system-packages 2>/dev/null || python3 -m pip install --user --upgrade pip setuptools wheel
-        python3 -m pip install --user -r requirements.txt --break-system-packages 2>/dev/null || python3 -m pip install --user -r requirements.txt
-        python3 -m pip install --user -r requirements-test.txt --break-system-packages 2>/dev/null || python3 -m pip install --user -r requirements-test.txt
-        python3 -m pip install --user . --break-system-packages 2>/dev/null || python3 -m pip install --user .
-        echo -e "${GREEN}[✓] Installed via pip --user${NC}"
-    fi
-
-    # Ensure ~/.local/bin is on PATH for bash and zsh
-    for RC in ~/.bashrc ~/.zshrc; do
-        if [ -f "$RC" ]; then
-            if ! grep -q "\.local/bin" "$RC"; then
-                echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$RC"
-            fi
-        fi
-    done
-
-    # Update current shell PATH if needed
-    if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
-        export PATH="$HOME/.local/bin:$PATH"
-    fi
-    USER_BIN="$HOME/.local/bin"
-fi
-
-# Post-install verification and fallback
-echo -e "\n${BLUE}Verifying CLI installation...${NC}"
-if command -v vulnforge &> /dev/null; then
-    echo -e "${GREEN}[✓] 'vulnforge' is available on PATH${NC}"
-else
-    echo -e "${YELLOW}[!] 'vulnforge' not found on PATH yet.${NC}"
-    if [ "$INSTALL_SCOPE" = "system" ]; then
-        # Try to create a symlink in /usr/local/bin
-        SRC_PATH="${SYSTEM_BIN:-/usr/local/bin}/vulnforge"
-        if [ ! -x "$SRC_PATH" ]; then
-            # Some distros place console_scripts under /usr/bin
-            [ -x "/usr/bin/vulnforge" ] && SRC_PATH="/usr/bin/vulnforge"
-        fi
-        if [ -x "$SRC_PATH" ]; then
-            echo -e "${YELLOW}Creating symlink in /usr/local/bin for global access...${NC}"
-            sudo ln -sf "$SRC_PATH" /usr/local/bin/vulnforge
-        else
-            echo -e "${RED}Could not locate installed script to symlink. Check your pip scripts directory.${NC}"
-        fi
-    else
-        echo -e "${YELLOW}Adding ~/.local/bin to your PATH in the current session...${NC}"
-        if [ -n "$USER_BIN" ]; then
-            export PATH="$USER_BIN:$PATH"
-        fi
-        echo -e "${YELLOW}Open a new shell or 'source' your shell rc file to persist.${NC}"
-    fi
-    if command -v vulnforge &> /dev/null; then
-        echo -e "${GREEN}[✓] 'vulnforge' is now available on PATH${NC}"
-    else
-        echo -e "${RED}[✗] 'vulnforge' still not on PATH. Try reloading your shell or check pip install logs.${NC}"
-    fi
-fi
+python3 -m pip install -r requirements.txt --break-system-packages 2>/dev/null || python3 -m pip install -r requirements.txt
+python3 -m pip install -r requirements-test.txt --break-system-packages 2>/dev/null || python3 -m pip install -r requirements-test.txt
+python3 -m pip install . --break-system-packages 2>/dev/null || python3 -m pip install .
 
 # Install missing tools if requested
 if [[ $INSTALL_TOOLS =~ ^[Yy]$ ]]; then
@@ -293,43 +258,43 @@ mkdir -p ~/.vulnforge/{results,tools,sessions}
 
 # Create global wrapper script and symlink
 echo -e "${BLUE}Creating global command...${NC}"
-INSTALL_DIR="$(pwd)"
-cat > vulnforge << 'EOF'
+INSTALL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cat > vulnforge << EOF
 #!/bin/bash
 # VulnForge Global Wrapper Script
 
-# Get the directory where this script is located
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Absolute path to the main script
+MAIN_SCRIPT="$INSTALL_DIR/vulnforge_main.py"
+
+if [ ! -f "\$MAIN_SCRIPT" ]; then
+    echo "❌ Error: Could not find vulnforge_main.py at \$MAIN_SCRIPT"
+    exit 1
+fi
 
 # Activate virtual environment if it exists
-if [ -f "$SCRIPT_DIR/.venv/bin/activate" ]; then
-    source "$SCRIPT_DIR/.venv/bin/activate"
-    exec python3 "$SCRIPT_DIR/vulnforge_main.py" "$@"
-else
-    # Fallback to direct execution
-    exec python3 "$SCRIPT_DIR/vulnforge_main.py" "$@"
+if [ -f "$INSTALL_DIR/.venv/bin/activate" ]; then
+    source "$INSTALL_DIR/.venv/bin/activate"
 fi
+
+# Run the script
+exec python3 "\$MAIN_SCRIPT" "\$@"
 EOF
 
 chmod +x vulnforge
 
 # Try to create symlink in /usr/local/bin
 if command -v sudo &> /dev/null; then
-    if sudo -n true 2>/dev/null; then
-        sudo ln -sf "$INSTALL_DIR/vulnforge" /usr/local/bin/vulnforge
-        echo -e "${GREEN}[✓] Created global command: vulnforge${NC}"
-    else
-        echo -e "${YELLOW}[!] Creating global symlink (requires sudo)...${NC}"
-        sudo ln -sf "$INSTALL_DIR/vulnforge" /usr/local/bin/vulnforge && \
-            echo -e "${GREEN}[✓] Created global command: vulnforge${NC}" || \
-            echo -e "${YELLOW}[!] Could not create symlink. Run manually: sudo ln -sf $INSTALL_DIR/vulnforge /usr/local/bin/vulnforge${NC}"
-    fi
+    echo -e "${YELLOW}[!] Creating global symlink (requires sudo)...${NC}"
+    sudo ln -sf "$INSTALL_DIR/vulnforge" /usr/local/bin/vulnforge && \
+        echo -e "${GREEN}[✓] Created global command: vulnforge${NC}" || \
+        echo -e "${YELLOW}[!] Could not create symlink manual action needed.${NC}"
 else
     echo -e "${YELLOW}[!] sudo not available. Add to PATH manually: export PATH=\"$INSTALL_DIR:\$PATH\"${NC}"
 fi
 
 # Create initial config files
 echo -e "${BLUE}Creating configuration files...${NC}"
+mkdir -p ~/.vulnforge/configs
 cat > ~/.vulnforge/configs/tools.json << EOL
 {
     "nmap": {

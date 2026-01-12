@@ -39,6 +39,7 @@ from recon_module import EnhancedReconModule
 from ai_integration import AIAnalyzer, OllamaClient
 from ai_orchestrator import AIOrchestrator # New Import
 import modules.darkweb as darkweb_module
+from modules.ai.agent import VulnForgeAgent
 
 
 class VulnForge:
@@ -54,6 +55,8 @@ class VulnForge:
         # Initialize AI components
         self.ollama = OllamaClient()
         self.ai_analyzer = AIAnalyzer(self.ollama)
+        self.agentic_mode = False
+        self.agent = VulnForgeAgent(self.ollama)
 
     def setup_directories(self):
         """Create necessary directories"""
@@ -455,7 +458,7 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
         "--ai-pipeline", action="store_true", help="Enable the advanced multi-prompt AI pipeline."
     )
     parser.add_argument(
-        "--prompt-dir", help="Directory for the AI pipeline prompts.", default="AI_Propmt/system-prompts-and-models-of-ai-tools"
+        "--prompt-dir", help="Directory for the AI pipeline prompts.", default="prompts/system_prompts"
     )
     parser.add_argument(
         "--uninstall", action="store_true", help="Uninstall VulnForge and its components"
@@ -468,6 +471,9 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
     )
     parser.add_argument(
         "--web-port", type=int, default=8501, help="Web interface port (default: 8501)"
+    )
+    parser.add_argument(
+        "--agentic", "--ai-agent", action="store_true", help="Enable simple agentic AI mode"
     )
 
     # Add subparsers for commands
@@ -553,6 +559,23 @@ async def _async_main(args):
         orchestrator = AIOrchestrator(prompt_path)
         orchestrator.execute_task(f"Perform a security scan on {args.target}")
         return
+
+    # Handle Agentic AI Mode
+    if args.agentic:
+        vf.agentic_mode = True
+        os.environ["VULNFORGE_AGENTIC"] = "1"
+        vf.logger.info("Agentic AI mode enabled.")
+        if args.target:
+            # If target provided, run an initial agentic task
+            task = f"Analyze and plan a security assessment for target: {args.target}"
+            result = await vf.agent.run_task(task)
+            vf.console.print("\n[bold cyan]--- Agentic Action Plan ---[/bold cyan]")
+            vf.console.print(json.dumps(result, indent=2))
+        else:
+            vf.console.print("\n[bold yellow]Agentic mode enabled. Ready for instructions...[/bold yellow]")
+        
+        # If we are not in web mode, we might want an interactive CLI loop here
+        # For now, we'll just continue to respect other flags.
 
     # Set logging level based on verbose flag
     if args.verbose:

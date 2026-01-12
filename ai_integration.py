@@ -68,7 +68,7 @@ class OllamaClient:
             self.logger.error("Error pulling model %s: %s", model, e)
             return False
         
-    def generate(self, prompt: str, model: str = None, system_prompt: str = None) -> Optional[str]:
+    def generate(self, prompt: str, model: str = None, system_prompt: str = None, format: str = None) -> Optional[str]:
         """Generate text using Ollama"""
         if not model:
             model = self.get_best_model()
@@ -94,6 +94,9 @@ class OllamaClient:
             
             if system_prompt:
                 data["system"] = system_prompt
+            
+            if format:
+                data["format"] = format
                 
             response = requests.post(f"{self.base_url}/api/generate", json=data, timeout=300)  # Increased timeout
             
@@ -395,19 +398,44 @@ class AIOrchestrator:
     def _load_prompts(self):
         """Loads the specialized AI prompts from the prompt directory."""
         prompts = {}
+        # The prompt_dir is /home/arun/tools/Custom_T_1/VulnForge/prompts/system_prompts
         try:
             # Devin-style planning prompt
-            with open(self.prompt_dir / "Devin AI/system.md", "r") as f:
-                prompts["planner"] = f.read()
+            planner_path = self.prompt_dir / "Devin AI" / "Prompt.txt"
+            if planner_path.exists():
+                with open(planner_path, "r") as f:
+                    prompts["planner"] = f.read()
+            else:
+                prompts["planner"] = "You are an expert security planner."
+
             # Manus-style tool selection prompt
-            with open(self.prompt_dir / "Manus Agent Tools & Prompt/system.md", "r") as f:
-                prompts["tool_selector"] = f.read()
+            tool_path = self.prompt_dir / "Manus Agent Tools & Prompt" / "Prompt.txt"
+            if tool_path.exists():
+                with open(tool_path, "r") as f:
+                    prompts["tool_selector"] = f.read()
+            else:
+                prompts["tool_selector"] = "You are an expert at selecting the best security tool for a task."
+
             # Cursor-style code/analysis prompt
-            with open(self.prompt_dir / "Cursor Prompts/prompts.md", "r") as f:
-                prompts["analyst"] = f.read()
-        except FileNotFoundError as e:
-            print(f"Error: Could not load a required prompt. {e}")
-            raise
+            analyst_path = self.prompt_dir / "Cursor Prompts" / "Cursor Prompts.txt"
+            # Checking common child in Cursor Prompts
+            if not analyst_path.exists():
+                # Fallback to the first .txt file found if possible, or a default
+                analyst_path = self.prompt_dir / "Cursor Prompts" / "System Prompt.txt"
+            
+            if analyst_path.exists():
+                with open(analyst_path, "r") as f:
+                    prompts["analyst"] = f.read()
+            else:
+                prompts["analyst"] = "You are a senior security researcher analyzing results."
+                
+        except Exception as e:
+            logging.getLogger(__name__).error(f"Error loading specialized prompts: {e}")
+            # Ensure we have defaults if everything fails
+            prompts.setdefault("planner", "You are an expert security planner.")
+            prompts.setdefault("tool_selector", "You are an expert at selecting the best security tool.")
+            prompts.setdefault("analyst", "You are a senior security researcher.")
+            
         return prompts
 
     def execute_task(self, task_description: str):
@@ -481,7 +509,7 @@ if __name__ == "__main__":
         "--ai-pipeline", action="store_true", help="Enable the advanced multi-prompt AI pipeline."
     )
     parser.add_argument(
-        "--prompt-dir", help="Directory for the AI pipeline prompts.", default="AI_Propmt/system-prompts-and-models-of-ai-tools"
+        "--prompt-dir", help="Directory for the AI pipeline prompts.", default="prompts/system_prompts"
     )
     
     args = parser.parse_args()

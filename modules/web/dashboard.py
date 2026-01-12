@@ -100,18 +100,27 @@ def show_overview():
         except: pass
 
     # Summary Metrics
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4, col5 = st.columns(5)
     with col1:
         st.metric("Total Scans", str(recon_scans))
     with col2:
         st.metric("Vulnerabilities", str(total_vulns))
+    
+    # Dynamic System Health
+    agent_status = st.session_state.vulnforge.agent.get_readiness_status()
+    health_status = "Optimal" if agent_status["ready"] else "Degraded"
+    
     with col3:
-        st.metric("System Health", "Optimal")
+        st.metric("System Health", health_status)
     with col4:
         # Check if Ollama is running
         from modules.darkweb.robin.llm_utils import fetch_ollama_models
         ollama_status = "Connected" if fetch_ollama_models() else "Disconnected"
         st.metric("Ollama AI", ollama_status)
+    with col5:
+        is_agentic = os.getenv("VULNFORGE_AGENTIC") == "1" or st.session_state.vulnforge.agentic_mode
+        agent_ui_status = "Enabled" if is_agentic else "Disabled"
+        st.metric("Agentic AI", agent_ui_status)
 
     st.markdown("### 🕒 Recent Activity")
     # Fetch last 5 modified items in results

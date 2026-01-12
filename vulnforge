@@ -1,14 +1,18 @@
 #!/bin/bash
 # VulnForge Global Wrapper Script
 
-# Get the directory where this script is located
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Absolute path to the main script
+MAIN_SCRIPT="/home/arun/tools/Custom_T_1/VulnForge/vulnforge_main.py"
+
+if [ ! -f "$MAIN_SCRIPT" ]; then
+    echo "❌ Error: Could not find vulnforge_main.py at $MAIN_SCRIPT"
+    exit 1
+fi
 
 # Activate virtual environment if it exists
-if [ -f "$SCRIPT_DIR/.venv/bin/activate" ]; then
-    source "$SCRIPT_DIR/.venv/bin/activate"
-    exec python3 "$SCRIPT_DIR/vulnforge_main.py" "$@"
-else
-    # Fallback to direct execution
-    exec python3 "$SCRIPT_DIR/vulnforge_main.py" "$@"
+if [ -f "/home/arun/tools/Custom_T_1/VulnForge/.venv/bin/activate" ]; then
+    source "/home/arun/tools/Custom_T_1/VulnForge/.venv/bin/activate"
 fi
+
+# Run the script
+exec python3 "$MAIN_SCRIPT" "$@"

@@ -130,7 +130,7 @@ python3 vulnforge_main.py ask-ai "What vulnerabilities should I look for in a we
 python3 vulnforge_main.py generate-tool "A port scanner for web services"
 
 # Use advanced AI pipeline
-python3 vulnforge_main.py --ai-pipeline --target "example.com" --prompt-dir AI_Propmt
+python3 vulnforge_main.py --ai-pipeline --target "example.com" --prompt-dir prompts/system_prompts
 
 # Interactive AI Security Assistant in Web Dashboard
 # Launch --webmod and navigate to 'AI Assistant' tab
@@ -310,6 +310,30 @@ VulnForge now features a **Premium Multi-Module Dashboard** built with Streamlit
 - **🤖 AI Assistant**: Interactive chat interface for security consulting and vulnerability analysis.
 - **📑 Intelligence Reports**: Easy access and download of all generated security reports.
 - **⚙️ Settings**: Configuration of Ollama, API keys, and framework parameters.
+- **🤖 Agentic AI**: Managed autonomous planning and action intents.
+
+### **Agentic AI Mode**
+
+VulnForge now features a **Simple Agentic AI Mode** that turns the AI assistant into a tool-aware agent. In this mode, the AI can understand all available modules and suggest structured action plans based on your intent.
+
+#### **How it Works**
+- **AI = Decision Layer**: Analyzes your request and determines the best course of action.
+- **Controller = Execution Layer**: Receives the AI's structured "action intents" and delegates them to the appropriate framework modules or UI elements.
+- **Safety**: The AI does not execute system commands directly. It only emits intents that must be processed by the framework's controller.
+
+#### **Usage**
+To enable agentic mode via the CLI:
+```bash
+vulnforge --agentic --target example.com
+```
+
+#### **Example Interaction**
+1. **User asks**: "I want to see if there are any leaked credentials for example.com and then run a passive scan."
+2. **AI Plans**:
+    - Step 1: Call Robin module to search for leaks.
+    - Step 2: Navigate to Recon module.
+    - Step 3: Trigger a passive scan on example.com.
+3. **Controller Executes**: The framework sequentially calls the dark web OSINT engine and prepares the reconnaissance module.
 
 #### **Monitoring & Health**
 

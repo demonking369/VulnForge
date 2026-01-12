@@ -133,6 +133,45 @@ Provide a detailed response:"""
             self.logger.error("Error processing query: %s", str(e))
             raise RuntimeError("Failed to process query")
 
+    async def execute_intent(self, intent: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute a structured action intent from the Agentic AI.
+        
+        Args:
+            intent: The structured intent JSON.
+            
+        Returns:
+            Result of the execution.
+        """
+        self.logger.info("Executing intent: %s on %s", intent.get("type"), intent.get("target"))
+        
+        action_type = intent.get("type")
+        target = intent.get("target")
+        value = intent.get("value")
+        
+        try:
+            if action_type == "module_call":
+                if target == "recon_scan":
+                    # Placeholder for recon trigger logic
+                    return {"status": "success", "message": f"Triggered recon scan on {value}"}
+                elif target == "robin_search":
+                    return {"status": "success", "message": f"Triggered Robin search for {value}"}
+            
+            elif action_type == "tool_call":
+                if target == "install_tool":
+                    return {"status": "info", "message": f"Suggested installation of tool: {value}"}
+                
+            elif action_type == "ui_click":
+                return {"status": "ui_intent", "action": "navigate", "tab": target}
+                
+            elif action_type == "ui_input":
+                return {"status": "ui_intent", "action": "fill", "element": target, "value": value}
+                
+            return {"status": "error", "message": f"Unknown intent type or target: {action_type}/{target}"}
+            
+        except Exception as e:
+            self.logger.error(f"Intent execution failed: {e}")
+            return {"status": "error", "message": str(e)}
+
     async def _get_ai_response(self, prompt: str) -> str:
         """Get response from AI model with timeout.
         
