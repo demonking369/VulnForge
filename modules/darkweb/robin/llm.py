@@ -90,7 +90,7 @@ def filter_results(llm, query, results):
     try:
         result_indices = chain.invoke({"query": query, "results": final_str})
     except openai.RateLimitError as e:
-        print(
+        logging.warning(
             f"Rate limit error: {e} \n Truncating to Web titles only with 30 characters"
         )
         final_str = _generate_final_string(results, truncate=True)

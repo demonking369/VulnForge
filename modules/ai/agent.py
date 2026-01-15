@@ -3,7 +3,7 @@ import logging
 import re
 from pathlib import Path
 from typing import Dict, Any, List, Optional
-from ai_integration import OllamaClient
+from modules.ai.ai_integration import OllamaClient
 
 class VulnForgeAgent:
     """Simple Agentic AI for VulnForge.

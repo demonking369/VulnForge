@@ -2,7 +2,7 @@ import json
 import subprocess
 import shlex
 from pathlib import Path
-from ai_integration import OllamaClient
+from modules.ai.ai_integration import OllamaClient
 
 class AIOrchestrator:
     """

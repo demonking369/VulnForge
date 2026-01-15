@@ -50,8 +50,8 @@ sys.path.append(str(BASE_DIR))
 # Import VulnForge components
 try:
     from vulnforge_main import VulnForge
-    from recon_module import EnhancedReconModule
-    from ai_integration import AIAnalyzer, OllamaClient
+    from modules.recon.recon_module import EnhancedReconModule
+    from modules.ai.ai_integration import AIAnalyzer, OllamaClient
     from modules.web.web_module import WebModule
     from modules.scan.scan_module import ScanModule
     from modules.exploit.exploit_module import ExploitModule

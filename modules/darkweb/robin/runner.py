@@ -11,6 +11,9 @@ from typing import Optional, Dict, Any
 
 from rich.console import Console
 from rich.panel import Panel
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Fix imports to work both as module and when run directly
 try:
@@ -90,23 +93,18 @@ def run_darkweb_osint(
 
     _ensure_tor_proxy()
 
-    console.print(
-        Panel.fit(
-            f"[bold blue]Robin Dark Web OSINT[/bold blue]\nModel: {model}\nThreads: {threads}",
-            title="Dark Web Module",
-        )
-    )
+    logger.info(f"Starting Robin Dark Web OSINT | Model: {model} | Threads: {threads}")
 
     llm = get_llm(model)
 
-    with console.status("Refining query with AI...", spinner="dots"):
-        refined_query = refine_query(llm, query)
+    logger.info("Refining query with AI...")
+    refined_query = refine_query(llm, query)
 
-    with console.status("Querying dark web indices via Tor...", spinner="dots"):
-        search_results = get_search_results(refined_query.replace(" ", "+"), max_workers=threads)
+    logger.info("Querying dark web indices via Tor...")
+    search_results = get_search_results(refined_query.replace(" ", "+"), max_workers=threads)
 
     if not search_results:
-        console.print("[yellow]No search results returned. Verify Tor connectivity and try again.[/yellow]")
+        logger.warning("No search results returned. Verify Tor connectivity and try again.")
         return {
             "refined_query": refined_query,
             "search_results": [],
@@ -115,17 +113,18 @@ def run_darkweb_osint(
             "report_path": None,
         }
 
-    with console.status("Prioritising results with AI...", spinner="dots"):
-        filtered_results = filter_results(llm, refined_query, search_results)
+    logger.info("Prioritising results with AI...")
+    filtered_results = filter_results(llm, refined_query, search_results)
 
-    with console.status("Scraping selected hidden services...", spinner="dots"):
-        scraped_results = scrape_multiple(filtered_results, max_workers=threads)
+    logger.info("Scraping selected hidden services...")
+    scraped_results = scrape_multiple(filtered_results, max_workers=threads)
 
-    with console.status("Generating intelligence summary...", spinner="dots"):
-        summary = generate_summary(llm, query, scraped_results)
+    logger.info("Generating intelligence summary...")
+    summary = generate_summary(llm, query, scraped_results)
 
     report_path = _write_report(summary, Path(output) if output else None)
-    console.print(f"[green]✔ Dark web report saved to {report_path}[/green]")
+    report_path = _write_report(summary, Path(output) if output else None)
+    logger.info(f"Dark web report saved to {report_path}")
 
     return {
         "refined_query": refined_query,

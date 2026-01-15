@@ -39,9 +39,9 @@ from utils.security_utils import (
 )
 from utils.auth import get_auth_manager, Permission
 
-from recon_module import EnhancedReconModule
-from ai_integration import AIAnalyzer, OllamaClient
-from ai_orchestrator import AIOrchestrator # New Import
+from modules.recon.recon_module import EnhancedReconModule
+from modules.ai.ai_integration import AIAnalyzer, OllamaClient
+from modules.ai.ai_orchestrator import AIOrchestrator # New Import
 import modules.darkweb as darkweb_module
 from modules.ai.agent import VulnForgeAgent
 from modules.web.web_module import WebModule
