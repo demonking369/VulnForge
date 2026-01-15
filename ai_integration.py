@@ -6,7 +6,7 @@ Handles Ollama integration, prompt engineering, and AI-powered analysis
 
 import json
 import os
-import requests
+import httpx
 import subprocess
 import logging
 from typing import Dict, List, Optional, Any
@@ -15,6 +15,11 @@ import re
 from pathlib import Path
 import asyncio
 import ctypes
+try:
+    from duckduckgo_search import DDGS
+    DDGS_AVAILABLE = True
+except ImportError:
+    DDGS_AVAILABLE = False
 
 class OllamaClient:
     def __init__(self, base_url: str = "http://localhost:11434"):
@@ -24,6 +29,7 @@ class OllamaClient:
         # Load configuration from environment
         self.main_model = os.getenv("OLLAMA_MAIN_MODEL", "deepseek-coder-v2:16b-lite-base-q4_0")
         self.assistant_model = os.getenv("OLLAMA_ASSISTANT_MODEL", "mistral:7b-instruct-v0.2-q4_0")
+        self.ai_enabled = os.getenv("AI_ENABLED", "true").lower() == "true"
         
         self.backup_models = [
             "deepseek-coder:6.7b",
@@ -31,21 +37,44 @@ class OllamaClient:
             "mistral:7b"
         ]
         
-    def is_available(self) -> bool:
+    async def is_available(self) -> bool:
         """Check if Ollama service is running"""
         try:
-            response = requests.get(f"{self.base_url}/api/tags", timeout=5)
-            return response.status_code == 200
-        except (requests.RequestException, requests.Timeout, requests.ConnectionError):
+            async with httpx.AsyncClient(timeout=2) as client:
+                response = await client.get(f"{self.base_url}/api/tags")
+                return response.status_code == 200
+        except (httpx.RequestError, httpx.TimeoutException):
+            return False
+
+    async def ensure_service_running(self) -> bool:
+        """Try to start Ollama service if not running"""
+        if await self.is_available():
+            return True
+            
+        self.logger.info("Ollama service not running. Attempting to start...")
+        try:
+            # Try to start using subprocess (background)
+            subprocess.Popen(["ollama", "serve"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            
+            # Wait for it to start
+            for i in range(10):
+                await asyncio.sleep(2)
+                if await self.is_available():
+                    self.logger.info("Ollama service started successfully.")
+                    return True
+            return False
+        except Exception as e:
+            self.logger.error(f"Failed to start Ollama service: {e}")
             return False
             
-    def list_models(self) -> List[Dict]:
+    async def list_models(self) -> List[Dict]:
         """List available models"""
         try:
-            response = requests.get(f"{self.base_url}/api/tags")
-            if response.status_code == 200:
-                return response.json().get('models', [])
-        except (requests.RequestException, requests.Timeout, requests.ConnectionError) as e:
+            async with httpx.AsyncClient(timeout=5) as client:
+                response = await client.get(f"{self.base_url}/api/tags")
+                if response.status_code == 200:
+                    return response.json().get('models', [])
+        except (httpx.RequestError, httpx.TimeoutException) as e:
             self.logger.error("Error listing models: %s", e)
         return []
         
@@ -68,13 +97,26 @@ class OllamaClient:
             self.logger.error("Error pulling model %s: %s", model, e)
             return False
         
-    def generate(self, prompt: str, model: str = None, system_prompt: str = None, format: str = None) -> Optional[str]:
+    async def generate(self, prompt: str, model: str = None, system_prompt: str = None, format: str = None) -> Optional[str]:
         """Generate text using Ollama"""
+        if not self.ai_enabled:
+            self.logger.warning("AI features are currently disabled in configuration.")
+            return None
+
+        # Auto-start if needed
+        if not await self.ensure_service_running():
+            self.logger.error("Ollama service is not running and could not be auto-started.")
+            return None
+
         if not model:
-            model = self.get_best_model()
+            model = await self.get_best_model()
             
         if not model:
-            self.logger.error("No suitable model available")
+            available = await self.list_models()
+            if not available:
+                self.logger.error("No models found in Ollama. Please pull a model using 'ollama pull <model>'.")
+            else:
+                self.logger.error(f"Configured models ({self.main_model}, {self.assistant_model}) not found.")
             return None
             
         try:
@@ -83,10 +125,10 @@ class OllamaClient:
                 "prompt": prompt,
                 "stream": False,
                 "options": {
-                    "temperature": 0.5, # Lowered for more deterministic planning
+                    "temperature": 0.5,
                     "top_p": 0.9,
                     "max_tokens": 4096,
-                    "num_ctx": 16384,     # Increased context window for large prompts
+                    "num_ctx": 4096,     # Reduced from 16384 to prevent OOM
                     "num_thread": 8,
                     "repeat_penalty": 1.1
                 }
@@ -98,22 +140,27 @@ class OllamaClient:
             if format:
                 data["format"] = format
                 
-            response = requests.post(f"{self.base_url}/api/generate", json=data, timeout=300)  # Increased timeout
+            async with httpx.AsyncClient(timeout=300) as client:
+                response = await client.post(f"{self.base_url}/api/generate", json=data)
             
             if response.status_code == 200:
                 result = response.json()
                 return result.get('response', '').strip()
             else:
-                self.logger.error("Ollama API error: %s", response.status_code)
+                self.logger.error(f"Ollama API error: {response.status_code} - {response.text}")
                 
-        except (requests.RequestException, requests.Timeout, requests.ConnectionError) as e:
-            self.logger.error("Error generating with Ollama: %s", e)
+        except (httpx.RequestError, httpx.TimeoutException) as e:
+            self.logger.error(f"Error generating with Ollama: {e}")
             
         return None
+
+    async def query(self, prompt: str, system_prompt: str = None) -> Optional[str]:
+        """Wrapper for compatibility with modules expecting .query()"""
+        return await self.generate(prompt=prompt, system_prompt=system_prompt)
         
-    def get_best_model(self) -> Optional[str]:
+    async def get_best_model(self) -> Optional[str]:
         """Get the best available model"""
-        available_models = [m['name'] for m in self.list_models()]
+        available_models = [m['name'] for m in await self.list_models()]
         
         # Check main model first (deepseek-coder-v2:16b-lite-base-q4_0)
         if self.main_model in available_models:
@@ -159,7 +206,7 @@ class AIAnalyzer:
         self.ollama = ollama_client
         self.logger = logging.getLogger(__name__)
         
-    def analyze_nmap_output(self, nmap_output: str) -> Dict[str, Any]:
+    async def analyze_nmap_output(self, nmap_output: str) -> Dict[str, Any]:
         """Analyze nmap scan results using AI"""
         system_prompt = """You are a cybersecurity expert analyzing nmap scan results. 
         Identify potential vulnerabilities, interesting services, and security issues.
@@ -188,7 +235,7 @@ class AIAnalyzer:
         }}
         """
         
-        response = self.ollama.generate(prompt, system_prompt=system_prompt)
+        response = await self.ollama.generate(prompt, system_prompt=system_prompt)
         if response:
             try:
                 return json.loads(response)
@@ -203,35 +250,58 @@ class AIAnalyzer:
                         
         return {"error": "Failed to analyze nmap output", "raw_response": response}
         
-    def generate_exploit_code(self, vulnerability_info: Dict) -> str:
+    async def perform_web_search(self, query: str, max_results: int = 3) -> str:
+        """Perform a web search to augment AI context"""
+        if not DDGS_AVAILABLE:
+            return "Web search unavailable (duckduckgo-search not installed)."
+            
+        try:
+            self.logger.info(f"Performing web search for: {query}")
+            results = DDGS().text(query, max_results=max_results)
+            if not results:
+                return "No results found."
+                
+            formatted_results = "Web Search Results:\n"
+            for i, r in enumerate(results, 1):
+                formatted_results += f"{i}. {r['title']}\n   {r['body']}\n   Source: {r['href']}\n\n"
+            return formatted_results
+        except Exception as e:
+            self.logger.error(f"Web search failed: {e}")
+            return f"Web search failed: {e}"
+
+    async def generate_exploit_code(self, vulnerability_info: Dict) -> Dict[str, Any]:
         """Generate exploit code based on vulnerability information"""
-        system_prompt = """You are a security researcher creating proof-of-concept exploit code.
-        Generate safe, educational exploit code with proper error handling and comments.
-        Include safety warnings and ethical use disclaimers."""
-        
         prompt = f"""
-        Generate a Python proof-of-concept exploit for this vulnerability:
+        Generate a safe, educational exploit for the following vulnerability:
+        {json.dumps(vulnerability_info, indent=2)}
         
-        Service: {vulnerability_info.get('service', 'Unknown')}
-        Port: {vulnerability_info.get('port', 'Unknown')}
-        Vulnerability: {vulnerability_info.get('vulnerability', 'Unknown')}
-        Target: {vulnerability_info.get('target', 'localhost')}
+        Focus on:
+        1. Identification of the vulnerable component.
+        2. Proof of Concept (PoC) code in Python.
+        3. Clear comments explaining each step.
+        4. Safety measures and authorization checks.
         
-        Requirements:
-        1. Include proper error handling
-        2. Add educational comments
-        3. Include safety warnings
-        4. Make it modular and readable
-        5. Add timeout and connection limits
-        6. Include ethical use disclaimer
-        
-        Generate complete, working Python code:
+        Provide the result in this JSON format:
+        {{
+            "vulnerability": "Name",
+            "exploit_code": "Python code here",
+            "explanation": "Brief description of how it works",
+            "safety_warning": "Warning about usage"
+        }}
         """
         
-        response = self.ollama.generate(prompt, system_prompt=system_prompt)
-        return response or "# Failed to generate exploit code"
+        response = await self.ollama.generate(prompt)
+        if response:
+            try:
+                return json.loads(response)
+            except json.JSONDecodeError:
+                json_match = re.search(r'```json\n(.*?)\n```', response, re.DOTALL)
+                if json_match:
+                    return json.loads(json_match.group(1))
+                    
+        return {"error": "Failed to generate exploit", "raw_response": response}
         
-    def analyze_web_response(self, url: str, response_data: Dict) -> Dict[str, Any]:
+    async def analyze_web_response(self, url: str, response_data: Dict) -> Dict[str, Any]:
         """Analyze web service response for vulnerabilities"""
         system_prompt = """You are a web application security expert.
         Analyze HTTP responses for potential vulnerabilities and security issues."""
@@ -274,7 +344,7 @@ class AIAnalyzer:
         }}
         """
         
-        response = self.ollama.generate(prompt, system_prompt=system_prompt)
+        response = await self.ollama.generate(prompt, system_prompt=system_prompt)
         if response:
             try:
                 return json.loads(response)

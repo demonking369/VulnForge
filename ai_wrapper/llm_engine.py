@@ -15,7 +15,7 @@ import logging
 import time
 from pathlib import Path
 from typing import Dict, List, Optional, Any
-import requests
+import httpx
 from functools import lru_cache
 
 class LLMEngine:
@@ -72,14 +72,15 @@ class LLMEngine:
             
         return available_models
         
-    def _is_model_available(self, model: str) -> bool:
+    async def _is_model_available(self, model: str) -> bool:
         """Check if a model is available"""
         try:
-            response = requests.get(f"{self.base_url}/api/tags", timeout=5)
+            async with httpx.AsyncClient(timeout=5) as client:
+                response = await client.get(f"{self.base_url}/api/tags")
             if response.status_code == 200:
                 models = response.json().get('models', [])
                 return any(m['name'] == model for m in models)
-        except (requests.RequestException, requests.Timeout, requests.ConnectionError) as e:
+        except (httpx.RequestError, httpx.TimeoutException) as e:
             self.logger.error("Error checking model availability: %s", e)
             return False
         return False
@@ -104,9 +105,12 @@ class LLMEngine:
         return False
         
     @lru_cache(maxsize=100)
-    def query(self, prompt: str, system_prompt: Optional[str] = None, 
+    async def generate(self, prompt: str, system_prompt: Optional[str] = None, model: Optional[str] = None) -> Optional[str]:
+        """Generate text (wrapper for query)"""
+        return await self.query(prompt, system_prompt=system_prompt, model=model)
+
+    async def query(self, prompt: str, system_prompt: Optional[str] = None, 
               model: Optional[str] = None, use_cache: bool = True) -> Optional[str]:
-        """Query the LLM with fallback support"""
         if not model:
             model = self.current_model
             
@@ -134,11 +138,11 @@ class LLMEngine:
                 if system_prompt:
                     data["system"] = system_prompt
                     
-                response = requests.post(
-                    f"{self.base_url}/api/generate", 
-                    json=data, 
-                    timeout=self.config["timeout"]
-                )
+                async with httpx.AsyncClient(timeout=self.config["timeout"]) as client:
+                    response = await client.post(
+                        f"{self.base_url}/api/generate", 
+                        json=data
+                    )
                 
                 if response.status_code == 200:
                     result = response.json().get('response', '').strip()
@@ -146,7 +150,7 @@ class LLMEngine:
                         self.response_cache[cache_key] = result
                     return result
                     
-            except (requests.RequestException, requests.Timeout, requests.ConnectionError) as e:
+            except (httpx.RequestError, httpx.TimeoutException) as e:
                 self.logger.error("Error querying model %s: %s", model, e)
                 
             # Try next model if available
@@ -158,7 +162,7 @@ class LLMEngine:
                 else:
                     break
                     
-            time.sleep(self.config["retry_delay"])
+            await asyncio.sleep(self.config["retry_delay"])
             
         return None
         

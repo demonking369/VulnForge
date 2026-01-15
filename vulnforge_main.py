@@ -20,9 +20,13 @@ from datetime import datetime
 from pathlib import Path
 import logging
 import asyncio
+from dotenv import load_dotenv
 from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
+
+# Load environment variables
+load_dotenv()
 from typing import Optional
 
 # SECURITY: Import security utilities
@@ -40,6 +44,9 @@ from ai_integration import AIAnalyzer, OllamaClient
 from ai_orchestrator import AIOrchestrator # New Import
 import modules.darkweb as darkweb_module
 from modules.ai.agent import VulnForgeAgent
+from modules.web.web_module import WebModule
+from modules.exploit.exploit_module import ExploitModule
+from modules.scan.scan_module import ScanModule
 
 
 class VulnForge:
@@ -57,6 +64,9 @@ class VulnForge:
         self.ai_analyzer = AIAnalyzer(self.ollama)
         self.agentic_mode = False
         self.agent = VulnForgeAgent(self.ollama)
+        self.web_module = WebModule(self.base_dir, self.ai_analyzer)
+        self.exploit_module = ExploitModule(self.base_dir, self.ai_analyzer)
+        self.scan_module = ScanModule(self.base_dir, self.ai_analyzer)
 
     def setup_directories(self):
         """Create necessary directories"""
@@ -475,6 +485,9 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
     parser.add_argument(
         "--agentic", "--ai-agent", action="store_true", help="Enable simple agentic AI mode"
     )
+    parser.add_argument(
+        "--no-ai", action="store_true", help="Disable AI analysis for the current mode"
+    )
 
     # Add subparsers for commands
     subparsers = parser.add_subparsers(dest='command', help='Available commands')
@@ -712,13 +725,143 @@ async def _async_main(args):
             await dev_mode_shell(vf, session_dir)
 
     elif args.mode == "scan":
-        print("Port scanning mode not implemented yet")
+        print(f"\n📡 Starting port scan on {args.target}")
+        
+        results = await vf.scan_module.run_scan(args.target, session_dir, use_ai=False)
+
+        console = Console()
+        console.print("\n[bold green]Scan Complete![/bold green]")
+        console.print(f"Found {len(results['ports'])} open ports")
+
+        if results['ports']:
+            from rich.table import Table
+            table = Table(title=f"Open Ports on {args.target}")
+            table.add_column("Port", style="cyan")
+            table.add_column("State", style="green")
+            table.add_column("Service", style="magenta")
+            table.add_column("Version", style="yellow")
+
+            for p in results['ports']:
+                version = f"{p['product']} {p['version']}".strip() or "N/A"
+                table.add_row(f"{p['number']}/{p['protocol']}", p['state'], p['service'], version)
+            
+            console.print(table)
+
+        # AI Analysis Interaction
+        if not args.no_ai:
+            if input("\n🤖 Do you want an AI analysis of these results? (y/N): ").lower() == 'y':
+                console.print("\n[bold cyan]Generating AI Analysis...[/bold cyan]")
+                # We reuse AIAnalyzer.analyze_nmap_output via ScanModule
+                nmap_str = vf.scan_module._format_nmap_results(results['ports'])
+                analysis = await vf.ai_analyzer.analyze_nmap_output(nmap_str)
+                results["ai_analysis"] = analysis
+                
+                # Update saved results
+                vf.scan_module._save_results(results, session_dir)
+
+                if analysis:
+                    console.print("\n[bold cyan]AI Security Insights:[/bold cyan]")
+                    if isinstance(analysis, dict):
+                        if "summary" in analysis:
+                            console.print(f"\n[bold]Summary:[/bold]\n{analysis['summary']}")
+                        if "potential_vulnerabilities" in analysis:
+                            console.print("\n[bold yellow]Potential Vulnerabilities:[/bold yellow]")
+                            for v in analysis["potential_vulnerabilities"]:
+                                console.print(f"- [bold]{v.get('type')}[/bold]: {v.get('description')} (Severity: {v.get('severity')})")
+                    else:
+                        console.print(analysis)
+            else:
+                console.print("\n[yellow]Skipping AI analysis.[/yellow]")
+        else:
+            console.print("\n[yellow]AI analysis disabled by flag.[/yellow]")
 
     elif args.mode == "web":
-        print("Web discovery mode not implemented yet")
+        print(f"\n🌐 Starting web discovery on {args.target}")
+        if args.ai_only:
+            print("Running in AI-only mode - AI will make all decisions")
+        
+        # Run discovery without AI initially to allow for interactive prompt at the end
+        results = await vf.web_module.run_web_discovery(args.target, session_dir, use_ai=False)
+
+        # Display summary
+        console = Console()
+        console.print("\n[bold green]Web Discovery Complete![/bold green]")
+        console.print(f"Discovered {len(results['technologies'])} technologies")
+        console.print(f"Found {len(results['directories'])} directories/files")
+
+        # Interactive AI Analysis Prompt
+        if not args.no_ai:
+            if input("\n🤖 Do you want an AI analysis of these results? (y/N): ").lower() == 'y':
+                console.print("\n[bold cyan]Generating AI Analysis...[/bold cyan]")
+                analysis = await vf.web_module.analyze_with_ai(args.target, results)
+                results["ai_analysis"] = analysis
+                
+                # Update saved results with AI analysis
+                vf.web_module.save_results(results, session_dir)
+
+                if "error" not in analysis:
+                    console.print("\n[bold cyan]AI Analysis Summary:[/bold cyan]")
+                    st = analysis.get("tech_stack_assessment", "N/A")
+                    console.print(f"[bold]Tech Stack:[/bold] {st}")
+                    
+                    interesting = analysis.get("interesting_findings", [])
+                    if interesting:
+                        console.print("\n[bold yellow]Interesting Findings:[/bold yellow]")
+                        for finding in interesting:
+                            console.print(f"- {finding}")
+            else:
+                console.print("\n[yellow]Skipping AI analysis.[/yellow]")
+        else:
+            console.print("\n[yellow]AI analysis disabled by flag.[/yellow]")
+
+        # Start dev mode shell if requested
+        if args.dev_mode:
+            await dev_mode_shell(vf, session_dir)
 
     elif args.mode == "exploit":
-        print("Exploit mode not implemented yet")
+        print(f"\n💀 Starting exploit mode on {args.target}")
+        
+        # To run exploit mode, we need recon data
+        # Let's check if there's a recent recon scan for this target
+        recon_data = {}
+        recon_results_path = session_dir / "recon_results.json"
+        web_results_path = session_dir / "web_discovery_results.json"
+        
+        if recon_results_path.exists():
+            with open(recon_results_path, 'r') as f:
+                recon_data = json.load(f)
+        elif web_results_path.exists():
+            with open(web_results_path, 'r') as f:
+                web_data = json.load(f)
+                # Map web data to a format exploit module understands
+                recon_data = {
+                    "target": args.target,
+                    "services": [{"name": tech.get("raw"), "version": ""} for tech in web_data.get("technologies", [])]
+                }
+        else:
+            print("[yellow]No reconnaissance data found for this target in the current session.[/yellow]")
+            print("Exploit mode works best when preceded by 'recon' or 'web' mode.")
+            # We can still try with basic info if provided
+            recon_data = {"target": args.target, "services": []}
+
+        results = await vf.exploit_module.run_exploit_pipeline(args.target, recon_data, session_dir, use_ai=not args.no_ai)
+
+        console = Console()
+        console.print("\n[bold green]Exploit Pipeline Complete![/bold green]")
+        console.print(f"Mapped {len(results['vulnerabilities'])} potential vulnerabilities")
+        console.print(f"Generated {len(results['exploits'])} exploits")
+
+        if results['exploits']:
+            console.print("\n[bold cyan]Generated Exploits:[/bold cyan]")
+            for exploit in results['exploits']:
+                if "error" not in exploit:
+                    console.print(f"- [green]{exploit.get('file_path')}[/green]")
+                    if exploit.get("validation", {}).get("issues"):
+                        console.print(f"  [yellow]Validation Issues:[/yellow] {', '.join(exploit['validation']['issues'])}")
+        
+        # Start dev mode shell if requested
+        if args.dev_mode:
+            await dev_mode_shell(vf, session_dir)
 
 
 def main():

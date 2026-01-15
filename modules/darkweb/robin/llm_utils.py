@@ -5,6 +5,7 @@ LLM utility functions and handlers for Robin
 from typing import Callable, Optional, List
 from urllib.parse import urljoin
 
+import logging
 import requests
 from langchain_openai import ChatOpenAI
 from langchain_ollama import ChatOllama

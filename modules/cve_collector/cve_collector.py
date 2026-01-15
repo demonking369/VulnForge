@@ -307,18 +307,53 @@ class CVECollector:
         """
         
         try:
+            # Await the async AI call
             analysis = await self.ai_wrapper.generate(prompt)
-            try:
-                # Try to parse as JSON
-                analysis_json = json.loads(analysis)
-                cve_data["ai_analysis"] = analysis_json
-            except:
-                # If not valid JSON, store as raw text
-                cve_data["ai_analysis"] = {"raw_analysis": analysis}
+            if analysis:
+                try:
+                    # Try to parse as JSON
+                    analysis_json = json.loads(analysis)
+                    cve_data["ai_analysis"] = analysis_json
+                except json.JSONDecodeError:
+                    # Extract JSON if wrapped in markdown
+                    json_match = re.search(r'```json\n(.*?)\n```', analysis, re.DOTALL)
+                    if json_match:
+                        try:
+                            cve_data["ai_analysis"] = json.loads(json_match.group(1))
+                        except json.JSONDecodeError:
+                            cve_data["ai_analysis"] = {"raw_analysis": analysis}
+                    else:
+                        # If not valid JSON, store as raw text
+                        cve_data["ai_analysis"] = {"raw_analysis": analysis}
         except Exception as e:
             self.logger.error("Error analyzing CVE: %s", e)
             
         return cve_data
+
+    async def search_cves(self, query: str) -> List[Dict[str, Any]]:
+        """Search for CVEs based on a query string (e.g., product name and version)"""
+        self.logger.info("Searching CVEs for query: %s", query)
+        
+        # This is a simplified search that uses the NVD feed we already fetched
+        # In a real scenario, this might call an external API or search a local database
+        results = []
+        
+        # For now, let's fetch the feed and match
+        # (Assuming we have a local cache or feed already loaded)
+        cves = await self.fetch_nvd_feed()
+        
+        # Simple keyword matching
+        keywords = query.lower().split()
+        for cve in cves:
+            desc = cve.get("cve", {}).get("descriptions", [{}])[0].get("value", "").lower()
+            if all(k in desc for k in keywords):
+                results.append({
+                    "id": cve.get("cve", {}).get("id"),
+                    "description": desc,
+                    "score": cve.get("cve", {}).get("metrics", {}).get("cvssMetricV31", [{}])[0].get("cvssData", {}).get("baseScore", "N/A")
+                })
+                
+        return results
         
     async def collect_cves(self, target_info: Dict) -> Dict[str, Any]:
         """Collect and analyze CVEs for target"""

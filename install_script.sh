@@ -176,7 +176,8 @@ if check_command ollama; then
     
     # Save to .env
     if [ -d ".env" ]; then rm -rf .env; fi
-    echo "OLLAMA_MAIN_MODEL=$MAIN_MODEL" > .env
+    echo "AI_ENABLED=true" > .env
+    echo "OLLAMA_MAIN_MODEL=$MAIN_MODEL" >> .env
     echo "OLLAMA_ASSISTANT_MODEL=$ASSISTANT_MODEL" >> .env
     echo -e "${GREEN}[✓] Saved model configuration to .env${NC}"
 
@@ -199,6 +200,14 @@ echo -e "Ollama Status: ${GREEN}$([ "$OLLAMA_INSTALLED" = true ] && echo "Instal
 
 # Ask for installation preferences
 echo -e "\n${YELLOW}Installation Options:${NC}"
+read -p "Do you want to enable AI features for this tool? (Y/n): " ENABLE_AI
+ENABLE_AI=${ENABLE_AI:-Y}
+
+if [[ ! $ENABLE_AI =~ ^[Yy]$ ]]; then
+    echo "AI_ENABLED=false" > .env
+    echo -e "${YELLOW}[!] AI features disabled.${NC}"
+fi
+
 read -p "Do you want to install missing tools? (y/N): " INSTALL_TOOLS
 read -p "Do you want to install/update Ollama and AI models? (y/N): " INSTALL_AI
 
@@ -244,12 +253,23 @@ if [[ $INSTALL_AI =~ ^[Yy]$ ]]; then
     
     if ! $OLLAMA_INSTALLED; then
         echo -e "${YELLOW}Installing Ollama...${NC}"
-        curl -fsSL https://ollama.com/install.sh | sh
+        if ! curl -fsSL https://ollama.com/install.sh | sh; then
+            echo -e "${RED}[✗] Failed to install Ollama. AI features will be limited.${NC}"
+            echo "AI_ENABLED=false" > .env
+        fi
     fi
 
-    echo -e "${YELLOW}Pulling required AI models...${NC}"
-    ollama pull deepseek-coder-v2:16b-lite-base-q4_0
-    ollama pull mistral:7b-instruct-v0.2-q4_0
+    if [ "$OLLAMA_INSTALLED" = true ] || [ $? -eq 0 ]; then
+        echo -e "${YELLOW}Pulling required AI models...${NC}"
+        if ! ollama pull deepseek-coder-v2:16b-lite-base-q4_0; then
+            echo -e "${RED}[✗] Failed to pull deepseek-coder. AI features will be limited.${NC}"
+            echo "AI_ENABLED=false" >> .env
+        fi
+        if ! ollama pull mistral:7b-instruct-v0.2-q4_0; then
+            echo -e "${RED}[✗] Failed to pull mistral. AI features will be limited.${NC}"
+            echo "AI_ENABLED=false" >> .env
+        fi
+    fi
 fi
 
 # Setting up VulnForge directories...
