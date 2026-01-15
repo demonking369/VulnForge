@@ -90,18 +90,20 @@ graph TD
 
 ### **The Command Center (Web Dashboard)**
 The centralized hub for all your security operations. Monitor active scans, view system health, and access all modules.
-> *[PLACEHOLDER: Insert screenshot of the main Dashboard Overview here]*
-> *Recommended size: 1200x800px*
+> 
+> <img width="1920" height="928" alt="Screenshot_2026-01-15_18-55-47" src="https://github.com/user-attachments/assets/c88bb7b3-9403-408e-b5bf-06bc3b813fd7" />
+
 
 ### **AI Security Assistant**
 Interact naturally with the framework. Ask questions, request scans, and toggle "Web Search" for real-time internet data.
-> *[PLACEHOLDER: Insert screenshot of the AI Chat Interface showing Web Search toggle]*
-> *Recommended size: 800x600px*
+> 
+> <img width="1918" height="930" alt="Screenshot_2026-01-15_18-54-26" src="https://github.com/user-attachments/assets/60bf10f1-5d11-4c79-948e-e03098191c81" />
 
 ### **Dark Web Investigation**
 Search, filter, and analyze dark web findings in a secure, isolated environment.
-> *[PLACEHOLDER: Insert screenshot of the Dark Web / Robin module interface]*
-> *Recommended size: 1200x800px*
+> 
+> <img width="1920" height="926" alt="Screenshot_2026-01-15_18-56-29" src="https://github.com/user-attachments/assets/9fec9ae3-70fd-41a5-a6c0-2a973110efa8" />
+
 
 ---
 
