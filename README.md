@@ -43,26 +43,26 @@ VulnForge is built on a modular Python architecture that separates core logic, t
 
 ```mermaid
 graph TD
-    User[User / Security Researcher] -->|Interacts| Dashboard[Web Dashboard (Streamlit)]
-    User -->|Commands| CLI[CLI Interface]
+    User["User / Security Researcher"] -->|Interacts| Dashboard["Web Dashboard (Streamlit)"]
+    User -->|Commands| CLI["CLI Interface"]
     
-    Dashboard & CLI --> Controller[Core Controller]
+    Dashboard & CLI --> Controller["Core Controller"]
     
-    Controller --> AI[AI Orchestrator (Ollama)]
-    Controller --> Recon[Recon Module]
-    Controller --> DarkWeb[Dark Web Module (Robin)]
-    Controller --> Scanning[Scanning Module]
+    Controller --> AI["AI Orchestrator (Ollama)"]
+    Controller --> Recon["Recon Module"]
+    Controller --> DarkWeb["Dark Web Module (Robin)"]
+    Controller --> Scanning["Scanning Module"]
     
-    Recon --> Tools((External Tools))
+    Recon --> Tools(("External Tools"))
     Scanning --> Tools
     
-    Tools -->|Subfinder| Subdomains[Subdomains]
-    Tools -->|Nmap| Ports[Port Data]
-    Tools -->|Nuclei| Vulns[Vulnerabilities]
+    Tools -->|Subfinder| Subdomains["Subdomains"]
+    Tools -->|Nmap| Ports["Port Data"]
+    Tools -->|Nuclei| Vulns["Vulnerabilities"]
     
-    DarkWeb -->|Tor| Onion[Onion Sites]
+    DarkWeb -->|Tor| Onion["Onion Sites"]
     
-    AI -->|Analyzes| Reports[Intelligence Reports]
+    AI -->|Analyzes| Reports["Intelligence Reports"]
 ```
 
 ---
