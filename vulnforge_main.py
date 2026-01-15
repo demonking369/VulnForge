@@ -35,13 +35,13 @@ from utils.security_utils import (
     RateLimiter,
     FilePermissionManager,
     validate_target,
-    sanitize_filename
+    sanitize_filename,
 )
 from utils.auth import get_auth_manager, Permission
 
 from recon_module import EnhancedReconModule
 from ai_integration import AIAnalyzer, OllamaClient
-from ai_orchestrator import AIOrchestrator # New Import
+from ai_orchestrator import AIOrchestrator  # New Import
 import modules.darkweb as darkweb_module
 from modules.ai.agent import VulnForgeAgent
 from modules.web.web_module import WebModule
@@ -154,8 +154,12 @@ class VulnForge:
                 self.logger.info("Installing %s...", tool)
                 try:
                     # SECURITY FIX: Use full executable path and handle subprocess failures
-                    result = subprocess.run(["/usr/bin/go", "install", package], 
-                                          capture_output=True, text=True, check=True)
+                    result = subprocess.run(
+                        ["/usr/bin/go", "install", package],
+                        capture_output=True,
+                        text=True,
+                        check=True,
+                    )
                     self.logger.info("Successfully installed %s", tool)
                 except subprocess.CalledProcessError as e:
                     self.logger.error("Failed to install %s: %s", tool, e)
@@ -169,7 +173,9 @@ class VulnForge:
 
     async def run_recon(self, target: str, output_dir: Optional[Path] = None):
         """Run reconnaissance on target"""
-        recon = EnhancedReconModule(self.base_dir, self.ai_analyzer, config_path="configs/tools.json")
+        recon = EnhancedReconModule(
+            self.base_dir, self.ai_analyzer, config_path="configs/tools.json"
+        )
         return await recon.run_recon(target, output_dir)
 
     def ask_ai(self, question: str):
@@ -188,9 +194,9 @@ class VulnForge:
             )
 
     @RateLimiter(max_calls=5, time_window=60)
-    def generate_tool(self, description: str, identifier: str = 'default'):
+    def generate_tool(self, description: str, identifier: str = "default"):
         """Generate a custom tool using AI and save it to custom_tools directory.
-        
+
         Args:
             description: Tool description
             identifier: Rate limit identifier (username/session)
@@ -200,12 +206,12 @@ class VulnForge:
             if not description or not isinstance(description, str):
                 self.logger.error("Invalid tool description")
                 return
-            
+
             # SECURITY: Limit description length
             if len(description) > 500:
                 self.logger.error("Tool description too long (max 500 chars)")
                 return
-            
+
             # Use os.path.expanduser to properly handle home directory
             tool_dir = Path.home() / ".vulnforge" / "custom_tools"
             self.console.print(
@@ -239,10 +245,14 @@ class VulnForge:
             base_name = re.sub(r"[^a-zA-Z0-9]+", "_", description.strip().lower())[
                 :32
             ].strip("_")
-            filename = sanitize_filename(f"{base_name or 'custom_tool'}_{int(time.time())}.py")
-            
+            filename = sanitize_filename(
+                f"{base_name or 'custom_tool'}_{int(time.time())}.py"
+            )
+
             # SECURITY: Validate path to prevent traversal
-            tool_path = SecurityValidator.sanitize_path(str(tool_dir / filename), base_dir=tool_dir)
+            tool_path = SecurityValidator.sanitize_path(
+                str(tool_dir / filename), base_dir=tool_dir
+            )
             if not tool_path:
                 self.logger.error("Invalid tool path")
                 return
@@ -250,7 +260,7 @@ class VulnForge:
             # Write the generated tool to file
             with open(tool_path, "w", encoding="utf-8") as f:
                 f.write(response)
-            
+
             # SECURITY: Set secure file permissions (0o600) for generated tool files
             FilePermissionManager.set_secure_permissions(tool_path, mode=0o600)
             self.console.print(
@@ -296,13 +306,13 @@ class VulnForge:
         try:
             # SECURITY: Use Path and validate directory
             tool_dir = Path.home() / ".vulnforge" / "custom_tools"
-            
+
             # SECURITY: Validate path
             tool_dir = SecurityValidator.sanitize_path(str(tool_dir))
             if not tool_dir:
                 self.logger.error("Invalid tool directory path")
                 return
-            
+
             metadata_path = tool_dir / "metadata.json"
 
             if not tool_dir.exists():
@@ -429,7 +439,7 @@ Key Features:
 
 For detailed documentation, visit: https://github.com/Arunking9/VulnForge
 """,
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("--target", "-t", help="Target domain or IP")
     parser.add_argument(
@@ -465,76 +475,110 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
         "--stealth", "-s", action="store_true", help="Enable stealth mode"
     )
     parser.add_argument(
-        "--ai-pipeline", action="store_true", help="Enable the advanced multi-prompt AI pipeline."
+        "--ai-pipeline",
+        action="store_true",
+        help="Enable the advanced multi-prompt AI pipeline.",
     )
     parser.add_argument(
-        "--prompt-dir", help="Directory for the AI pipeline prompts.", default="prompts/system_prompts"
+        "--prompt-dir",
+        help="Directory for the AI pipeline prompts.",
+        default="prompts/system_prompts",
     )
     parser.add_argument(
-        "--uninstall", action="store_true", help="Uninstall VulnForge and its components"
+        "--uninstall",
+        action="store_true",
+        help="Uninstall VulnForge and its components",
     )
     parser.add_argument(
-        "--webmod", action="store_true", help="Launch VulnForge web interface (Streamlit UI)"
+        "--webmod",
+        action="store_true",
+        help="Launch VulnForge web interface (Streamlit UI)",
     )
     parser.add_argument(
-        "--web-host", default="localhost", help="Web interface host (default: localhost)"
+        "--web-host",
+        default="localhost",
+        help="Web interface host (default: localhost)",
     )
     parser.add_argument(
         "--web-port", type=int, default=8501, help="Web interface port (default: 8501)"
     )
     parser.add_argument(
-        "--agentic", "--ai-agent", action="store_true", help="Enable simple agentic AI mode"
+        "--agentic",
+        "--ai-agent",
+        action="store_true",
+        help="Enable simple agentic AI mode",
     )
     parser.add_argument(
         "--no-ai", action="store_true", help="Disable AI analysis for the current mode"
     )
 
     # Add subparsers for commands
-    subparsers = parser.add_subparsers(dest='command', help='Available commands')
-    
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+
     # Ask AI command
-    ask_ai_parser = subparsers.add_parser('ask-ai', help='Ask the AI assistant a question')
-    ask_ai_parser.add_argument('question', help='The question to ask the AI')
-    ask_ai_parser.add_argument('--verbose', action='store_true', help='Show detailed model logs')
-    ask_ai_parser.add_argument('--dangerous', action='store_true', help='Enable dangerous mode')
-    ask_ai_parser.add_argument('--confirm-danger', action='store_true', help='Confirm dangerous mode')
-    
+    ask_ai_parser = subparsers.add_parser(
+        "ask-ai", help="Ask the AI assistant a question"
+    )
+    ask_ai_parser.add_argument("question", help="The question to ask the AI")
+    ask_ai_parser.add_argument(
+        "--verbose", action="store_true", help="Show detailed model logs"
+    )
+    ask_ai_parser.add_argument(
+        "--dangerous", action="store_true", help="Enable dangerous mode"
+    )
+    ask_ai_parser.add_argument(
+        "--confirm-danger", action="store_true", help="Confirm dangerous mode"
+    )
+
     # Generate tool command
-    generate_tool_parser = subparsers.add_parser('generate-tool', help='Generate a custom tool')
-    generate_tool_parser.add_argument('description', help='Description of the tool to generate')
-    generate_tool_parser.add_argument('--verbose', action='store_true', help='Show detailed generation logs')
-    
+    generate_tool_parser = subparsers.add_parser(
+        "generate-tool", help="Generate a custom tool"
+    )
+    generate_tool_parser.add_argument(
+        "description", help="Description of the tool to generate"
+    )
+    generate_tool_parser.add_argument(
+        "--verbose", action="store_true", help="Show detailed generation logs"
+    )
+
     # List tools command
-    list_tools_parser = subparsers.add_parser('list-tools', help='List all custom tools')
-    list_tools_parser.add_argument('--verbose', action='store_true', help='Show detailed tool information')
+    list_tools_parser = subparsers.add_parser(
+        "list-tools", help="List all custom tools"
+    )
+    list_tools_parser.add_argument(
+        "--verbose", action="store_true", help="Show detailed tool information"
+    )
 
     # Dark web OSINT command (Robin integration)
     darkweb_parser = subparsers.add_parser(
-        'darkweb', help='Run the Robin dark web OSINT workflow'
+        "darkweb", help="Run the Robin dark web OSINT workflow"
     )
-    darkweb_parser.add_argument('--query', '-q', required=True, help='Dark web search query')
     darkweb_parser.add_argument(
-        '--model',
-        '-m',
+        "--query", "-q", required=True, help="Dark web search query"
+    )
+    darkweb_parser.add_argument(
+        "--model",
+        "-m",
         choices=darkweb_module.get_robin_model_choices(),
         default=darkweb_module.ROBIN_DEFAULT_MODEL,
-        help='LLM model to use for refinement/filtering',
+        help="LLM model to use for refinement/filtering",
     )
     darkweb_parser.add_argument(
-        '--threads',
-        '-t',
+        "--threads",
+        "-t",
         type=int,
         default=5,
-        help='Number of concurrent requests for search/scrape',
+        help="Number of concurrent requests for search/scrape",
     )
     darkweb_parser.add_argument(
-        '--output',
-        '-o',
-        help='Optional output file or directory for the markdown report',
+        "--output",
+        "-o",
+        help="Optional output file or directory for the markdown report",
     )
 
     args = parser.parse_args()
     return parser, args
+
 
 async def _async_main(args):
     # Initialize VulnForge
@@ -545,11 +589,11 @@ async def _async_main(args):
     if args.uninstall:
         script_dir = Path(__file__).parent
         uninstall_script = script_dir / "uninstall_script.sh"
-        
+
         if not uninstall_script.exists():
             print(f"Error: Uninstall script not found at {uninstall_script}")
             return
-        
+
         try:
             subprocess.run([str(uninstall_script)], check=True)
         except subprocess.CalledProcessError as e:
@@ -561,14 +605,16 @@ async def _async_main(args):
     # Handle AI Pipeline Mode
     if args.ai_pipeline:
         if not args.target:
-            print("Error: A target is required for AI pipeline mode, e.g., --target 'scan example.com'")
+            print(
+                "Error: A target is required for AI pipeline mode, e.g., --target 'scan example.com'"
+            )
             return
-        
+
         prompt_path = Path(args.prompt_dir)
         if not prompt_path.exists():
             print(f"Error: Prompt directory not found at '{prompt_path}'")
             return
-            
+
         orchestrator = AIOrchestrator(prompt_path)
         orchestrator.execute_task(f"Perform a security scan on {args.target}")
         return
@@ -585,8 +631,10 @@ async def _async_main(args):
             vf.console.print("\n[bold cyan]--- Agentic Action Plan ---[/bold cyan]")
             vf.console.print(json.dumps(result, indent=2))
         else:
-            vf.console.print("\n[bold yellow]Agentic mode enabled. Ready for instructions...[/bold yellow]")
-        
+            vf.console.print(
+                "\n[bold yellow]Agentic mode enabled. Ready for instructions...[/bold yellow]"
+            )
+
         # If we are not in web mode, we might want an interactive CLI loop here
         # For now, we'll just continue to respect other flags.
 
@@ -611,9 +659,11 @@ async def _async_main(args):
         # Check if Robin is available
         if not darkweb_module.ROBIN_AVAILABLE:
             print("❌ Error: Robin module dependencies not installed.")
-            print("Install with: pip install langchain-core langchain-openai langchain-ollama")
+            print(
+                "Install with: pip install langchain-core langchain-openai langchain-ollama"
+            )
             return
-        
+
         darkweb_module.run_darkweb_osint(
             args.query,
             model=args.model,
@@ -644,7 +694,7 @@ async def _async_main(args):
             "Use --target to specify a domain or IP address you own or have authorization to test"
         )
         return
-    
+
     # SECURITY: Validate target input
     if not validate_target(args.target):
         print(f"Error: Invalid target format: {args.target}")
@@ -667,11 +717,11 @@ async def _async_main(args):
 
     # SECURITY: Create session directory with secure permissions
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    
+
     # SECURITY: Sanitize target for use in path
     safe_target = sanitize_filename(args.target)
     session_dir = vf.base_dir / "sessions" / safe_target / timestamp
-    
+
     # SECURITY: Create with restricted permissions
     if not FilePermissionManager.create_secure_directory(session_dir, mode=0o700):
         print("Error: Failed to create secure session directory")
@@ -726,36 +776,44 @@ async def _async_main(args):
 
     elif args.mode == "scan":
         print(f"\n📡 Starting port scan on {args.target}")
-        
+
         results = await vf.scan_module.run_scan(args.target, session_dir, use_ai=False)
 
         console = Console()
         console.print("\n[bold green]Scan Complete![/bold green]")
         console.print(f"Found {len(results['ports'])} open ports")
 
-        if results['ports']:
+        if results["ports"]:
             from rich.table import Table
+
             table = Table(title=f"Open Ports on {args.target}")
             table.add_column("Port", style="cyan")
             table.add_column("State", style="green")
             table.add_column("Service", style="magenta")
             table.add_column("Version", style="yellow")
 
-            for p in results['ports']:
+            for p in results["ports"]:
                 version = f"{p['product']} {p['version']}".strip() or "N/A"
-                table.add_row(f"{p['number']}/{p['protocol']}", p['state'], p['service'], version)
-            
+                table.add_row(
+                    f"{p['number']}/{p['protocol']}", p["state"], p["service"], version
+                )
+
             console.print(table)
 
         # AI Analysis Interaction
         if not args.no_ai:
-            if input("\n🤖 Do you want an AI analysis of these results? (y/N): ").lower() == 'y':
+            if (
+                input(
+                    "\n🤖 Do you want an AI analysis of these results? (y/N): "
+                ).lower()
+                == "y"
+            ):
                 console.print("\n[bold cyan]Generating AI Analysis...[/bold cyan]")
                 # We reuse AIAnalyzer.analyze_nmap_output via ScanModule
-                nmap_str = vf.scan_module._format_nmap_results(results['ports'])
+                nmap_str = vf.scan_module._format_nmap_results(results["ports"])
                 analysis = await vf.ai_analyzer.analyze_nmap_output(nmap_str)
                 results["ai_analysis"] = analysis
-                
+
                 # Update saved results
                 vf.scan_module._save_results(results, session_dir)
 
@@ -763,11 +821,17 @@ async def _async_main(args):
                     console.print("\n[bold cyan]AI Security Insights:[/bold cyan]")
                     if isinstance(analysis, dict):
                         if "summary" in analysis:
-                            console.print(f"\n[bold]Summary:[/bold]\n{analysis['summary']}")
+                            console.print(
+                                f"\n[bold]Summary:[/bold]\n{analysis['summary']}"
+                            )
                         if "potential_vulnerabilities" in analysis:
-                            console.print("\n[bold yellow]Potential Vulnerabilities:[/bold yellow]")
+                            console.print(
+                                "\n[bold yellow]Potential Vulnerabilities:[/bold yellow]"
+                            )
                             for v in analysis["potential_vulnerabilities"]:
-                                console.print(f"- [bold]{v.get('type')}[/bold]: {v.get('description')} (Severity: {v.get('severity')})")
+                                console.print(
+                                    f"- [bold]{v.get('type')}[/bold]: {v.get('description')} (Severity: {v.get('severity')})"
+                                )
                     else:
                         console.print(analysis)
             else:
@@ -779,9 +843,11 @@ async def _async_main(args):
         print(f"\n🌐 Starting web discovery on {args.target}")
         if args.ai_only:
             print("Running in AI-only mode - AI will make all decisions")
-        
+
         # Run discovery without AI initially to allow for interactive prompt at the end
-        results = await vf.web_module.run_web_discovery(args.target, session_dir, use_ai=False)
+        results = await vf.web_module.run_web_discovery(
+            args.target, session_dir, use_ai=False
+        )
 
         # Display summary
         console = Console()
@@ -791,11 +857,16 @@ async def _async_main(args):
 
         # Interactive AI Analysis Prompt
         if not args.no_ai:
-            if input("\n🤖 Do you want an AI analysis of these results? (y/N): ").lower() == 'y':
+            if (
+                input(
+                    "\n🤖 Do you want an AI analysis of these results? (y/N): "
+                ).lower()
+                == "y"
+            ):
                 console.print("\n[bold cyan]Generating AI Analysis...[/bold cyan]")
                 analysis = await vf.web_module.analyze_with_ai(args.target, results)
                 results["ai_analysis"] = analysis
-                
+
                 # Update saved results with AI analysis
                 vf.web_module.save_results(results, session_dir)
 
@@ -803,10 +874,12 @@ async def _async_main(args):
                     console.print("\n[bold cyan]AI Analysis Summary:[/bold cyan]")
                     st = analysis.get("tech_stack_assessment", "N/A")
                     console.print(f"[bold]Tech Stack:[/bold] {st}")
-                    
+
                     interesting = analysis.get("interesting_findings", [])
                     if interesting:
-                        console.print("\n[bold yellow]Interesting Findings:[/bold yellow]")
+                        console.print(
+                            "\n[bold yellow]Interesting Findings:[/bold yellow]"
+                        )
                         for finding in interesting:
                             console.print(f"- {finding}")
             else:
@@ -820,45 +893,56 @@ async def _async_main(args):
 
     elif args.mode == "exploit":
         print(f"\n💀 Starting exploit mode on {args.target}")
-        
+
         # To run exploit mode, we need recon data
         # Let's check if there's a recent recon scan for this target
         recon_data = {}
         recon_results_path = session_dir / "recon_results.json"
         web_results_path = session_dir / "web_discovery_results.json"
-        
+
         if recon_results_path.exists():
-            with open(recon_results_path, 'r') as f:
+            with open(recon_results_path, "r") as f:
                 recon_data = json.load(f)
         elif web_results_path.exists():
-            with open(web_results_path, 'r') as f:
+            with open(web_results_path, "r") as f:
                 web_data = json.load(f)
                 # Map web data to a format exploit module understands
                 recon_data = {
                     "target": args.target,
-                    "services": [{"name": tech.get("raw"), "version": ""} for tech in web_data.get("technologies", [])]
+                    "services": [
+                        {"name": tech.get("raw"), "version": ""}
+                        for tech in web_data.get("technologies", [])
+                    ],
                 }
         else:
-            print("[yellow]No reconnaissance data found for this target in the current session.[/yellow]")
+            print(
+                "[yellow]No reconnaissance data found for this target in the current session.[/yellow]"
+            )
             print("Exploit mode works best when preceded by 'recon' or 'web' mode.")
             # We can still try with basic info if provided
             recon_data = {"target": args.target, "services": []}
 
-        results = await vf.exploit_module.run_exploit_pipeline(args.target, recon_data, session_dir, use_ai=not args.no_ai)
+        results = await vf.exploit_module.run_exploit_pipeline(
+            args.target, recon_data, session_dir, use_ai=not args.no_ai
+        )
 
         console = Console()
         console.print("\n[bold green]Exploit Pipeline Complete![/bold green]")
-        console.print(f"Mapped {len(results['vulnerabilities'])} potential vulnerabilities")
+        console.print(
+            f"Mapped {len(results['vulnerabilities'])} potential vulnerabilities"
+        )
         console.print(f"Generated {len(results['exploits'])} exploits")
 
-        if results['exploits']:
+        if results["exploits"]:
             console.print("\n[bold cyan]Generated Exploits:[/bold cyan]")
-            for exploit in results['exploits']:
+            for exploit in results["exploits"]:
                 if "error" not in exploit:
                     console.print(f"- [green]{exploit.get('file_path')}[/green]")
                     if exploit.get("validation", {}).get("issues"):
-                        console.print(f"  [yellow]Validation Issues:[/yellow] {', '.join(exploit['validation']['issues'])}")
-        
+                        console.print(
+                            f"  [yellow]Validation Issues:[/yellow] {', '.join(exploit['validation']['issues'])}"
+                        )
+
         # Start dev mode shell if requested
         if args.dev_mode:
             await dev_mode_shell(vf, session_dir)
@@ -875,41 +959,47 @@ def main():
             print("❌ Error: Robin module dependencies not installed.")
             print("\nInstall required packages:")
             print("  pip install langchain-core langchain-openai langchain-ollama")
-            print("  pip install langchain-anthropic langchain-google-genai langchain-community")
+            print(
+                "  pip install langchain-anthropic langchain-google-genai langchain-community"
+            )
             print("\nOr install all requirements:")
             print("  pip install -r requirements.txt")
             return
-        
+
         print("🌐 Launching VulnForge Web Interface...")
         print(f"📍 Access the UI at: http://{args.web_host}:{args.web_port}")
         print("⚠️  Press Ctrl+C to stop the server\n")
-        
+
         try:
             # Import streamlit CLI
             from streamlit.web import cli as stcli
             import sys
-            
+
             # Get the UI file path
             ui_file = Path(__file__).parent / "modules" / "web" / "dashboard.py"
-            
+
             if not ui_file.exists():
                 print(f"❌ Error: Web UI file not found at {ui_file}")
                 return
-            
+
             # Prepare streamlit arguments
             sys.argv = [
                 "streamlit",
                 "run",
                 str(ui_file),
-                "--server.port", str(args.web_port),
-                "--server.address", args.web_host,
-                "--server.headless", "true",
-                "--browser.gatherUsageStats", "false"
+                "--server.port",
+                str(args.web_port),
+                "--server.address",
+                args.web_host,
+                "--server.headless",
+                "true",
+                "--browser.gatherUsageStats",
+                "false",
             ]
-            
+
             # Launch streamlit
             sys.exit(stcli.main())
-            
+
         except ImportError:
             print("❌ Error: Streamlit is not installed.")
             return
@@ -919,6 +1009,7 @@ def main():
 
     # Run the main async pipeline
     asyncio.run(_async_main(args))
+
 
 if __name__ == "__main__":
     main()
