@@ -152,6 +152,18 @@ neurorift --webmod
 *   **Access**: Open your browser to `http://localhost:8501`
 *   **Features**: Full graphical control over all modules, real-time logs, and interactive reports
 
+#### 📸 Web Interface Gallery
+> *Place screenshots of the dashboard, settings, and tools here*
+
+![Dashboard Overview](docs/images/dashboard_placeholder.png)
+*(Dashboard View)*
+
+![AI Chat Interface](docs/images/chat_placeholder.png)
+*(AI Chat & Orchestration)*
+
+![Security Tools](docs/images/tools_placeholder.png)
+*(Security Tools Panel)*
+
 ### **Mode B: NeuroRift Intelligence Mode (Orchestrated)**
 
 **OFFENSIVE Mode (Discovery):**
