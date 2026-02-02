@@ -153,16 +153,23 @@ neurorift --webmod
 *   **Features**: Full graphical control over all modules, real-time logs, and interactive reports
 
 #### 📸 Web Interface Gallery
-> *Place screenshots of the dashboard, settings, and tools here*
+<img width="1920" height="1080" alt="Screenshot_2026-02-02_18_36_34" src="https://github.com/user-attachments/assets/1d8f4c62-7a48-405d-a5a0-22a802fe56e1" />
 
-![Dashboard Overview](docs/images/dashboard_placeholder.png)
-*(Dashboard View)*
 
-![AI Chat Interface](docs/images/chat_placeholder.png)
-*(AI Chat & Orchestration)*
 
-![Security Tools](docs/images/tools_placeholder.png)
+![Dashboard Overview}
+<img width="1920" height="1080" alt="Screenshot_2026-02-02_18_37_43" src="https://github.com/user-attachments/assets/a0fcfbcd-b32f-4fde-b220-5f4aeefebe14" />
+
+![Security Tools]
 *(Security Tools Panel)*
+<img width="1920" height="1080" alt="Screenshot_2026-02-02_18_36_57" src="https://github.com/user-attachments/assets/8e81abcd-1a59-46be-ba03-1993b4046618" />
+
+![Robin Intelligence]
+*(Robin Intelligence panel)*
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/a92a2ca9-d196-474d-bf0a-fc25bec5dd7b" />
+![Agent]
+*[Agent]*
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/b0ac9819-db1b-4e69-aadc-73b687f6f3a3" />
 
 ### **Mode B: NeuroRift Intelligence Mode (Orchestrated)**
 
