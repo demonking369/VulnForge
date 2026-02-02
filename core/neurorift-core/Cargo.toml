@@ -1,0 +1,28 @@
+[package]
+name = "neurorift-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "neurorift-core"
+path = "src/main.rs"
+
+[dependencies]
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio-tungstenite.workspace = true
+futures-util.workspace = true
+chrono.workspace = true
+uuid.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+
+# Additional dependencies
+reqwest = { version = "0.11", features = ["json"] }
+dashmap = "5.5"
+parking_lot = "0.12"

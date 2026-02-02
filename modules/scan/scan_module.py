@@ -1,5 +1,5 @@
 """
-Scan Module for VulnForge
+Scan Module for NeuroRift
 Handles port scanning and service detection using Nmap.
 """
 

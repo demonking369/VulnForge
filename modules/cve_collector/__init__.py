@@ -1,5 +1,5 @@
 """
-CVE Collector module for VulnForge
+CVE Collector module for NeuroRift
 """
 
 from .cve_collector import CVECollector

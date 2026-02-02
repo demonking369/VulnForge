@@ -1,0 +1,53 @@
+[
+  {
+    "name": "Full Reconnaissance Workflow",
+    "description": "Standard external assessment workflow",
+    "steps": [
+      {
+        "tool_name": "amass",
+        "args": {
+          "passive": true,
+          "active": false
+        },
+        "reasoning": "Initial passive subdomain enumeration"
+      },
+      {
+        "tool_name": "masscan",
+        "args": {
+          "ports": "1-1000",
+          "rate": "1000"
+        },
+        "reasoning": "Fast port scanning of identified assets"
+      },
+      {
+        "tool_name": "nmap",
+        "args": {
+          "flags": ["-sV", "-sC", "-p-"]
+        },
+        "reasoning": "Detailed service discovery on open ports"
+      }
+    ]
+  },
+  {
+    "name": "Web App Assessment",
+    "description": "Targeted web application scanning",
+    "steps": [
+      {
+        "tool_name": "nmap",
+        "args": {
+          "flags": ["-p", "80,443"]
+        },
+        "reasoning": "Confirm web ports"
+      },
+      {
+        "tool_name": "sqlmap",
+        "args": {
+          "level": 1,
+          "risk": 1,
+          "crawl": 2
+        },
+        "reasoning": "Check for SQL injection vulnerabilities"
+      }
+    ]
+  }
+]

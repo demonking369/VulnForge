@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-VulnForge AI Integration Module
+NeuroRift AI Integration Module
 Handles Ollama integration, prompt engineering, and AI-powered analysis
 """
 
@@ -358,7 +358,7 @@ class AIAnalyzer:
                         
         return {"error": "Failed to analyze web response", "raw_response": response}
         
-    def fix_broken_tool(self, tool_name: str, error_output: str, source_code: str = None) -> str:
+    async def fix_broken_tool(self, tool_name: str, error_output: str, source_code: str = None) -> str:
         """Generate fixes for broken security tools"""
         system_prompt = """You are a DevOps engineer specializing in fixing broken security tools.
         Analyze errors and provide working solutions."""
@@ -385,10 +385,10 @@ class AIAnalyzer:
         - Network/permission issues
         """
         
-        response = self.ollama.generate(prompt, system_prompt=system_prompt)
+        response = await self.ollama.generate(prompt, system_prompt=system_prompt)
         return response or "# Failed to generate fix"
         
-    def prioritize_vulnerabilities(self, vulnerabilities: List[Dict]) -> List[Dict]:
+    async def prioritize_vulnerabilities(self, vulnerabilities: List[Dict]) -> List[Dict]:
         """Use AI to prioritize vulnerabilities by exploitability and impact"""
         system_prompt = """You are a penetration tester prioritizing vulnerabilities.
         Rank vulnerabilities by exploitability and business impact."""
@@ -420,7 +420,7 @@ class AIAnalyzer:
         }}
         """
         
-        response = self.ollama.generate(prompt, system_prompt=system_prompt)
+        response = await self.ollama.generate(prompt, system_prompt=system_prompt)
         if response:
             try:
                 result = json.loads(response)
@@ -468,7 +468,7 @@ class AIOrchestrator:
     def _load_prompts(self):
         """Loads the specialized AI prompts from the prompt directory."""
         prompts = {}
-        # The prompt_dir is /home/arun/tools/Custom_T_1/VulnForge/prompts/system_prompts
+        # The prompt_dir is /home/arun/tools/Custom_T_1/NeuroRift/prompts/system_prompts
         try:
             # Devin-style planning prompt
             planner_path = self.prompt_dir / "Devin AI" / "Prompt.txt"
@@ -508,19 +508,19 @@ class AIOrchestrator:
             
         return prompts
 
-    def execute_task(self, task_description: str):
+    async def execute_task(self, task_description: str):
         """
         Executes a full task pipeline: Plan -> Select Tool -> Execute -> Analyze.
         """
         print("--- AI Task Pipeline Initiated ---")
         
-        # 1. Planning Phase (using Devin's prompt)
-        plan = self._planning_phase(task_description)
+        # 1. Planning Phase (using specialized prompt)
+        plan = await self._planning_phase(task_description)
         self.state['plan'] = plan
         print(f"Phase 1: Plan Created -> {plan}")
 
-        # 2. Tool Selection Phase (using Manus' prompt)
-        tool_command = self._tool_selection_phase(task_description, plan)
+        # 2. Tool Selection Phase (using specialized prompt)
+        tool_command = await self._tool_selection_phase(task_description, plan)
         self.state['tool_command'] = tool_command
         print(f"Phase 2: Tool Selected -> {tool_command}")
 
@@ -529,26 +529,26 @@ class AIOrchestrator:
         self.state['execution_result'] = execution_result
         print(f"Phase 3: Execution Result -> {execution_result[:100]}...")
 
-        # 4. Analysis Phase (using Cursor's prompt)
-        analysis = self._analysis_phase(execution_result)
+        # 4. Analysis Phase (using specialized prompt)
+        analysis = await self._analysis_phase(execution_result)
         self.state['analysis'] = analysis
         print(f"Phase 4: Analysis Complete -> {analysis}")
 
         print("--- AI Task Pipeline Complete ---")
         return self.state
 
-    def _planning_phase(self, task: str) -> str:
+    async def _planning_phase(self, task: str) -> str:
         """Uses the 'planner' prompt to create a high-level strategy."""
         system_prompt = self.prompts['planner']
         user_prompt = f"Create a step-by-step plan for the following task: {task}"
-        response = self.ollama.generate(user_prompt, system_prompt=system_prompt)
+        response = await self.ollama.generate(user_prompt, system_prompt=system_prompt)
         return response
 
-    def _tool_selection_phase(self, task: str, plan: str) -> str:
+    async def _tool_selection_phase(self, task: str, plan: str) -> str:
         """Uses the 'tool_selector' prompt to choose the right command."""
         system_prompt = self.prompts['tool_selector']
         user_prompt = f"Given the task '{task}' and the plan '{plan}', what is the exact shell command to execute next? Only output the command."
-        response = self.ollama.generate(user_prompt, system_prompt=system_prompt)
+        response = await self.ollama.generate(user_prompt, system_prompt=system_prompt)
         return response
     
     def _execution_phase(self, command: str) -> str:
@@ -558,11 +558,11 @@ class AIOrchestrator:
             return "Starting Nmap 7.92 ... Nmap scan report for example.com (93.184.216.34)\nHost is up (0.011s latency).\nNot shown: 998 filtered tcp ports\nPORT    STATE SERVICE\n80/tcp  open  http\n443/tcp open  https"
         return "Command executed successfully. No output."
 
-    def _analysis_phase(self, result: str) -> str:
+    async def _analysis_phase(self, result: str) -> str:
         """Uses the 'analyst' prompt to interpret the results."""
         system_prompt = self.prompts['analyst']
         user_prompt = f"Analyze the following tool output and provide a summary of key findings and recommendations:\n\n{result}"
-        response = self.ollama.generate(user_prompt, system_prompt=system_prompt)
+        response = await self.ollama.generate(user_prompt, system_prompt=system_prompt)
         return response
 
 
@@ -570,7 +570,7 @@ class AIOrchestrator:
 if __name__ == "__main__":
     import argparse
     
-    parser = argparse.ArgumentParser(description="VulnForge AI Module")
+    parser = argparse.ArgumentParser(description="NeuroRift AI Module")
     parser.add_argument("--test-connection", action="store_true", help="Test Ollama connection")
     parser.add_argument("--pull-model", help="Pull a specific model")
     parser.add_argument("--list-models", action="store_true", help="List available models")

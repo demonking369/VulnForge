@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Notification system for VulnForge
+Notification system for NeuroRift
 """
 
 import json
@@ -78,7 +78,7 @@ class Notifier:
             msg = MIMEMultipart()
             msg["From"] = email_config["username"]
             msg["To"] = email_config["username"]
-            msg["Subject"] = f"VulnForge Alert: {severity.upper()}"
+            msg["Subject"] = f"NeuroRift Alert: {severity.upper()}"
             
             body = f"Message: {message}\nSeverity: {severity}\n"
             if data:
@@ -101,7 +101,7 @@ class Notifier:
             color = self._get_severity_color(severity)
             
             embed = {
-                "title": f"VulnForge Alert: {severity.upper()}",
+                "title": f"NeuroRift Alert: {severity.upper()}",
                 "description": message,
                 "color": color,
                 "timestamp": datetime.now(timezone.utc).isoformat() # Changed datetime.utcnow() to datetime.now(UTC)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-VulnForge AI Analysis Script
+NeuroRift AI Analysis Script
 Analyzes scan results using AI models
 """
 

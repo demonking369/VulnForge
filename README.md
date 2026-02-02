@@ -1,19 +1,18 @@
-# �️ VulnForge: AI-Augmented Security Research Framework
+# 🧠 NeuroRift: Terminal-Based Multi-Agent Intelligence System
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
-[![Platform](https://img.shields.io/badge/platform-linux-lightgrey)]()
-[![Status](https://img.shields.io/badge/status-active-success)]()
+[![Platform](https://img.shields.io/badge/platform-linux-lightgrey)](https://github.com/demonking369/NeuroRift)
+[![Status](https://img.shields.io/badge/status-active-success)](https://github.com/demonking369/NeuroRift)
 
-> **"In the realm of cybersecurity, knowledge is power, and VulnForge is your sword."**
+> **"Intelligence amplified through orchestrated AI agents."**
 
+**Designed and developed by demonking369**
 
 > [!IMPORTANT]
 > **🚧 THIS PROJECT IS CURRENTLY IN ACTIVE DEVELOPMENT (BETA Phase) 🚧**
 >
-> While the core features are functional, you may encounter bugs or incomplete features. We are actively shaping the future of this tool and **NEED YOUR HELP!**
->
-> **We are looking for contributors!** Whether you're a developer, security researcher, or documentation wizard, check out the [Contributing](#-community--support) section to join the mission.
+> While the core features are functional, you may encounter bugs or incomplete features. We are actively shaping the future of this tool.
 
 ---
 
@@ -21,17 +20,24 @@
 - [Overview](#-overview)
 - [Architecture](#-architecture)
 - [Key Features](#-key-features)
-- [Visual Tour](#-visual-tour)
 - [Installation Guide](#-installation-guide)
 - [Usage Manual](#-usage-manual)
 - [Configuration](#-configuration)
+- [Credits & Thanks](#-credits--thanks)
 - [Disclaimer](#-legal-disclaimer)
 
 ---
 
 ## 🔭 Overview
 
-**VulnForge** is an enterprise-grade security testing framework designed for authorized penetration testers, bug bounty hunters, and security researchers. Unlike traditional tools, VulnForge leverages **Local Large Language Models (LLMs)** to act as an autonomous reasoning engine, capable of planning complex security tasks, analyzing scan results for context-aware risks, and interacting with the user through a natural language interface.
+**NeuroRift** is a terminal-based multi-agent intelligence system designed for authorized security research and penetration testing. The framework employs specialized AI agents that work in concert to plan, execute, analyze, and report on security operations with unprecedented precision.
+
+Unlike traditional security tools, NeuroRift leverages **Local Large Language Models (LLMs)** through an orchestrated multi-agent architecture where each agent has a distinct role:
+
+- **NR Planner**: Strategic planning and task decomposition
+- **NR Operator**: Terminal-based execution with human-in-the-loop controls
+- **NR Analyst**: Advanced vulnerability analysis with CVSS scoring
+- **NR Scribe**: Professional multi-format report generation
 
 The framework unifies industry-standard tools (`nmap`, `nuclei`, `subfinder`) into a cohesive, modular platform accessible via a modern Web Dashboard or a powerful Command Line Interface (CLI).
 
@@ -39,71 +45,66 @@ The framework unifies industry-standard tools (`nmap`, `nuclei`, `subfinder`) in
 
 ## 🏗️ Architecture
 
-VulnForge is built on a modular Python architecture that separates core logic, tool execution, and AI reasoning.
+NeuroRift is built on a multi-agent orchestration architecture with strict operational discipline:
 
 ```mermaid
 graph TD
-    User["User / Security Researcher"] -->|Interacts| Dashboard["Web Dashboard (Streamlit)"]
+    User["Security Researcher"] -->|Interacts| Dashboard["Web Dashboard"]
     User -->|Commands| CLI["CLI Interface"]
     
-    Dashboard & CLI --> Controller["Core Controller"]
+    Dashboard & CLI -->|Tasks| Orchestrator["NeuroRift Orchestrator"]
     
-    Controller --> AI["AI Orchestrator (Ollama)"]
-    Controller --> Recon["Recon Module"]
-    Controller --> DarkWeb["Dark Web Module (Robin)"]
-    Controller --> Scanning["Scanning Module"]
+    Orchestrator -->|Plans| Planner["NR Planner"]
+    Planner -->|Execution Plan| Operator["NR Operator"]
+    Operator -->|Results| Analyst["NR Analyst"]
+    Analyst -->|Analysis| Scribe["NR Scribe"]
     
-    Recon --> Tools(("External Tools"))
-    Scanning --> Tools
+    Operator -->|Terminal Only| Tools["Security Tools"]
+    Operator -->|Approval Request| Human["Human Approval"]
     
-    Tools -->|Subfinder| Subdomains["Subdomains"]
-    Tools -->|Nmap| Ports["Port Data"]
-    Tools -->|Nuclei| Vulns["Vulnerabilities"]
+    Tools -->|Data| Subfinder["subfinder"]
+    Tools -->|Data| Nmap["nmap"]
+    Tools -->|Data| Nuclei["nuclei"]
     
-    DarkWeb -->|Tor| Onion["Onion Sites"]
-    
-    AI -->|Analyzes| Reports["Intelligence Reports"]
+    Scribe -->|Reports| Output["Final Reports"]
 ```
 
 ---
 
 ## 🚀 Key Features
 
-### 1. **Autonomous AI Agent**
-*   **Web-Connected Reasoning**: The AI can browse the internet (via DuckDuckGo) to validate findings against the latest CVEs and exploit databases in real-time.
-*   **Agentic Planning**: In `Agentic Mode`, the AI autonomously formulates multi-step execution plans based on high-level user intents (e.g., "Find all login pages and check for default creds").
-*   **Contextual Analysis**: Goes beyond static rule matching by analyzing vulnerability context to reduce false positives.
+### 1. **Multi-Agent Orchestration**
+*   **NR Planner**: Creates strategic execution plans with task decomposition and risk assessment
+*   **NR Operator**: Executes commands exclusively through terminal with mandatory human approval for external actions
+*   **NR Analyst**: Performs advanced vulnerability analysis with CVSS 3.1 scoring and false positive reduction
+*   **NR Scribe**: Generates professional reports in multiple formats (Markdown, JSON, HTML, PDF)
 
-### 2. **Dark Web Intelligence (Robin Integration)**
-*   **Tor-Native**: Built-in routing via Tor SOCKS proxy for safe interaction with `.onion` services.
-*   **Semantic Search**: Uses AI to refine search queries and filter results, isolating high-value intelligence from noise.
-*   **Automated Scraping**: Safely extracts and summarizes content from hidden services for offline analysis.
+### 2. **Mode Governor**
+*   **OFFENSIVE Mode**: Research and discovery operations (reconnaissance, scanning, vulnerability assessment)
+*   **DEFENSIVE Mode**: Analysis and mitigation operations (vulnerability analysis, patch recommendations, hardening)
+*   **Strict Separation**: No cross-mode contamination, tool access controlled per mode
+*   **Violation Logging**: All mode violations are logged and reported
 
-### 3. **Advanced Reconnaissance Engine**
-*   **Full-Spectrum Discovery**: Automated workflow chaining subdomain enumeration (`subfinder`), port scanning (`nmap`), and technology profiling (`whatweb`).
-*   **Vulnerability Assessment**: Integrated `nuclei` scanning for rapid identification of known security flaws.
-*   **Stealth Mode**: Configurable rate limiting and passive scan options to minimize detection risk.
+### 3. **Human-in-the-Loop Controls**
+*   **Required Approval**: Browser navigation, external API calls, file modifications
+*   **Timeout Handling**: Configurable timeout with default deny on timeout
+*   **Audit Trail**: Complete logging of all approval requests and responses
 
----
+### 4. **Task State Memory**
+*   **Persistent Storage**: All task state saved to disk
+*   **Checkpoint/Resume**: Automatic checkpoints every 5 minutes
+*   **Execution History**: Complete history of all operations
+*   **Context Preservation**: Agent context maintained across sessions
 
-## 📸 Visual Tour
+### 5. **Advanced Reconnaissance Engine**
+*   **Full-Spectrum Discovery**: Automated workflow chaining subdomain enumeration (`subfinder`), port scanning (`nmap`), and technology profiling (`whatweb`)
+*   **Vulnerability Assessment**: Integrated `nuclei` scanning for rapid identification of known security flaws
+*   **Stealth Mode**: Configurable rate limiting and passive scan options to minimize detection risk
 
-### **The Command Center (Web Dashboard)**
-The centralized hub for all your security operations. Monitor active scans, view system health, and access all modules.
-> 
-> <img width="1920" height="928" alt="Screenshot_2026-01-15_18-55-47" src="https://github.com/user-attachments/assets/c88bb7b3-9403-408e-b5bf-06bc3b813fd7" />
-
-
-### **AI Security Assistant**
-Interact naturally with the framework. Ask questions, request scans, and toggle "Web Search" for real-time internet data.
-> 
-> <img width="1918" height="930" alt="Screenshot_2026-01-15_18-54-26" src="https://github.com/user-attachments/assets/60bf10f1-5d11-4c79-948e-e03098191c81" />
-
-### **Dark Web Investigation**
-Search, filter, and analyze dark web findings in a secure, isolated environment.
-> 
-> <img width="1920" height="926" alt="Screenshot_2026-01-15_18-56-29" src="https://github.com/user-attachments/assets/9fec9ae3-70fd-41a5-a6c0-2a973110efa8" />
-
+### 6. **Dark Web Intelligence (Robin Integration)**
+*   **Tor-Native**: Built-in routing via Tor SOCKS proxy for safe interaction with `.onion` services
+*   **Semantic Search**: Uses AI to refine search queries and filter results
+*   **Automated Scraping**: Safely extracts and summarizes content from hidden services
 
 ---
 
@@ -122,61 +123,87 @@ Search, filter, and analyze dark web findings in a secure, isolated environment.
 ### **Step-by-Step Setup**
 
 1.  **Clone the Repository**
-    Get the latest stable version of VulnForge.
     ```bash
-    git clone https://github.com/demonking369/VulnForge.git
-    cd VulnForge
+    git clone https://github.com/demonking369/NeuroRift.git
+    cd NeuroRift
     ```
 
-2.  **Run the Installer**
-    Our automated script handles dependency management and tool installation.
+2.  **Run the Unified Installer**
     ```bash
+    # Handles all dependencies (Rust, Python, Node.js, Security Tools)
     bash install_script.sh
     ```
 
-3.  **Prepare AI Models**
-    Pull the recommended models for optimal performance.
+3.  **Configure AI Models (Optional)**
     ```bash
-    ollama pull llama3.2    # Recommended balanced model
-    ollama pull deepseek-r1 # Excellent for reasoning tasks
+    # Launch interactive configuration wizard
+    source .venv/bin/activate
+    ./neurorift_main.py --configure
     ```
 
 ---
 
-## � Usage Manual
+## 🎯 Usage Manual
 
 ### **Mode A: Web Dashboard (Recommended)**
-The ideal experience for visual analysis and reporting.
 ```bash
-vulnforge --webmod
+neurorift --webmod
 ```
 *   **Access**: Open your browser to `http://localhost:8501`
-*   **Features**: Full graphical control over all modules, real-time logs, and interactive reports.
+*   **Features**: Full graphical control over all modules, real-time logs, and interactive reports
 
-### **Mode B: Command Line Interface (CLI)**
-For rapid, headless execution and scripting.
+### **Mode B: NeuroRift Intelligence Mode (Orchestrated)**
+
+**OFFENSIVE Mode (Discovery):**
+```bash
+neurorift --orchestrated --mode offensive -t example.com
+```
+
+**DEFENSIVE Mode (Analysis):**
+```bash
+neurorift --orchestrated --mode defensive --analyze results/scan.json
+```
+
+**Resume Interrupted Task:**
+```bash
+neurorift --resume task_20260124_092347
+```
+
+### **Mode C: Command Line Interface (CLI)**
 
 **Standard Recon Scan:**
 ```bash
-vulnforge -t example.com --mode recon
-```
-
-**Agentic Mode (Autonomous):**
-Delegate the planning to the AI.
-```bash
-vulnforge --agentic -t example.com --intent "Check for exposed admin panels"
+neurorift -t example.com --operation-mode recon
 ```
 
 **Dark Web Search:**
 ```bash
-vulnforge --darkweb --query "leaked credentials example.com"
+neurorift darkweb --query "leaked credentials example.com"
 ```
 
 ---
 
 ## 🔧 Configuration
 
-VulnForge utilizes a centralized `.env` file for configuration.
+NeuroRift utilizes a centralized configuration file at `configs/neurorift_config.json`:
+
+```json
+{
+  "agents": {
+    "planner": { "max_planning_iterations": 3 },
+    "operator": { "max_retries": 3 },
+    "analyst": { "confidence_threshold": 0.7 }
+  },
+  "mode_governor": {
+    "allow_mode_switching": false,
+    "log_violations": true
+  },
+  "human_in_the_loop": {
+    "timeout_seconds": 300,
+    "default_on_timeout": "deny"
+  }
+}
+```
 
 | Variable | Description | Default |
 | :--- | :--- | :--- |
@@ -190,28 +217,55 @@ VulnForge utilizes a centralized `.env` file for configuration.
 
 ## ⚠️ Legal Disclaimer
 
-**VulnForge is purpose-built for AUTHORIZED security testing, red teaming, and educational research.**
+**NeuroRift is purpose-built for AUTHORIZED security testing, red teaming, and educational research.**
 
 *   **Authorization Required**: You must have explicit, written permission from the owner of any system you scan or test.
 *   **Compliance**: Users are responsible for complying with all applicable local, state, and federal laws.
-*   **Liability**: The developers and contributors of VulnForge are not liable for any misuse, damage, or illegal activities resulting from the use of this software.
+*   **Liability**: The developer of NeuroRift is not liable for any misuse, damage, or illegal activities resulting from the use of this software.
+
+---
+
+## 🎖️ Credits & Thanks
+
+**NeuroRift is independently developed by demonking369.**
+
+The following open-source projects were used as references or components, and are gratefully acknowledged:
+
+### Referenced Projects
+- **[x1xhlol/system-prompts-and-models-of-ai-tools](https://github.com/x1xhlol/system-prompts-and-models-of-ai-tools)** - System prompt patterns and AI agent design references
+- **[SimStudioAI](https://simstudio.ai)** - Conceptual orchestration design inspiration
+
+### Core Dependencies
+- **[Ollama](https://ollama.com)** - Local LLM inference engine
+- **[ProjectDiscovery](https://projectdiscovery.io)** - Security tools (subfinder, nuclei, httpx)
+- **[Nmap](https://nmap.org)** - Network scanning and service detection
+- **[Streamlit](https://streamlit.io)** - Web dashboard framework
+- **[Rich](https://rich.readthedocs.io)** - Terminal UI library
+
+### Special Thanks
+- The open-source security community for continuous innovation
+- All contributors who have helped improve NeuroRift
+- The AI research community for advancing LLM capabilities
+
+> **Thanks to the open-source projects that inspired and supported NeuroRift.**
+
+---
+
+## 📚 Documentation
+
+- **[NeuroRift Intelligence Mode](docs/NEURORIFT_README.md)** - Complete multi-agent orchestration guide
+- **[Agent Roles](docs/AGENT_ROLES.md)** - Detailed agent capabilities and responsibilities
+- **[Migration Guide](docs/MIGRATION_GUIDE.md)** - Upgrading from legacy modes
 
 ---
 
 ## 🤝 Community & Support
 
-> **🙌 Call for Contributors:**
-> We need passionate developers to help take VulnForge to the next level!
-> *   **Refining AI Prompts**: Help make the agent smarter.
-> *   **frontend**: Improve the Streamlit dashboard.
-> *   **Testing**: Report bugs and verify fixes.
->
-> **Pull Requests are highly encouraged!**
-
-*   **GitHub Issues**: [Report Bugs & Request Features](https://github.com/demonking369/VulnForge/issues)
-*   **Community**: Join the discussion on [Reddit](https://reddit.com/r/Linux_369)
-*   **Contributing**: PRs are welcome! Please read `CONTRIBUTING.md` before submitting.
+*   **GitHub Issues**: [Report Bugs & Request Features](https://github.com/demonking369/NeuroRift/issues)
+*   **Documentation**: [Full Documentation](https://github.com/demonking369/NeuroRift)
 
 ---
 
-**Built with ❤️ and ☕ by the VulnForge Team**
+**Designed and developed with ❤️ and ☕ by demonking369**
+
+**NeuroRift** - Intelligence amplified through orchestrated AI agents.

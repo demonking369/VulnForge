@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-VulnForge Tool Manager Module
+NeuroRift Tool Manager Module
 Manages installation and updates of security tools
 """
 

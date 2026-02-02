@@ -1,9 +1,9 @@
 """
-Dark Web OSINT module for VulnForge
+Dark Web OSINT module for NeuroRift
 Provides Robin integration for dark web intelligence gathering
 """
 
-# Make Robin imports optional - don't break VulnForge if langchain is missing
+# Make Robin imports optional - don't break NeuroRift if langchain is missing
 try:
     from .robin.runner import run_darkweb_osint, ROBIN_DEFAULT_MODEL, get_robin_model_choices
     ROBIN_AVAILABLE = True

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-VulnForge Enhanced Reconnaissance Module
+NeuroRift Enhanced Reconnaissance Module
 Handles automated reconnaissance with AI-powered analysis
 """
 
@@ -341,7 +341,7 @@ class EnhancedReconModule:
         try:
             async with aiofiles.open(md_path, "w") as f:
                 await f.write(
-                    f"""# VulnForge Reconnaissance Report
+                    f"""# NeuroRift Reconnaissance Report
 
 ## Target: {results['target']}
 ## Scan Time: {results['timestamp']}

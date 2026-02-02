@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-VulnForge Reconnaissance Script for Bumba Global
+NeuroRift Reconnaissance Script for Bumba Global
 """
 
 import asyncio

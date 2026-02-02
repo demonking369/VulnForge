@@ -24,7 +24,7 @@ class AIAssistant:
             return ["nmap", "subfinder", "httpx", "nuclei"]
 
     def _log_ai_interaction(self, query, response, debug):
-        log_path = os.path.expanduser("~/.vulnforge/sessions/logs/ai_controller.log")
+        log_path = os.path.expanduser("~/.neurorift/sessions/logs/ai_controller.log")
         os.makedirs(os.path.dirname(log_path), exist_ok=True)
         with open(log_path, "a") as f:
             f.write(f"[QUERY] {query}\n[RESPONSE] {response}\n[DEBUG] {debug}\n\n") 

@@ -5,8 +5,8 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional
 from modules.ai.ai_integration import OllamaClient
 
-class VulnForgeAgent:
-    """Simple Agentic AI for VulnForge.
+class NeuroRiftAgent:
+    """Simple Agentic AI for NeuroRift.
     
     This agent understands the framework modules and outputs structured
     action intents in JSON format.
@@ -14,7 +14,7 @@ class VulnForgeAgent:
     
     def __init__(self, ollama_client: Optional[OllamaClient] = None):
         self.ollama = ollama_client or OllamaClient()
-        self.logger = logging.getLogger("vulnforge.agent")
+        self.logger = logging.getLogger("neurorift.agent")
         self.prompt_path = Path(__file__).resolve().parents[2] / "prompts" / "agentic_system.md"
         self._system_prompt = self._load_system_prompt()
         
@@ -25,10 +25,10 @@ class VulnForgeAgent:
                 return self.prompt_path.read_text()
             else:
                 self.logger.warning(f"System prompt not found at {self.prompt_path}")
-                return "You are a security assistant for the VulnForge framework."
+                return "You are a security assistant for the NeuroRift framework."
         except Exception as e:
             self.logger.error(f"Error loading system prompt: {e}")
-            return "You are a security assistant for the VulnForge framework."
+            return "You are a security assistant for the NeuroRift framework."
 
     async def run_task(self, task: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Process a user task and return a structured response.

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Configuration Manager for VulnForge
+Configuration Manager for NeuroRift
 Handles loading and managing configuration settings
 """
 

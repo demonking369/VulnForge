@@ -4,11 +4,11 @@ from dotenv import load_dotenv
 
 
 def _load_env():
-    """Attempt to load environment variables from common VulnForge locations."""
+    """Attempt to load environment variables from common NeuroRift locations."""
     candidate_paths = [
         Path.cwd() / ".env",
         Path(__file__).resolve().parents[3] / ".env",  # project root
-        Path.home() / ".vulnforge" / ".env",
+        Path.home() / ".neurorift" / ".env",
     ]
 
     loaded = False

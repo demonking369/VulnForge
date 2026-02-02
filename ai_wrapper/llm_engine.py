@@ -1,12 +1,12 @@
 # ╔══════════════════════════════════════════════════════════╗
-# ║ VulnForge - Built with Blood by DemonKing369.0 👑        ║
+# ║ NeuroRift - Built with Blood by DemonKing369.0 👑        ║
 # ║ GitHub: https://github.com/Arunking9                     ║
 # ║ AI-Powered Security Framework for Bug Bounty Warriors ⚔️║
 # ╚══════════════════════════════════════════════════════════╝
 
 #!/usr/bin/env python3
 """
-VulnForge LLM Engine
+NeuroRift LLM Engine
 Handles model management, fallbacks, and caching for AI operations
 """
 
@@ -30,7 +30,7 @@ class LLMEngine:
     def _load_config(self, config_path: Optional[Path] = None) -> Dict:
         """Load LLM configuration"""
         if not config_path:
-            config_path = Path.home() / ".vulnforge" / "configs" / "llm_config.json"
+            config_path = Path.home() / ".neurorift" / "configs" / "llm_config.json"
             
         default_config = {
             "preferred_model": "deepseek-coder-v2:16b-lite-base-q5_K_S",

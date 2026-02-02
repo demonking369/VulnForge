@@ -1,4 +1,4 @@
-# VulnForge Reconnaissance Report
+# NeuroRift Reconnaissance Report
 
 ## Target: example.com
 ## Scan Time: 2025-08-27T05:19:48.671133

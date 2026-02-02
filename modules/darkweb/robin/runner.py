@@ -1,5 +1,5 @@
 """
-Wrapper utilities that integrate the Robin dark web OSINT workflow with VulnForge.
+Wrapper utilities that integrate the Robin dark web OSINT workflow with NeuroRift.
 """
 
 from __future__ import annotations
@@ -38,7 +38,7 @@ except ImportError:
     from scrape import scrape_multiple
 
 ROBIN_DEFAULT_MODEL = "gpt-5-mini"
-REPORT_DIR = Path.home() / ".vulnforge" / "darkweb_reports"
+REPORT_DIR = Path.home() / ".neurorift" / "darkweb_reports"
 console = Console()
 
 

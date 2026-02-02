@@ -1,5 +1,5 @@
 """
-Web Module for VulnForge
+Web Module for NeuroRift
 Handles web application discovery, technology identification, and directory fuzzing.
 """
 

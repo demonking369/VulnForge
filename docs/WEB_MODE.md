@@ -1,15 +1,15 @@
-# VulnForge Web Mode
+# NeuroRift Web Mode
 
 ## Quick Start
 
-Launch the VulnForge web interface with a single command:
+Launch the NeuroRift web interface with a single command:
 
 ```bash
 # Launch web interface (default: localhost:8501)
-vulnforge --webmod
+neurorift --webmod
 
 # Customize host and port
-vulnforge --webmod --web-host 0.0.0.0 --web-port 8080
+neurorift --webmod --web-host 0.0.0.0 --web-port 8080
 
 # Or use the standalone launcher
 python3 launch_web.py
@@ -42,7 +42,7 @@ pip install streamlit
 ## Configuration
 
 The web interface uses the same configuration as the CLI:
-- AI models from `~/.vulnforge/.env`
+- AI models from `~/.neurorift/.env`
 - Tor proxy at `127.0.0.1:9050`
 - API keys for OpenAI/Anthropic/Google/Ollama
 

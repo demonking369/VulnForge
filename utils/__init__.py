@@ -1,5 +1,5 @@
 """
-Utility modules for VulnForge
+Utility modules for NeuroRift
 """
 
 from .cli_utils import (

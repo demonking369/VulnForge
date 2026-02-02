@@ -1,7 +1,7 @@
 #!/bin/bash
-# VulnForge Web Mode Troubleshooting Script
+# NeuroRift Web Mode Troubleshooting Script
 
-echo "🔍 VulnForge Web Mode Diagnostics"
+echo "🔍 NeuroRift Web Mode Diagnostics"
 echo "=================================="
 echo ""
 
@@ -86,7 +86,7 @@ if ps aux | grep -i streamlit | grep -v grep > /dev/null; then
     ps aux | grep -i streamlit | grep -v grep | awk '{print "      PID: "$2" | "$11" "$12" "$13}'
 else
     echo "   ❌ No Streamlit process running"
-    echo "   Start with: vulnforge --webmod"
+    echo "   Start with: neurorift --webmod"
 fi
 echo ""
 
@@ -95,10 +95,10 @@ echo "📋 Quick Start Commands:"
 echo ""
 echo "  # Activate venv and start web mode:"
 echo "  source .venv/bin/activate"
-echo "  python vulnforge_main.py --webmod"
+echo "  python neurorift_main.py --webmod"
 echo ""
 echo "  # Or use custom port:"
-echo "  python vulnforge_main.py --webmod --web-port 8502"
+echo "  python neurorift_main.py --webmod --web-port 8502"
 echo ""
 echo "  # Install missing dependencies:"
 echo "  pip install streamlit langchain-core langchain-openai langchain-ollama"

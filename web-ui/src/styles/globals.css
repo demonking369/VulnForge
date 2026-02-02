@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    body {
+        @apply bg-neuro-bg text-neuro-text-primary font-sans antialiased;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+        @apply w-2 h-2;
+    }
+
+    ::-webkit-scrollbar-track {
+        @apply bg-neuro-bg;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        @apply bg-neuro-border rounded-full hover:bg-neuro-primary/50 transition-colors;
+    }
+}
+
+@layer components {
+    .glass-card {
+        @apply bg-neuro-surface/80 backdrop-blur-sm border border-neuro-border rounded-lg shadow-lg;
+    }
+
+    .terminal-text {
+        @apply font-mono text-sm leading-relaxed;
+    }
+
+    .btn-primary {
+        @apply px-4 py-2 bg-neuro-primary text-white rounded-md hover:bg-neuro-primary/90 transition-colors;
+    }
+
+    .btn-secondary {
+        @apply px-4 py-2 bg-neuro-surface text-neuro-text-primary border border-neuro-border rounded-md hover:bg-neuro-surface/80 transition-colors;
+    }
+}

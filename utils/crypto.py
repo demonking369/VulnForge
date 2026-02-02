@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-VulnForge Cryptography Module
+NeuroRift Cryptography Module
 Provides encryption and secure credential storage
 """
 
@@ -39,7 +39,7 @@ class CredentialManager:
             raise ImportError("cryptography library required. Install with: pip install cryptography")
         
         if credentials_dir is None:
-            credentials_dir = Path.home() / ".vulnforge" / "credentials"
+            credentials_dir = Path.home() / ".neurorift" / "credentials"
         
         self.credentials_dir = Path(credentials_dir)
         FilePermissionManager.create_secure_directory(self.credentials_dir, mode=0o700)

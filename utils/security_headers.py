@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-VulnForge Security Headers Module
+NeuroRift Security Headers Module
 Provides security headers for web responses and API endpoints
 """
 

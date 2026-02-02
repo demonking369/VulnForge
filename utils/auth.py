@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-VulnForge Authentication and Authorization Framework
+NeuroRift Authentication and Authorization Framework
 Provides session management and role-based access control
 """
 
@@ -147,10 +147,10 @@ class AuthManager:
         """Initialize auth manager
         
         Args:
-            auth_dir: Directory to store auth data (default: ~/.vulnforge/auth)
+            auth_dir: Directory to store auth data (default: ~/.neurorift/auth)
         """
         if auth_dir is None:
-            auth_dir = Path.home() / ".vulnforge" / "auth"
+            auth_dir = Path.home() / ".neurorift" / "auth"
         
         self.auth_dir = Path(auth_dir)
         FilePermissionManager.create_secure_directory(self.auth_dir, mode=0o700)

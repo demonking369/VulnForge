@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # ╔══════════════════════════════════════════════════════════╗
-# ║ VulnForge Uninstall Script                               ║
-# ║ Built with Blood by DemonKing369.0 👑                    ║
-# ║ GitHub: https://github.com/Arunking9                     ║
+# ║ NeuroRift Uninstall Script                               ║
+# ║ Designed and developed by demonking369 🧠                ║
+# ║ GitHub: https://github.com/demonking369/NeuroRift        ║
 # ╚══════════════════════════════════════════════════════════╝
 
 # Colors for output
@@ -14,10 +14,10 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 echo -e "${RED}╔══════════════════════════════════════════════════════════╗${NC}"
-echo -e "${RED}║           VulnForge Uninstall Utility                    ║${NC}"
+echo -e "${RED}║           NeuroRift Uninstall Utility                    ║${NC}"
 echo -e "${RED}╚══════════════════════════════════════════════════════════╝${NC}"
 echo ""
-echo -e "${YELLOW}This will help you remove VulnForge components from your system.${NC}"
+echo -e "${YELLOW}This will help you remove NeuroRift components from your system.${NC}"
 echo ""
 
 # Function to ask yes/no question
@@ -45,8 +45,9 @@ UNINSTALL_APP=false
 UNINSTALL_MODELS=false
 UNINSTALL_TOOLS=false
 UNINSTALL_CONFIG=false
+UNINSTALL_SESSIONS=false
 
-if ask_yes_no "Remove VulnForge application (Python package)?"; then
+if ask_yes_no "Remove NeuroRift application (Python package)?"; then
     UNINSTALL_APP=true
 fi
 
@@ -60,17 +61,22 @@ if ask_yes_no "Remove security tools (subfinder, httpx, nuclei, etc.)?"; then
     UNINSTALL_TOOLS=true
 fi
 
-if ask_yes_no "Remove configuration files (~/.vulnforge)?"; then
+if ask_yes_no "Remove configuration files (~/.neurorift/configs)?"; then
     UNINSTALL_CONFIG=true
+fi
+
+if ask_yes_no "Remove session data (~/.neurorift/sessions)?"; then
+    UNINSTALL_SESSIONS=true
 fi
 
 # Confirm before proceeding
 echo ""
 echo -e "${YELLOW}Summary of what will be removed:${NC}"
-[ "$UNINSTALL_APP" = true ] && echo -e "  ${RED}✗${NC} VulnForge application"
+[ "$UNINSTALL_APP" = true ] && echo -e "  ${RED}✗${NC} NeuroRift application"
 [ "$UNINSTALL_MODELS" = true ] && echo -e "  ${RED}✗${NC} AI models"
 [ "$UNINSTALL_TOOLS" = true ] && echo -e "  ${RED}✗${NC} Security tools"
 [ "$UNINSTALL_CONFIG" = true ] && echo -e "  ${RED}✗${NC} Configuration files"
+[ "$UNINSTALL_SESSIONS" = true ] && echo -e "  ${RED}✗${NC} Session data (.nrs files)"
 echo ""
 
 if ! ask_yes_no "${RED}Proceed with uninstallation?${NC}"; then
@@ -82,39 +88,39 @@ echo ""
 echo -e "${BLUE}Starting uninstallation...${NC}"
 echo ""
 
-# Uninstall VulnForge application
+# Uninstall NeuroRift application
 if [ "$UNINSTALL_APP" = true ]; then
-    echo -e "${YELLOW}Removing VulnForge application...${NC}"
+    echo -e "${YELLOW}Removing NeuroRift application...${NC}"
     
     # Try pipx first
     if command -v pipx &> /dev/null; then
-        if pipx list | grep -q vulnforge; then
-            pipx uninstall vulnforge
+        if pipx list | grep -q neurorift; then
+            pipx uninstall neurorift
             echo -e "${GREEN}[✓] Removed via pipx${NC}"
         fi
     fi
     
     # Try pip user install
-    if pip list --user 2>/dev/null | grep -q vulnforge; then
-        pip uninstall -y vulnforge
+    if pip list --user 2>/dev/null | grep -q neurorift; then
+        pip uninstall -y neurorift
         echo -e "${GREEN}[✓] Removed via pip (user)${NC}"
     fi
     
     # Try system pip
     if command -v sudo &> /dev/null; then
-        if pip list 2>/dev/null | grep -q vulnforge; then
-            sudo pip uninstall -y vulnforge
+        if pip list 2>/dev/null | grep -q neurorift; then
+            sudo pip uninstall -y neurorift
             echo -e "${GREEN}[✓] Removed via pip (system)${NC}"
         fi
     fi
     
     # Remove from /usr/local/bin if exists
-    if [ -f "/usr/local/bin/vulnforge" ]; then
+    if [ -f "/usr/local/bin/neurorift" ]; then
         if command -v sudo &> /dev/null; then
-            sudo rm -f /usr/local/bin/vulnforge
-            echo -e "${GREEN}[✓] Removed /usr/local/bin/vulnforge${NC}"
+            sudo rm -f /usr/local/bin/neurorift
+            echo -e "${GREEN}[✓] Removed /usr/local/bin/neurorift${NC}"
         else
-            rm -f /usr/local/bin/vulnforge 2>/dev/null || echo -e "${YELLOW}[!] Could not remove /usr/local/bin/vulnforge (permission denied)${NC}"
+            rm -f /usr/local/bin/neurorift 2>/dev/null || echo -e "${YELLOW}[!] Could not remove /usr/local/bin/neurorift (permission denied)${NC}"
         fi
     fi
 fi
@@ -169,19 +175,54 @@ if [ "$UNINSTALL_TOOLS" = true ]; then
     done
 fi
 
+# Remove session data
+if [ "$UNINSTALL_SESSIONS" = true ]; then
+    echo -e "${YELLOW}Removing session data...${NC}"
+    
+    if [ -d "$HOME/.neurorift/sessions" ]; then
+        # Count sessions
+        SESSION_COUNT=$(find "$HOME/.neurorift/sessions" -name "*.nrs" 2>/dev/null | wc -l)
+        
+        if [ "$SESSION_COUNT" -gt 0 ]; then
+            echo -e "${YELLOW}Found $SESSION_COUNT session(s)${NC}"
+            if ask_yes_no "Delete all sessions? (This cannot be undone)" "N"; then
+                rm -rf "$HOME/.neurorift/sessions"
+                rm -rf "$HOME/.neurorift/session_data"
+                echo -e "${GREEN}[✓] Removed all sessions${NC}"
+            else
+                echo -e "${YELLOW}[!] Keeping session data${NC}"
+            fi
+        else
+            rm -rf "$HOME/.neurorift/sessions"
+            rm -rf "$HOME/.neurorift/session_data"
+            echo -e "${GREEN}[✓] Removed session directories${NC}"
+        fi
+    fi
+fi
+
 # Remove configuration files
 if [ "$UNINSTALL_CONFIG" = true ]; then
     echo -e "${YELLOW}Removing configuration files...${NC}"
     
-    if [ -d "$HOME/.vulnforge" ]; then
-        rm -rf "$HOME/.vulnforge"
-        echo -e "${GREEN}[✓] Removed ~/.vulnforge${NC}"
+    if [ -d "$HOME/.neurorift/configs" ]; then
+        rm -rf "$HOME/.neurorift/configs"
+        echo -e "${GREEN}[✓] Removed ~/.neurorift/configs${NC}"
     fi
     
     # Remove .env file from project directory if it exists
     if [ -f ".env" ]; then
         rm -f .env
         echo -e "${GREEN}[✓] Removed .env${NC}"
+    fi
+    
+    # Remove entire .neurorift directory if empty
+    if [ -d "$HOME/.neurorift" ]; then
+        if [ -z "$(ls -A $HOME/.neurorift)" ]; then
+            rm -rf "$HOME/.neurorift"
+            echo -e "${GREEN}[✓] Removed ~/.neurorift (empty)${NC}"
+        else
+            echo -e "${YELLOW}[!] ~/.neurorift not empty, keeping directory${NC}"
+        fi
     fi
 fi
 
@@ -190,5 +231,6 @@ echo -e "${GREEN}╔════════════════════
 echo -e "${GREEN}║           Uninstallation Complete!                       ║${NC}"
 echo -e "${GREEN}╚══════════════════════════════════════════════════════════╝${NC}"
 echo ""
-echo -e "${BLUE}Thank you for using VulnForge!${NC}"
+echo -e "${BLUE}Thank you for using NeuroRift!${NC}"
+echo -e "${BLUE}Designed and developed by demonking369${NC}"
 echo -e "${BLUE}To reinstall, run: ./install_script.sh${NC}"

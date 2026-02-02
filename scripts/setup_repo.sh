@@ -6,7 +6,7 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-echo -e "${GREEN}Setting up VulnForge repository...${NC}"
+echo -e "${GREEN}Setting up NeuroRift repository...${NC}"
 
 # Check if git is installed
 if ! command -v git &> /dev/null; then
@@ -26,15 +26,15 @@ git add .
 
 # Create initial commit
 echo -e "${YELLOW}Creating initial commit...${NC}"
-git commit -m "Initial commit: VulnForge AI-powered vulnerability research framework"
+git commit -m "Initial commit: NeuroRift AI-powered vulnerability research framework"
 
 # Add remote repository
 echo -e "${YELLOW}Adding remote repository...${NC}"
-git remote add origin https://github.com/Arunking9/VulnForge.git
+git remote add origin https://github.com/Arunking9/NeuroRift.git
 
 # Push to GitHub
 echo -e "${YELLOW}Pushing to GitHub...${NC}"
 git push -u origin main
 
 echo -e "${GREEN}Repository setup complete!${NC}"
-echo -e "You can now access your repository at: ${YELLOW}https://github.com/Arunking9/VulnForge${NC}" 
+echo -e "You can now access your repository at: ${YELLOW}https://github.com/Arunking9/NeuroRift${NC}" 

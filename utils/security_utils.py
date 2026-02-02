@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-VulnForge Security Utilities Module
+NeuroRift Security Utilities Module
 Provides security functions for input validation, sanitization, and protection
 """
 

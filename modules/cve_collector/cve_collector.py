@@ -1,5 +1,5 @@
 """
-CVE Collector module for VulnForge
+CVE Collector module for NeuroRift
 Handles gathering and analyzing CVEs from various sources
 """
 
@@ -25,7 +25,7 @@ class CVECollector:
     def __init__(self, base_dir: Path, ai_wrapper: Optional[OllamaWrapper] = None):
         self.base_dir = base_dir
         self.console = Console()
-        self.logger = setup_logger("vulnforge.cve_collector")
+        self.logger = setup_logger("neurorift.cve_collector")
         self.ai_wrapper = ai_wrapper
         self.data_dir = base_dir / "data" / "cve_feeds"
         self.cache_dir = base_dir / "cache" / "cve_feeds"
@@ -204,7 +204,7 @@ class CVECollector:
         url = "https://api.github.com/search/code"
         headers = {
             "Accept": "application/vnd.github.v3+json",
-            "User-Agent": "VulnForge/1.0"
+            "User-Agent": "NeuroRift/1.0"
         }
         
         # Add API key if available

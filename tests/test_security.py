@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-VulnForge Security Test Suite
+NeuroRift Security Test Suite
 Tests security utilities, authentication, and input validation
 """
 

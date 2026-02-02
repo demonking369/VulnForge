@@ -1,5 +1,5 @@
 """
-Reconnaissance module for VulnForge
+Reconnaissance module for NeuroRift
 """
 
 from .recon import ReconModule

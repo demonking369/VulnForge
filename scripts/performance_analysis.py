@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-VulnForge Performance Analysis & Benchmarking Tool
+NeuroRift Performance Analysis & Benchmarking Tool
 
 This script provides comprehensive analysis of:
 1. AI Reasoning Capabilities
@@ -342,7 +342,7 @@ def main():
     """Main function to run comprehensive performance analysis"""
     analyzer = PerformanceAnalyzer()
     
-    console.print("[bold yellow]🚀 VulnForge Performance Analysis[/bold yellow]")
+    console.print("[bold yellow]🚀 NeuroRift Performance Analysis[/bold yellow]")
     console.print("=" * 60)
     
     # Run analysis
