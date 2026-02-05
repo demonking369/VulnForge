@@ -11,7 +11,11 @@ import logging
 
 # Import existing NeuroRift modules
 from modules.ai.ai_integration import OllamaClient, AIAnalyzer
-from modules.orchestration.execution_manager import ExecutionManager, ScanRequest, SessionContext
+from modules.orchestration.execution_manager import (
+    ExecutionManager,
+    ScanRequest,
+    SessionContext,
+)
 from modules.darkweb.robin import runner as robin_runner
 from modules.tools.base import ToolMode
 
@@ -29,12 +33,14 @@ execution_manager = ExecutionManager()
 
 class Command(BaseModel):
     """Generic command structure"""
+
     type: str
     data: Dict[str, Any] = {}
 
 
 class Response(BaseModel):
     """Generic response structure"""
+
     success: bool
     data: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
@@ -44,7 +50,7 @@ class Response(BaseModel):
 async def execute_command(command: Dict[str, Any]) -> Response:
     """
     Execute a command from Rust core
-    
+
     Command types:
     - ai_generate: Generate AI response
     - tool_execute: Execute a security tool
@@ -53,7 +59,7 @@ async def execute_command(command: Dict[str, Any]) -> Response:
     """
     try:
         cmd_type = command.get("type")
-        
+
         if cmd_type == "ai_generate":
             result = await handle_ai_generate(command)
         elif cmd_type == "tool_execute":
@@ -63,10 +69,12 @@ async def execute_command(command: Dict[str, Any]) -> Response:
         elif cmd_type == "browser_action":
             result = await handle_browser_action(command)
         else:
-            raise HTTPException(status_code=400, detail=f"Unknown command type: {cmd_type}")
-        
+            raise HTTPException(
+                status_code=400, detail=f"Unknown command type: {cmd_type}"
+            )
+
         return Response(success=True, data=result)
-    
+
     except Exception as e:
         logger.error(f"Command execution failed: {e}", exc_info=True)
         return Response(success=False, error=str(e))
@@ -76,9 +84,9 @@ async def handle_ai_generate(command: Dict[str, Any]) -> Dict[str, Any]:
     """Generate AI response"""
     prompt = command.get("prompt", "")
     model = command.get("model")
-    
+
     response = await ollama.generate(prompt, model=model)
-    
+
     return {
         "response": response,
         "model": model or ollama.model,
@@ -90,24 +98,18 @@ async def handle_tool_execute(command: Dict[str, Any]) -> Dict[str, Any]:
     tool_name = command.get("tool", "")
     target = command.get("target", "")
     args = command.get("args", {})
-    
+
     # Create scan request
-    scan_request = ScanRequest(
-        tool_name=tool_name,
-        target=target,
-        args=args
-    )
-    
+    scan_request = ScanRequest(tool_name=tool_name, target=target, args=args)
+
     # Create minimal session context
     session_context = SessionContext(
-        session_id="temp",
-        mode=ToolMode.OFFENSIVE,  # TODO: Get from Rust
-        history=[]
+        session_id="temp", mode=ToolMode.OFFENSIVE, history=[]  # TODO: Get from Rust
     )
-    
+
     # Execute tool
     result = await execution_manager.execute_tool(scan_request, session_context)
-    
+
     return {
         "tool_name": result.tool_name,
         "command": result.command,
@@ -122,27 +124,23 @@ async def handle_tool_execute(command: Dict[str, Any]) -> Dict[str, Any]:
 async def handle_robin_search(command: Dict[str, Any]) -> Dict[str, Any]:
     """Execute Robin dark web search"""
     query = command.get("query", "")
-    
+
     # TODO: Integrate with Robin module
     # For now, return placeholder
-    return {
-        "query": query,
-        "results": [],
-        "message": "Robin integration pending"
-    }
+    return {"query": query, "results": [], "message": "Robin integration pending"}
 
 
 async def handle_browser_action(command: Dict[str, Any]) -> Dict[str, Any]:
     """Execute browser automation action"""
     action = command.get("action", "")
     params = command.get("params", {})
-    
+
     # TODO: Integrate with browser automation
     # For now, return placeholder
     return {
         "action": action,
         "success": True,
-        "message": "Browser automation integration pending"
+        "message": "Browser automation integration pending",
     }
 
 
@@ -161,4 +159,5 @@ async def startup_event():
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="127.0.0.1", port=8766, log_level="info")

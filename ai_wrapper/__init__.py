@@ -10,4 +10,4 @@ AI Wrapper module for NeuroRift
 
 from .ollama_wrapper import OllamaWrapper
 
-__all__ = ['OllamaWrapper'] 
+__all__ = ["OllamaWrapper"]

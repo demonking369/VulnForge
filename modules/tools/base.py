@@ -4,9 +4,11 @@ from enum import Enum
 from pydantic import BaseModel
 from pathlib import Path
 
+
 class ToolMode(Enum):
     OFFENSIVE = "offensive"
     DEFENSIVE = "defensive"
+
 
 class ToolCategory(Enum):
     RECON = "recon"
@@ -14,9 +16,11 @@ class ToolCategory(Enum):
     MONITORING = "monitoring"
     ANALYSIS = "analysis"
 
+
 class ToolInput(BaseModel):
     target: str
     args: Dict[str, Any] = {}
+
 
 class ToolResult(BaseModel):
     tool_name: str
@@ -26,8 +30,11 @@ class ToolResult(BaseModel):
     structured_data: Dict[str, Any]
     error: Optional[str] = None
 
+
 class BaseTool(ABC):
-    def __init__(self, name: str, description: str, category: ToolCategory, mode: ToolMode):
+    def __init__(
+        self, name: str, description: str, category: ToolCategory, mode: ToolMode
+    ):
         self.name = name
         self.description = description
         self.category = category
@@ -47,7 +54,7 @@ class BaseTool(ABC):
     def parse_output(self, raw_output: str) -> Dict[str, Any]:
         """Parse raw terminal output into structured JSON."""
         pass
-    
+
     @abstractmethod
     def check_installed(self) -> bool:
         """Check if the tool is installed on the system."""
