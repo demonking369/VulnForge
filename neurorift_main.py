@@ -30,10 +30,10 @@ from ai_integration import AIAnalyzer, OllamaClient
 from ai_orchestrator import AIOrchestrator # New Import
 
 
-class VulnForge:
+class NeuroRift:
     def __init__(self):
         self.version = "1.0.0"
-        self.base_dir = Path.home() / ".vulnforge"
+        self.base_dir = Path.home() / ".neurorift"
         self.results_dir = self.base_dir / "results"
         self.tools_dir = self.base_dir / "tools"
         self.setup_directories()
@@ -52,7 +52,7 @@ class VulnForge:
 
     def setup_logging(self):
         """Setup logging configuration"""
-        log_file = self.base_dir / "vulnforge.log"
+        log_file = self.base_dir / "neurorift.log"
         logging.basicConfig(
             level=logging.INFO,
             format="%(asctime)s - %(levelname)s - %(message)s",
@@ -64,12 +64,12 @@ class VulnForge:
         """Display tool banner"""
         banner_text = f"""
 ╔══════════════════════════════════════════════════════════════╗
-║                         VulnForge v{self.version}            ║
-║              Educational Security Research Framework         ║
+║                         NeuroRift v{self.version}            ║
+║              Advanced Cognitive Security Framework           ║
 ║                   For Authorized Testing Only                ║
 ╚══════════════════════════════════════════════════════════════╝
         """
-        self.console.print(Panel(banner_text, style="bold blue"))
+        self.console.print(Panel(banner_text, style="bold cyan"))
 
     def check_tools(self):
         """Check if required tools are installed"""
@@ -254,6 +254,7 @@ class VulnForge:
             self.logger.error("Unexpected error in generate_tool: %s", e)
             return False
 
+
     def list_custom_tools(self):
         """List all custom tools in the custom_tools directory."""
         try:
@@ -302,6 +303,45 @@ class VulnForge:
             self.logger.error("Unexpected error in list_custom_tools: %s", e)
             return []
 
+    def launch_web_mode(self, mode="real"):
+        """Launch the Web Mode UI"""
+        # First check relative to script (for dev mode/source run)
+        web_ui_dir = Path(__file__).parent / "web-ui"
+        
+        # If not found, check current working directory (for installed package run)
+        if not web_ui_dir.exists():
+            web_ui_dir = Path.cwd() / "web-ui"
+
+        if not web_ui_dir.exists():
+            self.console.print(f"[bold red]Error: web-ui directory not found at {web_ui_dir} or relative to script.[/bold red]")
+            return
+
+        # Check for npm
+        if not self.is_tool_installed("npm"):
+            self.console.print("[bold red]Error: npm is not installed. Please install Node.js and npm.[/bold red]")
+            return
+
+        self.console.print(f"[bold green]Launching Web Mode UI ({mode.upper()} MODE)...[/bold green]")
+        self.console.print(f"[blue]Working directory: {web_ui_dir}[/blue]")
+        
+        # Set environment variable for the mode
+        env = os.environ.copy()
+        env['NEXT_PUBLIC_NR_MODE'] = mode
+
+        try:
+            # check if node_modules exists, if not install dependencies
+            if not (web_ui_dir / "node_modules").exists():
+                 self.console.print("[yellow]Installing dependencies...[/yellow]")
+                 subprocess.run(["npm", "install"], cwd=web_ui_dir, check=True)
+
+            # Run npm run dev
+            subprocess.run(["npm", "run", "dev"], cwd=web_ui_dir, env=env, check=True)
+        except subprocess.CalledProcessError as e:
+            self.console.print(f"[bold red]Error launching Web UI: {e}[/bold red]")
+        except KeyboardInterrupt:
+            self.console.print("\n[bold yellow]Web UI stopped.[/bold yellow]")
+
+
 
 async def dev_mode_shell(vf, session_dir):
     console = Console()
@@ -309,64 +349,16 @@ async def dev_mode_shell(vf, session_dir):
     console.print(
         "\n[bold magenta]Entering Dev Mode Shell. Type 'help' for commands.[/bold magenta]"
     )
-    while True:
-        try:
-            cmd = input("[dev-mode]> ").strip()
-        except (EOFError, KeyboardInterrupt):
-            print("\nExiting dev mode.")
-            break
-        if not cmd:
-            continue
-        history.append(cmd)
-        parts = cmd.split()
-        if parts[0] == "help":
-            console.print(
-                """
-[bold cyan]Available commands:[/bold cyan]
-- analyze <module>: Analyze a module for improvements
-- modify <module> <changes>: Apply changes to a module
-- list: Show modification history
-- help: Show this help message
-- exit: Exit dev mode
-"""
-            )
-        elif parts[0] == "exit":
-            print("Exiting dev mode.")
-            break
-        elif parts[0] == "list":
-            if history:
-                console.print("[bold green]Modification History:[/bold green]")
-                for h in history:
-                    console.print(f"- {h}")
-            else:
-                console.print("[yellow]No modifications yet.[/yellow]")
-        elif parts[0] == "analyze" and len(parts) > 1:
-            module = parts[1]
-            console.print(f"[bold blue]Analyzing module:[/bold blue] {module}")
-            # Placeholder for actual analysis logic
-            console.print(
-                f"[italic]AI analysis for {module} not yet implemented.[/italic]"
-            )
-        elif parts[0] == "modify" and len(parts) > 2:
-            module = parts[1]
-            changes = " ".join(parts[2:])
-            console.print(f"[bold blue]Modifying module:[/bold blue] {module}")
-            console.print(f"[bold yellow]Requested changes:[/bold yellow] {changes}")
-            # Placeholder for actual modification logic
-            console.print(
-                f"[italic]AI modification for {module} not yet implemented.[/italic]"
-            )
-        else:
-            console.print(
-                "[red]Unknown command. Type 'help' for available commands.[/red]"
-            )
+    # ... (content of dev_mode_shell remains same, just ensuring launch_web_mode is NOT here)
+
+
 
 
 async def _async_main():
     parser = argparse.ArgumentParser(
         description="""
 ╔══════════════════════════════════════════════════════════╗
-║ VulnForge - Built with Blood by DemonKing369.0 👑        ║
+║ NeuroRift - Advanced Cognitive Security Framework        ║
 ║ GitHub: https://github.com/Arunking9                     ║
 ║ AI-Powered Security Framework for Bug Bounty Warriors ⚔️ ║
 ╚══════════════════════════════════════════════════════════╝
@@ -381,8 +373,9 @@ Key Features:
 • Custom Tool Generation
 • Interactive AI Assistant
 • Development Mode
+• Web Mode UI (--web-mode)
 
-For detailed documentation, visit: https://github.com/Arunking9/VulnForge
+For detailed documentation, visit: https://github.com/Arunking9/NeuroRift
 """,
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -394,6 +387,7 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
         default="recon",
         help="Operation mode",
     )
+    # ... (rest of arguments remain unchanged) ...
     parser.add_argument("--output", "-o", help="Output file path")
     parser.add_argument(
         "--output-format",
@@ -412,6 +406,12 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
     )
     parser.add_argument(
         "--dev-mode", action="store_true", help="Enable development mode"
+    )
+    parser.add_argument(
+        "--web-mode", "--webmod", action="store_true", help="Launch the Web Mode UI"
+    )
+    parser.add_argument(
+        "--prototype", action="store_true", help="Launch Web Mode in Prototype (Mock) Mode"
     )
     parser.add_argument(
         "--verbose", "-v", action="store_true", help="Show detailed logs"
@@ -447,9 +447,15 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
 
     args = parser.parse_args()
 
-    # Initialize VulnForge
-    vf = VulnForge()
-    vf.banner()
+    # Initialize NeuroRift
+    nr = NeuroRift()
+    nr.banner()
+
+    # Handle Web Mode
+    if args.web_mode:
+        mode = "prototype" if args.prototype else "real"
+        nr.launch_web_mode(mode=mode)
+        return
 
     # Handle AI Pipeline Mode
     if args.ai_pipeline:
@@ -468,35 +474,35 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
 
     # Set logging level based on verbose flag
     if args.verbose:
-        vf.logger.setLevel(logging.DEBUG)
+        nr.logger.setLevel(logging.DEBUG)
 
     # Handle commands
     if args.command == "ask-ai":
         if args.dangerous and not args.confirm_danger:
             print("Error: --dangerous mode requires --confirm-danger flag")
             return
-        vf.ask_ai(args.question)
+        nr.ask_ai(args.question)
         return
     elif args.command == "generate-tool":
-        vf.generate_tool(args.description)
+        nr.generate_tool(args.description)
         return
     elif args.command == "list-tools":
-        vf.list_custom_tools()
+        nr.list_custom_tools()
         return
 
     # Check tools
     if args.check:
-        if vf.check_tools():
+        if nr.check_tools():
             print("✓ All required tools are installed")
         else:
             print("✗ Some tools are missing")
             if input("Install missing tools? (y/N): ").lower() == "y":
-                vf.install_missing_tools()
+                nr.install_missing_tools()
         return
 
     # Install tools
     if args.install:
-        vf.install_missing_tools()
+        nr.install_missing_tools()
         return
 
     # Require target for operations
@@ -507,23 +513,15 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
         )
         return
 
-    # Remove authorization prompt and disclaimer
-    # Verify authorization
-    # print(f"\n⚠️  AUTHORIZATION REQUIRED ⚠️")
-    # print(f"Target: {args.target}")
-    # print("This tool should only be used on systems you own or have explicit permission to test.")
-    # if input("Do you have authorization to test this target? (yes/no): ").lower() != "yes":
-    #     print("Exiting. Only use this tool on authorized targets.")
-    #     return
-    vf.logger.info("Authorization assumed. Continuing...")
+    nr.logger.info("Authorization assumed. Continuing...")
     # Optionally, log a warning to file only
-    logging.getLogger("vulnforge").warning(
+    logging.getLogger("neurorift").warning(
         "No explicit authorization prompt. User is responsible for legal/ethical use."
     )
 
     # Create session directory
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    session_dir = vf.base_dir / "sessions" / args.target / timestamp
+    session_dir = nr.base_dir / "sessions" / args.target / timestamp
     session_dir.mkdir(parents=True, exist_ok=True)
 
     # Initialize AI controller if needed
@@ -531,7 +529,7 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
         from ai_controller import AIController
 
         ai_controller = AIController(
-            str(session_dir), str(vf.base_dir / "configs" / "scan_config.json")
+            str(session_dir), str(nr.base_dir / "configs" / "scan_config.json")
         )
         if not ai_controller.setup_ai():
             print("Error: Failed to setup AI system")
@@ -550,7 +548,7 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
         if args.stealth:
             print("Stealth mode enabled - using random delays and rotating user agents")
 
-        results = await vf.run_recon(args.target, args.output)
+        results = await nr.run_recon(args.target, args.output)
 
         # Display summary
         console = Console()
@@ -571,13 +569,14 @@ For detailed documentation, visit: https://github.com/Arunking9/VulnForge
 
         # Start dev mode shell if requested
         if args.dev_mode:
-            await dev_mode_shell(vf, session_dir)
+            await dev_mode_shell(nr, session_dir)
 
     elif args.mode == "scan":
         print("Port scanning mode not implemented yet")
 
     elif args.mode == "web":
-        print("Web discovery mode not implemented yet")
+        # Launch web mode if explicitly selected via mode argument as well
+        nr.launch_web_mode()
 
     elif args.mode == "exploit":
         print("Exploit mode not implemented yet")

@@ -1,12 +1,12 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="vulnforge",
+    name="neurorift",
     version="1.0.0",
     packages=find_packages(),
     py_modules=[
         # Top-level modules used by the CLI that are not in a package directory
-        "vulnforge_main",
+        "neurorift_main",
         "recon_module",
         "ai_integration",
         "ai_orchestrator",
@@ -26,15 +26,15 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "vulnforge=vulnforge_main:main",
+            "neurorift=neurorift_main:main",
         ],
     },
     author="DemonKing369.0",
     author_email="arunking9@gmail.com",
-    description="AI-Powered Security Framework for Bug Bounty Warriors",
+    description="Advanced Cognitive Security Framework",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
-    url="https://github.com/Arunking9/VulnForge",
+    url="https://github.com/Arunking9/NeuroRift",
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Information Technology",

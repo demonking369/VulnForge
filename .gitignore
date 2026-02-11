@@ -69,4 +69,17 @@ config.local.json
 
 # Temporary files
 *.tmp
-*.temp 
+*.temp
+
+# Web development
+node_modules/
+.next/
+out/
+.env*.local
+.npm/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+ 
