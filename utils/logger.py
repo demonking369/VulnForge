@@ -1,9 +1,9 @@
 """
-Logger utility for VulnForge
+Logger utility for NeuroRift
 """
 
 # ╔══════════════════════════════════════════════════════════╗
-# ║ VulnForge - Built with Blood by DemonKing369.0 👑        ║
+# ║ NeuroRift - Built with Blood by DemonKing369.0 👑        ║
 # ║ GitHub: https://github.com/Arunking9                     ║
 # ║ AI-Powered Security Framework for Bug Bounty Warriors ⚔️║
 # ╚══════════════════════════════════════════════════════════╝
@@ -18,7 +18,7 @@ from datetime import datetime
 def setup_logger(name: str, log_dir: str = None) -> logging.Logger:
     """Set up a logger with the given name."""
     if log_dir is None:
-        log_dir = os.path.join(os.path.expanduser("~"), ".vulnforge", "logs")
+        log_dir = os.path.join(os.path.expanduser("~"), ".neurorift", "logs")
     
     os.makedirs(log_dir, exist_ok=True)
     

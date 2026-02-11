@@ -1,260 +1,168 @@
 #!/bin/bash
+set -e
 
-# ╔══════════════════════════════════════════════════════════╗
-# ║ VulnForge - Built with Blood by DemonKing369.0 👑        ║
-# ║ GitHub: https://github.com/Arunking9                     ║
-# ║ AI-Powered Security Framework for Bug Bounty Warriors ⚔️║
-# ╚══════════════════════════════════════════════════════════╝
-
-# Colors for output
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
+# Colors
 RED='\033[0;31m'
+GREEN='\033[0;32m'
 BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-# Function to check if a command exists
-check_command() {
-    if command -v $1 &> /dev/null; then
-        echo -e "${GREEN}[✓] $1 is installed${NC}"
-        return 0
-    else
-        echo -e "${RED}[✗] $1 is not installed${NC}"
-        return 1
-    fi
-}
+echo -e "${BLUE}🧠 NeuroRift Unified Installer${NC}"
+echo "=================================="
 
-# Function to check Python package
-check_python_package() {
-    if python3 -c "import $1" &> /dev/null; then
-        echo -e "${GREEN}[✓] Python package $1 is installed${NC}"
-        return 0
-    else
-        echo -e "${RED}[✗] Python package $1 is not installed${NC}"
-        return 1
-    fi
-}
+# 1. System Checks
+echo -e "\n${BLUE}[1/9] System Checks...${NC}"
 
-echo -e "${BLUE}Starting VulnForge Installation...${NC}"
-echo -e "${YELLOW}Checking system requirements...${NC}\n"
-
-# Check Python
-if ! check_command python3; then
-    echo -e "${RED}Python 3 is required but not installed. Please install Python 3.8 or higher.${NC}"
-    exit 1
-fi
-
-# Check Python version
-PYTHON_VERSION=$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
-PYTHON_MAJOR=$(echo $PYTHON_VERSION | cut -d. -f1)
-PYTHON_MINOR=$(echo $PYTHON_VERSION | cut -d. -f2)
-
-if [ "$PYTHON_MAJOR" -lt 3 ] || ([ "$PYTHON_MAJOR" -eq 3 ] && [ "$PYTHON_MINOR" -lt 8 ]); then
-    echo -e "${RED}Python 3.8 or higher is required. Current version: $PYTHON_VERSION${NC}"
-    exit 1
-fi
-
-echo -e "${GREEN}Found Python $PYTHON_VERSION${NC}"
-
-# Check required tools
-echo -e "\n${YELLOW}Checking required tools...${NC}"
-TOOLS=("nmap" "dig" "go" "git")
-MISSING_TOOLS=()
-
-for tool in "${TOOLS[@]}"; do
-    if ! check_command $tool; then
-        MISSING_TOOLS+=($tool)
-    fi
-done
-
-# Check Ollama
-OLLAMA_INSTALLED=false
-if check_command ollama; then
-    OLLAMA_INSTALLED=true
-    echo -e "\n${YELLOW}Checking Ollama models...${NC}"
-    if ollama list | grep -q "deepseek-coder-v2:16b-lite-base-q4_0"; then
-        echo -e "${GREEN}[✓] Main model (deepseek-coder) is installed${NC}"
-    else
-        echo -e "${YELLOW}[!] Main model is not installed${NC}"
-    fi
-    if ollama list | grep -q "mistral:7b-instruct-v0.2-q4_0"; then
-        echo -e "${GREEN}[✓] Assistant model (mistral) is installed${NC}"
-    else
-        echo -e "${YELLOW}[!] Assistant model is not installed${NC}"
+if [ "$EUID" -eq 0 ]; then 
+    echo -e "${YELLOW}⚠️  Warning: Running as root. This script installs user-level tools (Rust, Go, Node).${NC}"
+    echo -e "${YELLOW}    It is recommended to run as a normal user with sudo privileges for system packages.${NC}"
+    read -p "Continue anyway? (y/N) " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        exit 1
     fi
 fi
 
-# Installation summary
-echo -e "\n${BLUE}Installation Summary:${NC}"
-echo -e "Python Version: ${GREEN}$PYTHON_VERSION${NC}"
-echo -e "Missing Tools: ${RED}${MISSING_TOOLS[@]}${NC}"
-echo -e "Ollama Status: ${GREEN}$([ "$OLLAMA_INSTALLED" = true ] && echo "Installed" || echo "Not Installed")${NC}"
-
-# Ask for installation preferences
-echo -e "\n${YELLOW}Installation Options:${NC}"
-read -p "Do you want to install missing tools? (y/N): " INSTALL_TOOLS
-read -p "Do you want to install/update Ollama and AI models? (y/N): " INSTALL_AI
-
-# Install Python dependencies and CLI globally/for user
-echo -e "\n${BLUE}Installing Python dependencies and CLI...${NC}"
-
-# Prefer system-wide install when sudo is available and user consents
-INSTALL_SCOPE="user"
-if command -v sudo &> /dev/null; then
-    read -p "Install system-wide using sudo? (y/N): " INSTALL_SYSTEM
-    if [[ $INSTALL_SYSTEM =~ ^[Yy]$ ]]; then
-        INSTALL_SCOPE="system"
-    fi
-fi
-
-if [ "$INSTALL_SCOPE" = "system" ]; then
-    echo -e "${YELLOW}Using sudo to install system-wide...${NC}"
-    sudo python3 -m pip install --upgrade pip setuptools wheel
-    sudo python3 -m pip install -r requirements.txt
-    sudo python3 -m pip install -r requirements-test.txt
-    sudo python3 -m pip install .
-    # Determine system scripts directory
-    SYSTEM_BIN=$(python3 -c 'import sysconfig; print(sysconfig.get_path("scripts"))' 2>/dev/null || echo "/usr/local/bin")
+# Detect OS
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    OS=$NAME
+    echo "Detected OS: $OS"
 else
-    echo -e "${YELLOW}Installing for current user (~/.local) or via pipx...${NC}"
-
-    # Prefer pipx if available to avoid PEP 668 restrictions
-    if command -v pipx &> /dev/null; then
-        echo -e "${YELLOW}Using pipx to install in an isolated venv...${NC}"
-        # Install runtime deps first (pipx does not support -r directly for local dirs)
-        pipx runpip vulnforge install -r requirements.txt || true
-        # Install the app itself
-        pipx install --force .
-        # Ensure shim is linked
-        pipx ensurepath || true
-    else
-        # Fallback to user installation, with --break-system-packages for PEP 668 distros (Kali/Debian)
-        python3 -m pip install --user --upgrade pip setuptools wheel --break-system-packages || true
-        python3 -m pip install --user -r requirements.txt --break-system-packages || true
-        python3 -m pip install --user -r requirements-test.txt --break-system-packages || true
-        python3 -m pip install --user . --break-system-packages || true
-    fi
-
-    # Ensure ~/.local/bin is on PATH for bash and zsh
-    for RC in ~/.bashrc ~/.zshrc; do
-        if [ -f "$RC" ]; then
-            if ! grep -q "\.local/bin" "$RC"; then
-                echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$RC"
-            fi
-        fi
-    done
-
-    # Update current shell PATH if needed
-    if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
-        export PATH="$HOME/.local/bin:$PATH"
-    fi
-    USER_BIN="$HOME/.local/bin"
+    echo "Unknown OS. Assuming generic Linux."
+    OS="Linux"
 fi
 
-# Post-install verification and fallback
-echo -e "\n${BLUE}Verifying CLI installation...${NC}"
-if command -v vulnforge &> /dev/null; then
-    echo -e "${GREEN}[✓] 'vulnforge' is available on PATH${NC}"
+# 2. System Dependencies
+echo -e "\n${BLUE}[2/9] Installing System Dependencies...${NC}"
+if command -v apt-get &> /dev/null; then
+    echo "Updating package list..."
+    sudo apt-get update -qq
+    echo "Installing base dependencies..."
+    sudo apt-get install -y build-essential curl git python3-pip python3-venv python3-full unzip tor libssl-dev pkg-config
+elif command -v yum &> /dev/null; then
+    sudo yum install -y gcc gcc-c++ make curl git python3-pip python3-devel unzip tor openssl-devel
+elif command -v pacman &> /dev/null; then
+    sudo pacman -S --noconfirm base-devel curl git python python-pip unzip tor openssl
 else
-    echo -e "${YELLOW}[!] 'vulnforge' not found on PATH yet.${NC}"
-    if [ "$INSTALL_SCOPE" = "system" ]; then
-        # Try to create a symlink in /usr/local/bin
-        SRC_PATH="${SYSTEM_BIN:-/usr/local/bin}/vulnforge"
-        if [ ! -x "$SRC_PATH" ]; then
-            # Some distros place console_scripts under /usr/bin
-            [ -x "/usr/bin/vulnforge" ] && SRC_PATH="/usr/bin/vulnforge"
-        fi
-        if [ -x "$SRC_PATH" ]; then
-            echo -e "${YELLOW}Creating symlink in /usr/local/bin for global access...${NC}"
-            sudo ln -sf "$SRC_PATH" /usr/local/bin/vulnforge
-        else
-            echo -e "${RED}Could not locate installed script to symlink. Check your pip scripts directory.${NC}"
-        fi
-    else
-        echo -e "${YELLOW}Adding ~/.local/bin to your PATH in the current session...${NC}"
-        if [ -n "$USER_BIN" ]; then
-            export PATH="$USER_BIN:$PATH"
-        fi
-        echo -e "${YELLOW}Open a new shell or 'source' your shell rc file to persist.${NC}"
-    fi
-    if command -v vulnforge &> /dev/null; then
-        echo -e "${GREEN}[✓] 'vulnforge' is now available on PATH${NC}"
-    else
-        echo -e "${RED}[✗] 'vulnforge' still not on PATH. Try reloading your shell or check pip install logs.${NC}"
+    echo -e "${YELLOW}Could not detect package manager. Please ensure basic dependencies are installed manually.${NC}"
+fi
+
+# 3. Rust Toolchain
+echo -e "\n${BLUE}[3/9] Setting up Rust...${NC}"
+if ! command -v rustc &> /dev/null; then
+    echo "Installing Rust..."
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+    source "$HOME/.cargo/env"
+else
+    echo "Rust is already installed."
+    # Ensure it's in path
+    if [ -f "$HOME/.cargo/env" ]; then
+        source "$HOME/.cargo/env"
     fi
 fi
 
-# Install missing tools if requested
-if [[ $INSTALL_TOOLS =~ ^[Yy]$ ]]; then
-    echo -e "\n${BLUE}Installing missing tools...${NC}"
+# 4. Go Toolchain (for Security Tools)
+echo -e "\n${BLUE}[4/9] Setting up Go & Security Tools...${NC}"
+if ! command -v go &> /dev/null; then
+    echo "Go not found. Installing Go..."
+    # Download generic linux amd64 - simplistic approach, might need version check
+    GO_VER="1.21.6"
+    wget https://go.dev/dl/go${GO_VER}.linux-amd64.tar.gz -O /tmp/go.tar.gz
+    sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf /tmp/go.tar.gz
+    rm /tmp/go.tar.gz
+    export PATH=$PATH:/usr/local/go/bin
     
-    # Install system tools
-    if command -v apt &> /dev/null; then
-        sudo apt update
-        sudo apt install -y ${MISSING_TOOLS[@]}
-    elif command -v yum &> /dev/null; then
-        sudo yum install -y ${MISSING_TOOLS[@]}
+    # Add to shell profile if not present
+    if ! grep -q "/usr/local/go/bin" "$HOME/.bashrc"; then
+         echo 'export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin' >> "$HOME/.bashrc"
     fi
-
-    # Install Go tools if Go is available
-    if check_command go; then
-        echo -e "\n${BLUE}Installing Go tools...${NC}"
-        go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
-        go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
-        go install -v github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest
-        go install -v github.com/ffuf/ffuf@latest
-        go install -v github.com/OJ/gobuster/v3@latest
-
-        # Add Go bin to PATH if not already there
-        if [[ ":$PATH:" != *":$HOME/go/bin:"* ]]; then
-            echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.bashrc
-            source ~/.bashrc
-        fi
-    fi
+else
+    echo "Go is already installed."
 fi
 
-# Install Ollama and models if requested
-if [[ $INSTALL_AI =~ ^[Yy]$ ]]; then
-    echo -e "\n${BLUE}Setting up AI components...${NC}"
-    
-    if ! $OLLAMA_INSTALLED; then
-        echo -e "${YELLOW}Installing Ollama...${NC}"
-        curl -fsSL https://ollama.com/install.sh | sh
-    fi
+# Need to ensure GOPATH/bin is in path for this session
+export PATH=$PATH:$(go env GOPATH)/bin:/usr/local/go/bin
 
-    echo -e "${YELLOW}Pulling required AI models...${NC}"
-    ollama pull deepseek-coder-v2:16b-lite-base-q4_0
-    ollama pull mistral:7b-instruct-v0.2-q4_0
+echo "Installing ProjectDiscovery tools..."
+go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
+go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
+go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
+
+# 5. Node.js & npm (Frontend)
+echo -e "\n${BLUE}[5/9] Setting up Node.js...${NC}"
+if ! command -v npm &> /dev/null; then
+    echo "Installing Node.js..."
+    # Using NVM is cleaner but apt is easier for a script
+    if command -v apt-get &> /dev/null; then
+        curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+        sudo apt-get install -y nodejs
+    else
+        echo -e "${YELLOW}Please install Node.js v18+ manually.${NC}"
+    fi
+else
+    echo "Node.js is already installed."
 fi
 
-# Create necessary directories
-echo -e "\n${BLUE}Setting up VulnForge directories...${NC}"
-mkdir -p ~/.vulnforge/{configs,sessions,custom_tools}
+# 6. Python Environment
+echo -e "\n${BLUE}[6/9] Setting up Python Environment...${NC}"
+VENV_DIR=".venv"
+if [ ! -d "$VENV_DIR" ]; then
+    echo "Creating virtual environment..."
+    python3 -m venv "$VENV_DIR"
+fi
 
-# Create initial config files
-echo -e "${BLUE}Creating configuration files...${NC}"
-cat > ~/.vulnforge/configs/tools.json << EOL
-{
-    "nmap": {
-        "enabled": true,
-        "args": "-sV -sC --min-rate 1000"
-    },
-    "subfinder": {
-        "enabled": true,
-        "args": "-silent"
-    },
-    "httpx": {
-        "enabled": true,
-        "args": "-silent -title -status-code"
-    }
-}
+source "$VENV_DIR/bin/activate"
+
+echo "Installing Python requirements..."
+# Ensure pip is up to date
+pip install --upgrade pip
+
+# Core dependencies (recreating requirements.txt list here for safety)
+pip install fastapi uvicorn requests python-dotenv rich dashmap httpx ollama beautifulsoup4 duckduckgo-search
+
+# 7. Build Rust Core
+echo -e "\n${BLUE}[7/9] Building Rust Core...${NC}"
+cd core
+cargo build --release
+cd ..
+
+# 8. Setup Web UI
+echo -e "\n${BLUE}[8/9] Building Web UI...${NC}"
+cd web-ui
+if [ ! -d "node_modules" ]; then
+    echo "Installing npm packages..."
+    npm install
+fi
+echo "Building Next.js app..."
+npm run build
+cd ..
+
+# 9. Configuration
+echo -e "\n${BLUE}[9/9] Finalizing Configuration...${NC}"
+
+# Create default .env if missing
+if [ ! -f .env ]; then
+    echo "Creating .env file..."
+    cat > .env <<EOL
+# NeuroRift Configuration
+LOG_LEVEL=INFO
+AI_ENABLED=true
+OLLAMA_MAIN_MODEL=llama3.2
+OLLAMA_ASSISTANT_MODEL=llama3.2
+NEURORIFT_HOME=$HOME/.neurorift
 EOL
+fi
 
-# Make scripts executable
-chmod +x vulnforge_main.py
+# Setup Scripts
+chmod +x scripts/*.sh
 
-echo -e "\n${GREEN}╔══════════════════════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}║                    Installation Complete!                  ║${NC}"
-echo -e "${GREEN}╚══════════════════════════════════════════════════════════╝${NC}"
-echo -e "\nYou can now use VulnForge from anywhere by typing: ${GREEN}vulnforge${NC}"
-echo -e "For help, run: ${GREEN}vulnforge -h${NC}"
+echo -e "\n${GREEN}✅ Installation Complete!${NC}"
+echo "=================================="
+echo -e "To start NeuroRift Web Mode:"
+echo -e "  ${BLUE}./scripts/launch_web.sh${NC}"
+echo -e "\nTo start CLI Mode with Wizard:"
+echo -e "  ${BLUE}source .venv/bin/activate${NC}"
+echo -e "  ${BLUE}./neurorift_main.py --configure${NC}"
+echo "=================================="

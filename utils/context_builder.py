@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-VulnForge Context Builder
+NeuroRift Context Builder
 Manages dynamic AI prompts with context from tools and previous results
 """
 

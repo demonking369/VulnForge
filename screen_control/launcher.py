@@ -63,7 +63,7 @@ def run_demo():
         screen.move_mouse(100, 100)
         
         print("Testing text input...")
-        screen.type_text("Hello from VulnForge!")
+        screen.type_text("Hello from NeuroRift!")
         
         print("Testing scroll...")
         screen.scroll(1)

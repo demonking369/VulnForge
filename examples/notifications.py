@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
-Example usage of the VulnForge notification system
+Example usage of the NeuroRift notification system
 """
 
 import asyncio
 import logging
+from pathlib import Path
 from utils.notifier import Notifier
 from utils.config_manager import ConfigManager
 
@@ -17,7 +18,8 @@ logger = logging.getLogger(__name__)
 
 async def main():
     # Initialize config manager
-    config = ConfigManager()
+    config_path = Path.home() / ".neurorift" / "config.json"
+    config = ConfigManager(config_path)
     
     # Initialize notifier
     notifier = Notifier(config)

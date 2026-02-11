@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Configuration Manager for VulnForge
+Configuration Manager for NeuroRift
 Handles loading and managing configuration settings
 """
 
@@ -22,13 +22,55 @@ class ConfigManager:
         """Load configuration from file"""
         if not self.config_path.exists():
             self.logger.warning("Config file not found: %s", self.config_path)
+            # If config file doesn't exist, save a default one and then load it
+            default_config = self._get_default_config()
+            self.config = default_config # Temporarily set to default for _save_config to work
             self._save_config()
+            return default_config # Return the default config
         try:
             with open(self.config_path, 'r') as f:
-                self.config = json.load(f)
+                config = json.load(f)
+            return config
         except Exception as e:
             self.logger.error("Error loading config: %s", e)
-            self.config = self._get_default_config()
+            # Return default config on error
+            return self._get_default_config()
+    
+    def _get_default_config(self) -> Dict[str, Any]:
+        """Get default configuration"""
+        return {
+            "ai": {
+                "preferred_model": "deepseek-coder-v2:16b-lite-base-q4_0",
+                "assistant_model": "mistral:7b-instruct-v0.2-q4_0",
+                "base_url": "http://localhost:11434",
+                "timeout": 300,
+                "max_tokens": 4096
+            },
+            "scanning": {
+                "max_threads": 10,
+                "timeout": 300
+            },
+            "stealth": {
+                "enabled": False,
+                "min_delay": 1,
+                "max_delay": 5
+            },
+            "reporting": {
+                "default_format": "all"
+            },
+            "tools": {
+                "subfinder": {"enabled": True},
+                "httpx": {"enabled": True},
+                "nuclei": {"enabled": True},
+                "nmap": {"enabled": True}
+            },
+            "notifications": {
+                "email": {"enabled": False},
+                "discord": {"enabled": False},
+                "slack": {"enabled": False},
+                "webhook": {"enabled": False}
+            }
+        }
             
     def get(self, key: str, default: Any = None) -> Any:
         """Get configuration value"""

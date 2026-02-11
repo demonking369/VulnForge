@@ -1,242 +1,290 @@
-# 🔥 VulnForge - AI-Powered Security Research Framework
+# 🧠 NeuroRift: Terminal-Based Multi-Agent Intelligence System
 
-> **Built with Blood by DemonKing369.0 👑**  
-> **GitHub: https://github.com/demonking369/VulnForge**  
-> **AI-Powered Security Framework for Bug Bounty Warriors ⚔️**
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
+[![Platform](https://img.shields.io/badge/platform-linux-lightgrey)](https://github.com/demonking369/NeuroRift)
+[![Status](https://img.shields.io/badge/status-active-success)](https://github.com/demonking369/NeuroRift)
 
-A powerful, AI-driven security testing framework designed for authorized penetration testing and bug bounty hunting. VulnForge combines advanced reconnaissance capabilities with cutting-edge AI integration to provide comprehensive security assessment tools.
+> **"Intelligence amplified through orchestrated AI agents."**
 
-## 🚀 Key Features
+**Designed and developed by demonking369**
 
-### 🔒 **Advanced Security Architecture**
-- **Multi-Language Performance**: Python orchestration with native C++, Rust, and Assembly modules
-- **AI-Powered Screen Control**: Human-like screen interaction using AI commands
-- **Advanced AI Pipeline**: Multi-step reasoning with real tool orchestration
-- **Secure by Design**: All critical security vulnerabilities addressed and fixed
-
-### 🛡️ **Security & Reliability Improvements**
-- **Subprocess Security**: Safe command execution without shell injection risks
-- **XML Security**: Protected against XXE attacks using defusedxml
-- **File Permissions**: Secure file handling with proper access controls
-- **Exception Handling**: Robust error handling with specific exception types
-- **Path Security**: Protected against path traversal attacks
-- **Memory Safety**: Graceful fallbacks for missing native libraries
-
-### 🤖 **AI Integration**
-- **Ollama Integration**: Local LLM support with multiple models
-- **AI Assistant**: Interactive AI-powered security consultant
-- **AI Pipeline**: Multi-step reasoning (Plan → Select Tool → Execute → Analyze)
-- **Custom Tool Generation**: AI-generated security tools and scripts
-- **Intelligent Analysis**: AI-powered vulnerability analysis and reporting
-
-### 🔍 **Reconnaissance & Scanning**
-- **Subdomain Discovery**: Advanced subdomain enumeration
-- **Web Service Probing**: Comprehensive web service detection
-- **Vulnerability Scanning**: Automated vulnerability assessment
-- **Port Scanning**: Network port analysis and service detection
-- **Technology Detection**: Automatic technology stack identification
-
-### 📊 **Reporting & Analysis**
-- **Multi-Format Reports**: JSON, Markdown, and HTML output
-- **AI Analysis**: Intelligent findings analysis and recommendations
-- **Custom Reports**: Tailored reporting for different audiences
-- **Real-time Updates**: Live progress tracking and status updates
-
-## 🏗️ New Architecture
-
-### **Polyglot Performance System**
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Python Core   │    │   C++ Modules   │    │   Rust Modules  │
-│   (Orchestration)│    │  (Screen Control)│    │ (Input Handling)│
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         └───────────────────────┼───────────────────────┘
-                                 │
-                    ┌─────────────────┐
-                    │ Assembly Hooks  │
-                    │ (Optimization)  │
-                    └─────────────────┘
-```
-
-### **AI Pipeline Architecture**
-```
-┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
-│   Planning  │→│ Tool Select │→│ Execution   │→│  Analysis   │
-│   Phase     │  │   Phase     │  │   Phase     │  │   Phase     │
-└─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘
-```
-
-## 📦 Installation
-
-### **Quick Start**
-```bash
-# Clone the repository
-git clone https://github.com/demonking369/VulnForge.git
-cd VulnForge
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run installation script
-bash install_script.sh
-
-# Start using VulnForge
-python3 vulnforge_main.py --help
-```
-
-### **System Requirements**
-- Python 3.8+
-- Go 1.19+ (for security tools)
-- Rust (optional, for performance modules)
-- GCC/Clang (for C++ modules)
-- NASM (for Assembly modules)
-
-## 🎯 Usage Examples
-
-### **Basic Reconnaissance**
-```bash
-# Run comprehensive reconnaissance
-python3 vulnforge_main.py --target "example.com" --mode recon
-
-# Generate detailed report
-python3 vulnforge_main.py --target "example.com" --mode recon --output-format all
-```
-
-### **AI-Powered Operations**
-```bash
-# Ask AI assistant
-python3 vulnforge_main.py ask-ai "What vulnerabilities should I look for in a web application?"
-
-# Generate custom tool
-python3 vulnforge_main.py generate-tool "A port scanner for web services"
-
-# Use advanced AI pipeline
-python3 vulnforge_main.py --ai-pipeline --target "example.com" --prompt-dir AI_Propmt
-```
-
-### **Tool Management**
-```bash
-# List generated tools
-python3 vulnforge_main.py list-tools
-
-# Check tool availability
-python3 vulnforge_main.py --check
-
-# Install missing tools
-python3 vulnforge_main.py --install
-```
-
-## 🔧 Configuration
-
-### **AI Configuration**
-```json
-{
-  "ai": {
-    "model": "deepseek-coder",
-    "base_url": "http://localhost:11434",
-    "timeout": 300,
-    "max_tokens": 16384
-  }
-}
-```
-
-### **Security Tools Configuration**
-```json
-{
-  "tools": {
-    "subfinder": {
-      "threads": 100,
-      "timeout": 30
-    },
-    "httpx": {
-      "threads": 50,
-      "timeout": 10
-    },
-    "nuclei": {
-      "severity": ["critical", "high", "medium"]
-    }
-  }
-}
-```
-
-## 🛡️ Security Features
-
-### **Critical Security Fixes Applied**
-- ✅ **BAN-B602**: Replaced `shell=True` with safe subprocess calls
-- ✅ **BAN-B314/BAN-B405**: Protected against XXE attacks
-- ✅ **BAN-B103**: Secure file permissions (0o600)
-- ✅ **BAN-B108**: Safe temporary file handling
-- ✅ **FLK-E722**: Specific exception handling
-- ✅ **BAN-B607**: Full executable paths
-- ✅ **PYL-W1510**: Proper subprocess error handling
-
-### **Security Best Practices**
-- **Input Validation**: All user inputs are validated and sanitized
-- **Path Security**: Protected against directory traversal attacks
-- **Memory Safety**: Graceful handling of native library failures
-- **Error Handling**: Comprehensive error handling without information leakage
-- **Access Control**: Proper file permissions and access controls
-
-## 🧪 Testing Results
-
-### **Comprehensive Test Coverage**
-- ✅ **Core Application**: All main functions tested and working
-- ✅ **AI Integration**: Ollama integration with fallback support
-- ✅ **Tool Generation**: Custom tool creation and management
-- ✅ **Reconnaissance**: Full reconnaissance pipeline tested
-- ✅ **Reporting**: Multi-format report generation verified
-- ✅ **Screen Control**: Multi-language screen interaction tested
-- ✅ **Security**: All security fixes verified and tested
-
-### **Performance Benchmarks**
-- **Reconnaissance Speed**: 3x faster with native modules
-- **AI Response Time**: <2 seconds for complex queries
-- **Memory Usage**: Optimized with proper cleanup
-- **Error Recovery**: 100% graceful fallback support
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
-
-### **Development Setup**
-```bash
-# Install development dependencies
-pip install -r requirements-test.txt
-
-# Run tests
-pytest tests/
-
-# Code formatting
-black .
-
-# Linting
-pylint vulnforge_main.py
-```
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## ⚠️ Legal Disclaimer
-
-**IMPORTANT**: This tool is designed for authorized security testing and educational purposes only. Users are responsible for ensuring they have proper authorization before testing any systems. Unauthorized use may violate laws and regulations.
-
-## 🆘 Support
-
-- **GitHub Issues**: [Report bugs and request features](https://github.com/Arunking9/VulnForge/issues)
-- **Documentation**: [Comprehensive documentation](https://github.com/Arunking9/VulnForge/wiki)
-- **Community**: Join our [Discord server](https://discord.gg/vulnforge)
-
-## 🙏 Acknowledgments
-
-- **ProjectDiscovery**: For excellent security tools
-- **Ollama**: For local LLM capabilities
-- **OpenAI**: For AI model inspiration
-- **Security Community**: For continuous feedback and improvements
+> [!IMPORTANT]
+> **🚧 THIS PROJECT IS CURRENTLY IN ACTIVE DEVELOPMENT (BETA Phase) 🚧**
+>
+> While the core features are functional, you may encounter bugs or incomplete features. We are actively shaping the future of this tool.
 
 ---
 
-**Made with ❤️ by the VulnForge Team**
+## 📖 Table of Contents
+- [Overview](#-overview)
+- [Architecture](#-architecture)
+- [Key Features](#-key-features)
+- [Installation Guide](#-installation-guide)
+- [Usage Manual](#-usage-manual)
+- [Configuration](#-configuration)
+- [Credits & Thanks](#-credits--thanks)
+- [Disclaimer](#-legal-disclaimer)
 
-*"In the realm of cybersecurity, knowledge is power, and VulnForge is your sword."*
+---
+
+## 🔭 Overview
+
+**NeuroRift** is a terminal-based multi-agent intelligence system designed for authorized security research and penetration testing. The framework employs specialized AI agents that work in concert to plan, execute, analyze, and report on security operations with unprecedented precision.
+
+Unlike traditional security tools, NeuroRift leverages **Local Large Language Models (LLMs)** through an orchestrated multi-agent architecture where each agent has a distinct role:
+
+- **NR Planner**: Strategic planning and task decomposition
+- **NR Operator**: Terminal-based execution with human-in-the-loop controls
+- **NR Analyst**: Advanced vulnerability analysis with CVSS scoring
+- **NR Scribe**: Professional multi-format report generation
+
+The framework unifies industry-standard tools (`nmap`, `nuclei`, `subfinder`) into a cohesive, modular platform accessible via a modern Web Dashboard or a powerful Command Line Interface (CLI).
+
+---
+
+## 🏗️ Architecture
+
+NeuroRift is built on a multi-agent orchestration architecture with strict operational discipline:
+
+```mermaid
+graph TD
+    User["Security Researcher"] -->|Interacts| Dashboard["Web Dashboard"]
+    User -->|Commands| CLI["CLI Interface"]
+    
+    Dashboard & CLI -->|Tasks| Orchestrator["NeuroRift Orchestrator"]
+    
+    Orchestrator -->|Plans| Planner["NR Planner"]
+    Planner -->|Execution Plan| Operator["NR Operator"]
+    Operator -->|Results| Analyst["NR Analyst"]
+    Analyst -->|Analysis| Scribe["NR Scribe"]
+    
+    Operator -->|Terminal Only| Tools["Security Tools"]
+    Operator -->|Approval Request| Human["Human Approval"]
+    
+    Tools -->|Data| Subfinder["subfinder"]
+    Tools -->|Data| Nmap["nmap"]
+    Tools -->|Data| Nuclei["nuclei"]
+    
+    Scribe -->|Reports| Output["Final Reports"]
+```
+
+---
+
+## 🚀 Key Features
+
+### 1. **Multi-Agent Orchestration**
+*   **NR Planner**: Creates strategic execution plans with task decomposition and risk assessment
+*   **NR Operator**: Executes commands exclusively through terminal with mandatory human approval for external actions
+*   **NR Analyst**: Performs advanced vulnerability analysis with CVSS 3.1 scoring and false positive reduction
+*   **NR Scribe**: Generates professional reports in multiple formats (Markdown, JSON, HTML, PDF)
+
+### 2. **Mode Governor**
+*   **OFFENSIVE Mode**: Research and discovery operations (reconnaissance, scanning, vulnerability assessment)
+*   **DEFENSIVE Mode**: Analysis and mitigation operations (vulnerability analysis, patch recommendations, hardening)
+*   **Strict Separation**: No cross-mode contamination, tool access controlled per mode
+*   **Violation Logging**: All mode violations are logged and reported
+
+### 3. **Human-in-the-Loop Controls**
+*   **Required Approval**: Browser navigation, external API calls, file modifications
+*   **Timeout Handling**: Configurable timeout with default deny on timeout
+*   **Audit Trail**: Complete logging of all approval requests and responses
+
+### 4. **Task State Memory**
+*   **Persistent Storage**: All task state saved to disk
+*   **Checkpoint/Resume**: Automatic checkpoints every 5 minutes
+*   **Execution History**: Complete history of all operations
+*   **Context Preservation**: Agent context maintained across sessions
+
+### 5. **Advanced Reconnaissance Engine**
+*   **Full-Spectrum Discovery**: Automated workflow chaining subdomain enumeration (`subfinder`), port scanning (`nmap`), and technology profiling (`whatweb`)
+*   **Vulnerability Assessment**: Integrated `nuclei` scanning for rapid identification of known security flaws
+*   **Stealth Mode**: Configurable rate limiting and passive scan options to minimize detection risk
+
+### 6. **Dark Web Intelligence (Robin Integration)**
+*   **Tor-Native**: Built-in routing via Tor SOCKS proxy for safe interaction with `.onion` services
+*   **Semantic Search**: Uses AI to refine search queries and filter results
+*   **Automated Scraping**: Safely extracts and summarizes content from hidden services
+
+---
+
+## 📦 Installation Guide
+
+### **Prerequisites**
+*   **Operating System**: Linux (Kali Linux or Ubuntu 22.04+ recommended)
+*   **Python**: Version 3.10 or higher
+*   **Tor**: Required for Dark Web functionality
+    ```bash
+    sudo apt update && sudo apt install tor -y
+    sudo systemctl enable --now tor
+    ```
+*   **Ollama**: Required for AI features. [Download Ollama](https://ollama.com).
+
+### **Step-by-Step Setup**
+
+1.  **Clone the Repository**
+    ```bash
+    git clone https://github.com/demonking369/NeuroRift.git
+    cd NeuroRift
+    ```
+
+2.  **Run the Unified Installer**
+    ```bash
+    # Handles all dependencies (Rust, Python, Node.js, Security Tools)
+    bash install_script.sh
+    ```
+
+3.  **Configure AI Models (Optional)**
+    ```bash
+    # Launch interactive configuration wizard
+    source .venv/bin/activate
+    ./neurorift_main.py --configure
+    ```
+
+---
+
+## 🎯 Usage Manual
+
+### **Mode A: Web Dashboard (Recommended)**
+```bash
+neurorift --webmod
+```
+*   **Access**: Open your browser to `http://localhost:8501`
+*   **Features**: Full graphical control over all modules, real-time logs, and interactive reports
+
+#### 📸 Web Interface Gallery
+<img width="1920" height="1080" alt="Screenshot_2026-02-02_18_36_34" src="https://github.com/user-attachments/assets/1d8f4c62-7a48-405d-a5a0-22a802fe56e1" />
+
+
+
+![Dashboard Overview}
+<img width="1920" height="1080" alt="Screenshot_2026-02-02_18_37_43" src="https://github.com/user-attachments/assets/a0fcfbcd-b32f-4fde-b220-5f4aeefebe14" />
+
+![Security Tools]
+*(Security Tools Panel)*
+<img width="1920" height="1080" alt="Screenshot_2026-02-02_18_36_57" src="https://github.com/user-attachments/assets/8e81abcd-1a59-46be-ba03-1993b4046618" />
+
+![Robin Intelligence]
+*(Robin Intelligence panel)*
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/a92a2ca9-d196-474d-bf0a-fc25bec5dd7b" />
+![Agent]
+*[Agent]*
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/b0ac9819-db1b-4e69-aadc-73b687f6f3a3" />
+
+### **Mode B: NeuroRift Intelligence Mode (Orchestrated)**
+
+**OFFENSIVE Mode (Discovery):**
+```bash
+neurorift --orchestrated --mode offensive -t example.com
+```
+
+**DEFENSIVE Mode (Analysis):**
+```bash
+neurorift --orchestrated --mode defensive --analyze results/scan.json
+```
+
+**Resume Interrupted Task:**
+```bash
+neurorift --resume task_20260124_092347
+```
+
+### **Mode C: Command Line Interface (CLI)**
+
+**Standard Recon Scan:**
+```bash
+neurorift -t example.com --operation-mode recon
+```
+
+**Dark Web Search:**
+```bash
+neurorift darkweb --query "leaked credentials example.com"
+```
+
+---
+
+## 🔧 Configuration
+
+NeuroRift utilizes a centralized configuration file at `configs/neurorift_config.json`:
+
+```json
+{
+  "agents": {
+    "planner": { "max_planning_iterations": 3 },
+    "operator": { "max_retries": 3 },
+    "analyst": { "confidence_threshold": 0.7 }
+  },
+  "mode_governor": {
+    "allow_mode_switching": false,
+    "log_violations": true
+  },
+  "human_in_the_loop": {
+    "timeout_seconds": 300,
+    "default_on_timeout": "deny"
+  }
+}
+```
+
+| Variable | Description | Default |
+| :--- | :--- | :--- |
+| `AI_ENABLED` | Master switch for AI features | `true` |
+| `OLLAMA_MAIN_MODEL` | Primary LLM for complex reasoning | `llama3.2` |
+| `OLLAMA_ASSISTANT_MODEL` | Faster LLM for chat interactions | `llama3.2` |
+| `ROBIN_TOR_PROXY` | SOCKS proxy for Dark Web traffic | `socks5h://127.0.0.1:9050` |
+| `LOG_LEVEL` | Application logging verbosity | `INFO` |
+
+---
+
+## ⚠️ Legal Disclaimer
+
+**NeuroRift is purpose-built for AUTHORIZED security testing, red teaming, and educational research.**
+
+*   **Authorization Required**: You must have explicit, written permission from the owner of any system you scan or test.
+*   **Compliance**: Users are responsible for complying with all applicable local, state, and federal laws.
+*   **Liability**: The developer of NeuroRift is not liable for any misuse, damage, or illegal activities resulting from the use of this software.
+
+---
+
+## 🎖️ Credits & Thanks
+
+**NeuroRift is independently developed by demonking369.**
+
+The following open-source projects were used as references or components, and are gratefully acknowledged:
+
+### Referenced Projects
+- **[x1xhlol/system-prompts-and-models-of-ai-tools](https://github.com/x1xhlol/system-prompts-and-models-of-ai-tools)** - System prompt patterns and AI agent design references
+- **[SimStudioAI](https://simstudio.ai)** - Conceptual orchestration design inspiration
+
+### Core Dependencies
+- **[Ollama](https://ollama.com)** - Local LLM inference engine
+- **[ProjectDiscovery](https://projectdiscovery.io)** - Security tools (subfinder, nuclei, httpx)
+- **[Nmap](https://nmap.org)** - Network scanning and service detection
+- **[Streamlit](https://streamlit.io)** - Web dashboard framework
+- **[Rich](https://rich.readthedocs.io)** - Terminal UI library
+
+### Special Thanks
+- The open-source security community for continuous innovation
+- All contributors who have helped improve NeuroRift
+- The AI research community for advancing LLM capabilities
+
+> **Thanks to the open-source projects that inspired and supported NeuroRift.**
+
+---
+
+## 📚 Documentation
+
+- **[NeuroRift Intelligence Mode](docs/NEURORIFT_README.md)** - Complete multi-agent orchestration guide
+- **[Agent Roles](docs/AGENT_ROLES.md)** - Detailed agent capabilities and responsibilities
+- **[Migration Guide](docs/MIGRATION_GUIDE.md)** - Upgrading from legacy modes
+
+---
+
+## 🤝 Community & Support
+
+*   **GitHub Issues**: [Report Bugs & Request Features](https://github.com/demonking369/NeuroRift/issues)
+*   **Documentation**: [Full Documentation](https://github.com/demonking369/NeuroRift)
+
+---
+
+**Designed and developed with ❤️ and ☕ by demonking369**
+
+**NeuroRift** - Intelligence amplified through orchestrated AI agents.

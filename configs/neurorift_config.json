@@ -1,0 +1,179 @@
+{
+  "version": "1.0.0",
+  "system_name": "NeuroRift",
+  "orchestrated_intelligence_mode": {
+    "enabled": true,
+    "description": "Multi-agent orchestration system for advanced security operations"
+  },
+  "agents": {
+    "planner": {
+      "name": "NR Planner",
+      "role": "strategic_planning",
+      "prompt_file": "prompts/vfx/vfx_planner_prompt.md",
+      "capabilities": [
+        "task_decomposition",
+        "resource_estimation",
+        "tool_selection",
+        "risk_assessment"
+      ],
+      "output_format": "json",
+      "max_planning_iterations": 3
+    },
+    "operator": {
+      "name": "NR Operator",
+      "role": "execution",
+      "prompt_file": "prompts/vfx/vfx_operator_prompt.md",
+      "capabilities": [
+        "terminal_execution",
+        "tool_invocation",
+        "error_handling",
+        "progress_reporting"
+      ],
+      "restrictions": {
+        "terminal_only": true,
+        "require_human_approval": [
+          "browser_actions",
+          "external_requests",
+          "file_modifications_outside_workspace"
+        ]
+      },
+      "max_retries": 3
+    },
+    "analyst": {
+      "name": "NR Analyst",
+      "role": "analysis",
+      "prompt_file": "prompts/vfx/vfx_analyst_prompt.md",
+      "capabilities": [
+        "vulnerability_assessment",
+        "risk_scoring",
+        "correlation_analysis",
+        "false_positive_reduction"
+      ],
+      "frameworks": [
+        "CVSS",
+        "OWASP_Top_10",
+        "CWE"
+      ],
+      "confidence_threshold": 0.7
+    },
+    "scribe": {
+      "name": "NR Scribe",
+      "role": "reporting",
+      "prompt_file": "prompts/vfx/vfx_scribe_prompt.md",
+      "capabilities": [
+        "report_generation",
+        "executive_summary",
+        "technical_documentation",
+        "audit_trail"
+      ],
+      "output_formats": [
+        "markdown",
+        "json",
+        "html",
+        "pdf"
+      ]
+    }
+  },
+  "mode_governor": {
+    "enabled": true,
+    "modes": {
+      "offensive": {
+        "description": "Research and discovery operations",
+        "allowed_tools": [
+          "subfinder",
+          "nmap",
+          "httpx",
+          "nuclei",
+          "gobuster",
+          "ffuf",
+          "whatweb",
+          "dig"
+        ],
+        "allowed_modules": [
+          "recon",
+          "scan",
+          "web"
+        ],
+        "restrictions": [
+          "no_exploitation",
+          "passive_only_default",
+          "require_authorization"
+        ],
+        "prompt_file": "prompts/vfx/offensive_mode_rules.md"
+      },
+      "defensive": {
+        "description": "Analysis and mitigation operations",
+        "allowed_tools": [
+          "analysis_tools",
+          "patch_validators",
+          "config_auditors"
+        ],
+        "allowed_modules": [
+          "analysis",
+          "mitigation",
+          "hardening"
+        ],
+        "restrictions": [
+          "no_active_scanning",
+          "analysis_only",
+          "mitigation_focus"
+        ],
+        "prompt_file": "prompts/vfx/defensive_mode_rules.md"
+      }
+    },
+    "default_mode": "offensive",
+    "allow_mode_switching": false,
+    "log_violations": true
+  },
+  "orchestration": {
+    "agent_flow": [
+      "planner",
+      "operator",
+      "analyst",
+      "scribe"
+    ],
+    "allow_agent_backtracking": true,
+    "max_orchestration_cycles": 5,
+    "enable_parallel_execution": false,
+    "context_handoff": {
+      "enabled": true,
+      "max_context_size_mb": 10,
+      "compression": true
+    }
+  },
+  "task_memory": {
+    "enabled": true,
+    "storage_path": "~/.neurorift/task_memory",
+    "persistence_format": "json",
+    "auto_checkpoint": true,
+    "checkpoint_interval_seconds": 300,
+    "max_history_entries": 100
+  },
+  "human_in_the_loop": {
+    "enabled": true,
+    "approval_required_for": [
+      "browser_navigation",
+      "external_api_calls",
+      "file_system_modifications",
+      "network_requests_outside_target"
+    ],
+    "timeout_seconds": 300,
+    "default_on_timeout": "deny"
+  },
+  "terminal_interface": {
+    "rich_ui": true,
+    "show_agent_status": true,
+    "show_task_progress": true,
+    "show_mode_indicator": true,
+    "color_scheme": "dark",
+    "log_level": "INFO"
+  },
+  "credits": {
+    "contributors": [
+      "NeuroRift Core Team",
+      "x1xhlol (system-prompts-and-models-of-ai-tools)",
+      "SimStudioAI (conceptual orchestration)",
+      "Anti-Gravity AI"
+    ]
+  }
+}

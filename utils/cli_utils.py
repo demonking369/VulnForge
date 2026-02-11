@@ -1,5 +1,5 @@
 """
-CLI utilities for VulnForge
+CLI utilities for NeuroRift
 Handles banner display and results formatting
 """
 
@@ -14,10 +14,10 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 console = Console()
 
 def print_banner(version: str):
-    """Print VulnForge banner"""
+    """Print NeuroRift banner"""
     banner = f"""
     ╔══════════════════════════════════════════════════════════════╗
-    ║                    VulnForge v{version}                       ║
+    ║                    NeuroRift v{version}                       ║
     ║              Educational Security Framework                   ║
     ╚══════════════════════════════════════════════════════════════╝
     """

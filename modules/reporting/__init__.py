@@ -1,5 +1,5 @@
 """
-Reporting module for VulnForge
+Reporting module for NeuroRift
 """
 
 from .reporting import ReportGenerator

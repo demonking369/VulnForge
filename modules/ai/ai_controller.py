@@ -13,7 +13,7 @@ class AIController:
             return f"[AI ERROR] {e}"
 
     def _log_ai_task(self, task, result, debug):
-        log_path = os.path.expanduser("~/.vulnforge/sessions/logs/ai_controller.log")
+        log_path = os.path.expanduser("~/.neurorift/sessions/logs/ai_controller.log")
         os.makedirs(os.path.dirname(log_path), exist_ok=True)
         with open(log_path, "a") as f:
             f.write(f"[TASK] {task}\n[RESULT] {result}\n[DEBUG] {debug}\n\n") 

@@ -1,5 +1,6 @@
 'use client';
 
+<<<<<<< HEAD
 import { useState } from 'react';
 import { WebModeProvider } from '@/components/webmode/WebModeProvider';
 import { CommandPanel } from '@/components/webmode/panels/CommandPanel';
@@ -142,4 +143,10 @@ export default function WebModePage() {
             <Dashboard />
         </WebModeProvider>
     );
+=======
+import { CommandCenter } from '@/components/webmode/CommandCenter';
+
+export default function DashboardPage() {
+    return <CommandCenter />;
+>>>>>>> main
 }

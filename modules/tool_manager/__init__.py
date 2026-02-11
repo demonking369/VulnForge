@@ -1,5 +1,5 @@
 """
-Tool Manager module for VulnForge
+Tool Manager module for NeuroRift
 """
 
 from .tool_manager import ToolManager

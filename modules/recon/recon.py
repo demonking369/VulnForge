@@ -1,5 +1,5 @@
 """
-Reconnaissance Module for VulnForge
+Reconnaissance Module for NeuroRift
 Handles target reconnaissance and information gathering
 """
 
@@ -103,7 +103,7 @@ class ReconModule:
             return results
             
     async def discover_subdomains(self, target: str) -> List[str]:
-        with open("/tmp/vulnforge_subfinder_debug.log", "a") as f:
+        with open("/tmp/neurorift_subfinder_debug.log", "a") as f:
             f.write(f"[DEBUG] discover_subdomains called for {target}\n")
         try:
             domain = target.split("://")[-1].split("/")[0]
@@ -128,16 +128,16 @@ class ReconModule:
                 fallback.update([
                     "mail.google.com", "www.google.com", "accounts.google.com", "drive.google.com", "maps.google.com", "news.google.com", "calendar.google.com", "photos.google.com", "play.google.com", "docs.google.com", "translate.google.com", "books.google.com", "video.google.com", "sites.google.com", "plus.google.com", "groups.google.com", "hangouts.google.com", "scholar.google.com", "alerts.google.com", "blogger.google.com", "chrome.google.com", "cloud.google.com", "developers.google.com", "support.google.com", "about.google", "store.google.com", "pay.google.com", "dl.google.com", "apis.google.com", "one.google.com", "keep.google.com", "classroom.google.com", "earth.google.com", "trends.google.com", "sheets.google.com", "forms.google.com", "contacts.google.com", "jamboard.google.com", "currents.google.com", "admin.google.com", "ads.google.com", "adwords.google.com", "analytics.google.com", "domains.google.com", "firebase.google.com", "myaccount.google.com", "myactivity.google.com", "passwords.google.com", "safety.google", "search.google.com", "shopping.google.com", "sketchup.google.com", "vault.google.com", "voice.google.com", "workspace.google.com"
                 ])
-                with open("/tmp/vulnforge_subfinder_debug.log", "a") as f:
+                with open("/tmp/neurorift_subfinder_debug.log", "a") as f:
                     f.write(f"[FORCED FALLBACK] {sorted(fallback)}\n")
                 return sorted(list(fallback))[:20]
             # If all else fails, return domain 10 times
             fallback = [f"sub{i}.{domain}" for i in range(1, 11)]
-            with open("/tmp/vulnforge_subfinder_debug.log", "a") as f:
+            with open("/tmp/neurorift_subfinder_debug.log", "a") as f:
                 f.write(f"[GENERIC FALLBACK] {fallback}\n")
             return fallback
         except Exception as e:
-            with open("/tmp/vulnforge_subfinder_debug.log", "a") as f:
+            with open("/tmp/neurorift_subfinder_debug.log", "a") as f:
                 f.write(f"[ERROR] discover_subdomains: {e}\n")
             return [target.split("://")[-1].split("/")[0]]
             
@@ -194,7 +194,7 @@ class ReconModule:
                         return ports
                 await asyncio.sleep(1)
             except Exception as e:
-                with open("/tmp/vulnforge_subfinder_debug.log", "a") as f:
+                with open("/tmp/neurorift_subfinder_debug.log", "a") as f:
                     f.write(f"[ERROR] nmap: {e}\n")
         return []
             
@@ -243,7 +243,7 @@ class ReconModule:
                         return services
                 await asyncio.sleep(1)
             except Exception as e:
-                with open("/tmp/vulnforge_subfinder_debug.log", "a") as f:
+                with open("/tmp/neurorift_subfinder_debug.log", "a") as f:
                     f.write(f"[ERROR] httpx: {e}\n")
             finally:
                 # SECURITY FIX: Ensure temp file is always cleaned up
@@ -381,7 +381,15 @@ class ReconModule:
                 f"[DEBUG] STDERR: {stderr.decode().strip()}\n"
             )
             print(debug_info, flush=True)
-            with open("/tmp/vulnforge_subfinder_debug.log", "a") as f:
+            with open("/tmp/neurorift_subfinder_debug.log", "a") as f:
                 f.write(debug_info)
             if stderr:
-                self.logger.warning("Command stderr: %s", stderr.decode()) 
+                self.logger.warning("Command stderr: %s", stderr.decode())
+            
+            return stdout.decode().strip()
+            
+        except Exception as e:
+            self.logger.error("Error running command '%s': %s", command, e)
+            with open("/tmp/neurorift_subfinder_debug.log", "a") as f:
+                f.write(f"[ERROR] Command failed: {command}\n[ERROR] {e}\n")
+            return "" 

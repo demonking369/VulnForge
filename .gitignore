@@ -11,6 +11,8 @@ downloads/
 eggs/
 .eggs/
 lib/
+!web-ui/src/lib/
+!web-ui/src/lib/**
 lib64/
 parts/
 sdist/
@@ -69,6 +71,7 @@ config.local.json
 
 # Temporary files
 *.tmp
+<<<<<<< HEAD
 *.temp
 
 # Web development
@@ -83,3 +86,6 @@ dist/
 build/
 *.egg-info/
  
+=======
+*.temp 
+>>>>>>> main

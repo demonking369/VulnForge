@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-VulnForge AI Analysis Script
+NeuroRift AI Analysis Script
 Analyzes scan results using AI models
 """
 
@@ -23,7 +23,11 @@ logger = logging.getLogger(__name__)
 class ResultAnalyzer:
     def __init__(self, base_dir: Path):
         self.base_dir = base_dir
-        self.config = ConfigManager(base_dir)
+        self.logger = logging.getLogger(__name__)
+        
+        # Initialize components with proper config path
+        config_path = base_dir / "config" / "config.json"
+        self.config = ConfigManager(config_path)
         self.llm = LLMEngine()
         self.context = ContextBuilder(base_dir)
         self.notifier = Notifier(self.config)

@@ -1,5 +1,5 @@
 """
-Stealth utilities for VulnForge
+Stealth utilities for NeuroRift
 """
 
 import random
