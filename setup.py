@@ -5,7 +5,11 @@ setup(
     version="1.0.0",
     packages=find_packages(include=['modules', 'modules.*', 'utils', 'utils.*', 'ai_wrapper', 'ai_wrapper.*']),
     py_modules=[
+<<<<<<< HEAD
+        # Top-level modules used by the CLI that are not in a package directory
+=======
         # Top-level modules used by the CLI
+>>>>>>> main
         "neurorift_main",
         "recon_module",
         "ai_integration",
@@ -49,6 +53,14 @@ setup(
             "neurorift=neurorift_main:main",
         ],
     },
+<<<<<<< HEAD
+    author="DemonKing369.0",
+    author_email="arunking9@gmail.com",
+    description="Advanced Cognitive Security Framework",
+    long_description=open("README.md").read(),
+    long_description_content_type="text/markdown",
+    url="https://github.com/Arunking9/NeuroRift",
+=======
     author="demonking369",
     author_email="",
     description="Terminal-Based Multi-Agent Intelligence System for Security Research",
@@ -60,6 +72,7 @@ setup(
         "Documentation": "https://github.com/demonking369/NeuroRift",
         "Source Code": "https://github.com/demonking369/NeuroRift",
     },
+>>>>>>> main
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Information Technology",

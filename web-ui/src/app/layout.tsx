@@ -1,4 +1,18 @@
 import type { Metadata } from 'next';
+<<<<<<< HEAD
+import './globals.css';
+
+export const metadata: Metadata = {
+    title: 'NeuroRift — Web Mode',
+    description: 'AI-powered cybersecurity control plane',
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+    return (
+        <html lang="en">
+            <body className="min-h-screen bg-neuro-bg antialiased">
+                {children}
+=======
 import { Inter } from 'next/font/google';
 import '@/styles/globals.css';
 import { CommandCenterFrame } from '@/components/webmode/CommandCenterFrame';
@@ -23,6 +37,7 @@ export default function RootLayout({
                         {children}
                     </main>
                 </CommandCenterFrame>
+>>>>>>> main
             </body>
         </html>
     );
