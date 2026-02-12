@@ -1,14 +1,14 @@
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 const globalExecutions = (global as any)._nr_executions || new Map();
 (global as any)._nr_executions = globalExecutions;
 
 export async function GET(
-    request: Request,
-    { params }: { params: Promise<{ id: string }> }
+    request: NextRequest,
+    context: { params: Promise<{ id: string }> }
 ) {
-    const { id } = await params;
+    const { id } = await context.params;
     const exec = globalExecutions.get(id);
 
     if (!exec) {

@@ -1,15 +1,5 @@
 #!/usr/bin/env python3
 """
-<<<<<<< HEAD
-VulnForge - Educational Cybersecurity Research Framework
-For authorized testing and educational purposes only.
-"""
-
-# ╔══════════════════════════════════════════════════════════╗
-# ║ VulnForge - Built with Blood by DemonKing369.0 👑        ║
-# ║ GitHub: https://github.com/Arunking9                     ║
-# ║ AI-Powered Security Framework for Bug Bounty Warriors ⚔️║
-=======
 NeuroRift - Terminal-Based Multi-Agent Intelligence System
 For authorized security testing and educational purposes only.
 
@@ -20,7 +10,6 @@ Designed and developed by demonking369
 # ║ NeuroRift - Designed by demonking369 🧠                  ║
 # ║ GitHub: https://github.com/demonking369/NeuroRift        ║
 # ║ Multi-Agent Intelligence for Security Research ⚡        ║
->>>>>>> main
 # ╚══════════════════════════════════════════════════════════╝
 
 import os
@@ -33,16 +22,6 @@ from datetime import datetime
 from pathlib import Path
 import logging
 import asyncio
-<<<<<<< HEAD
-from rich.console import Console
-from rich.panel import Panel
-from rich.progress import Progress, SpinnerColumn, TextColumn
-from typing import Optional
-
-from recon_module import EnhancedReconModule
-from ai_integration import AIAnalyzer, OllamaClient
-from ai_orchestrator import AIOrchestrator # New Import
-=======
 from dotenv import load_dotenv
 from rich.console import Console
 from rich.panel import Panel
@@ -77,7 +56,6 @@ from modules.orchestration.execution_manager import ExecutionManager, ScanReques
 from modules.ai.agents import NRPlanner, NROperator, NRAnalyst, NRScribe
 from modules.tools.base import ToolMode
 from modules.config.config_wizard import ConfigWizard
->>>>>>> main
 
 
 class NeuroRift:
@@ -86,15 +64,6 @@ class NeuroRift:
         self.base_dir = Path.home() / ".neurorift"
         self.results_dir = self.base_dir / "results"
         self.tools_dir = self.base_dir / "tools"
-<<<<<<< HEAD
-        self.setup_directories()
-        self.setup_logging()
-        self.console = Console()
-
-        # Initialize AI components
-        self.ollama = OllamaClient()
-        self.ai_analyzer = AIAnalyzer(self.ollama)
-=======
         self.setup_logging()
         self.console = Console()
 
@@ -117,7 +86,6 @@ class NeuroRift:
         self.operator = NROperator(self.execution_manager)
         self.analyst = NRAnalyst(self.ollama)
         self.scribe = NRScribe(self.ollama)
->>>>>>> main
 
     def setup_directories(self):
         """Create necessary directories"""
@@ -139,14 +107,6 @@ class NeuroRift:
         """Display tool banner"""
         banner_text = f"""
 ╔══════════════════════════════════════════════════════════════╗
-<<<<<<< HEAD
-║                         NeuroRift v{self.version}            ║
-║              Advanced Cognitive Security Framework           ║
-║                   For Authorized Testing Only                ║
-╚══════════════════════════════════════════════════════════════╝
-        """
-        self.console.print(Panel(banner_text, style="bold cyan"))
-=======
 ║                    NeuroRift v{self.version:10}                ║
 ║       Terminal-Based Multi-Agent Intelligence System         ║
 ║                                                              ║
@@ -157,7 +117,6 @@ class NeuroRift:
 Thanks to the open-source projects that inspired and supported NeuroRift.
         """
         self.console.print(Panel(banner_text, style="bold blue"))
->>>>>>> main
 
     def check_tools(self):
         """Check if required tools are installed"""
@@ -251,13 +210,6 @@ Thanks to the open-source projects that inspired and supported NeuroRift.
                 "[bold red]Error: Could not get response from AI[/bold red]"
             )
 
-<<<<<<< HEAD
-    def generate_tool(self, description: str):
-        """Generate a custom tool using AI and save it to custom_tools directory."""
-        try:
-            # Use os.path.expanduser to properly handle home directory
-            tool_dir = os.path.expanduser("~/.vulnforge/custom_tools")
-=======
     @RateLimiter(max_calls=5, time_window=60)
     def generate_tool(self, description: str, identifier: str = 'default'):
         """Generate a custom tool using AI and save it to custom_tools directory.
@@ -279,28 +231,13 @@ Thanks to the open-source projects that inspired and supported NeuroRift.
             
             # Use os.path.expanduser to properly handle home directory
             tool_dir = Path.home() / ".neurorift" / "custom_tools"
->>>>>>> main
             self.console.print(
                 f"[bold blue]Resolved custom_tools directory:[/bold blue] {tool_dir}"
             )
 
-<<<<<<< HEAD
-            # Create directory with proper permissions
-            try:
-                os.makedirs(tool_dir, mode=0o755, exist_ok=True)
-                self.console.print(
-                    f"[bold green]✓ Directory created/verified:[/bold green] {tool_dir}"
-                )
-            except PermissionError as e:
-                self.logger.error("Permission error creating directory: %s", e)
-                return
-            except Exception as e:
-                self.logger.error("Error creating directory: %s", e)
-=======
             # SECURITY: Create directory with secure permissions (0o700)
             if not FilePermissionManager.create_secure_directory(tool_dir, mode=0o700):
                 self.logger.error("Failed to create secure directory")
->>>>>>> main
                 return
 
             metadata_path = os.path.join(tool_dir, "metadata.json")
@@ -319,20 +256,12 @@ Thanks to the open-source projects that inspired and supported NeuroRift.
                 )
                 return
 
-<<<<<<< HEAD
-            # Extract a reasonable filename from the description
-=======
             # SECURITY: Extract and sanitize filename
->>>>>>> main
             import re
 
             base_name = re.sub(r"[^a-zA-Z0-9]+", "_", description.strip().lower())[
                 :32
             ].strip("_")
-<<<<<<< HEAD
-            filename = f"{base_name or 'custom_tool'}_{int(time.time())}.py"
-            tool_path = os.path.join(tool_dir, filename)
-=======
             filename = sanitize_filename(f"{base_name or 'custom_tool'}_{int(time.time())}.py")
             
             # SECURITY: Validate path to prevent traversal
@@ -340,20 +269,13 @@ Thanks to the open-source projects that inspired and supported NeuroRift.
             if not tool_path:
                 self.logger.error("Invalid tool path")
                 return
->>>>>>> main
 
             # Write the generated tool to file
             with open(tool_path, "w", encoding="utf-8") as f:
                 f.write(response)
-<<<<<<< HEAD
-            # SECURITY FIX: Set secure file permissions (0o600) for generated tool files
-            # This ensures only the owner can read/write the file
-            os.chmod(tool_path, 0o600)
-=======
             
             # SECURITY: Set secure file permissions (0o600) for generated tool files
             FilePermissionManager.set_secure_permissions(tool_path, mode=0o600)
->>>>>>> main
             self.console.print(
                 f"[bold green]✓ Tool generated and saved to:[/bold green] {tool_path}"
             )
@@ -392,16 +314,6 @@ Thanks to the open-source projects that inspired and supported NeuroRift.
             self.logger.error("Unexpected error in generate_tool: %s", e)
             return False
 
-<<<<<<< HEAD
-
-    def list_custom_tools(self):
-        """List all custom tools in the custom_tools directory."""
-        try:
-            tool_dir = os.path.expanduser("~/.vulnforge/custom_tools")
-            metadata_path = os.path.join(tool_dir, "metadata.json")
-
-            if not os.path.exists(tool_dir):
-=======
     def list_custom_tools(self):
         """List all custom tools in the custom_tools directory."""
         try:
@@ -417,17 +329,12 @@ Thanks to the open-source projects that inspired and supported NeuroRift.
             metadata_path = tool_dir / "metadata.json"
 
             if not tool_dir.exists():
->>>>>>> main
                 self.console.print(
                     "[bold yellow]No custom tools directory found.[/bold yellow]"
                 )
                 return
 
-<<<<<<< HEAD
-            if not os.path.exists(metadata_path):
-=======
             if not metadata_path.exists():
->>>>>>> main
                 self.console.print(
                     "[bold yellow]No custom tools metadata found.[/bold yellow]"
                 )
@@ -463,47 +370,6 @@ Thanks to the open-source projects that inspired and supported NeuroRift.
             self.logger.error("Unexpected error in list_custom_tools: %s", e)
             return []
 
-<<<<<<< HEAD
-    def launch_web_mode(self, mode="real"):
-        """Launch the Web Mode UI"""
-        # First check relative to script (for dev mode/source run)
-        web_ui_dir = Path(__file__).parent / "web-ui"
-        
-        # If not found, check current working directory (for installed package run)
-        if not web_ui_dir.exists():
-            web_ui_dir = Path.cwd() / "web-ui"
-
-        if not web_ui_dir.exists():
-            self.console.print(f"[bold red]Error: web-ui directory not found at {web_ui_dir} or relative to script.[/bold red]")
-            return
-
-        # Check for npm
-        if not self.is_tool_installed("npm"):
-            self.console.print("[bold red]Error: npm is not installed. Please install Node.js and npm.[/bold red]")
-            return
-
-        self.console.print(f"[bold green]Launching Web Mode UI ({mode.upper()} MODE)...[/bold green]")
-        self.console.print(f"[blue]Working directory: {web_ui_dir}[/blue]")
-        
-        # Set environment variable for the mode
-        env = os.environ.copy()
-        env['NEXT_PUBLIC_NR_MODE'] = mode
-
-        try:
-            # check if node_modules exists, if not install dependencies
-            if not (web_ui_dir / "node_modules").exists():
-                 self.console.print("[yellow]Installing dependencies...[/yellow]")
-                 subprocess.run(["npm", "install"], cwd=web_ui_dir, check=True)
-
-            # Run npm run dev
-            subprocess.run(["npm", "run", "dev"], cwd=web_ui_dir, env=env, check=True)
-        except subprocess.CalledProcessError as e:
-            self.console.print(f"[bold red]Error launching Web UI: {e}[/bold red]")
-        except KeyboardInterrupt:
-            self.console.print("\n[bold yellow]Web UI stopped.[/bold yellow]")
-
-
-=======
 >>>>>>> main
 
 async def dev_mode_shell(vf, session_dir):
@@ -512,35 +378,6 @@ async def dev_mode_shell(vf, session_dir):
     console.print(
         "\n[bold magenta]Entering Dev Mode Shell. Type 'help' for commands.[/bold magenta]"
     )
-<<<<<<< HEAD
-    # ... (content of dev_mode_shell remains same, just ensuring launch_web_mode is NOT here)
-
-
-
-
-async def _async_main():
-    parser = argparse.ArgumentParser(
-        description="""
-╔══════════════════════════════════════════════════════════╗
-║ NeuroRift - Advanced Cognitive Security Framework        ║
-║ GitHub: https://github.com/Arunking9                     ║
-║ AI-Powered Security Framework for Bug Bounty Warriors ⚔️ ║
-╚══════════════════════════════════════════════════════════╝
-
-A powerful AI-driven security testing framework for authorized penetration testing and bug bounty hunting.
-
-Key Features:
-• AI-Autonomous Operation (--ai-only)
-• Advanced Reconnaissance
-• Stealth Mode Capabilities
-• Multi-format Reporting
-• Custom Tool Generation
-• Interactive AI Assistant
-• Development Mode
-• Web Mode UI (--web-mode)
-
-For detailed documentation, visit: https://github.com/Arunking9/NeuroRift
-=======
     while True:
         try:
             cmd = input("[dev-mode]> ").strip()
@@ -597,27 +434,25 @@ For detailed documentation, visit: https://github.com/Arunking9/NeuroRift
 def get_parser():
     parser = argparse.ArgumentParser(
         description="""
-╔══════════════════════════════════════════════════════════╗
-║ NeuroRift - Designed by demonking369 🧠                  ║
-║ GitHub: https://github.com/demonking369/NeuroRift        ║
-║ Multi-Agent Intelligence for Security Research ⚡        ║
-╚══════════════════════════════════════════════════════════╝
+NeuroRift - Designed by demonking369
+GitHub: https://github.com/demonking369/NeuroRift
+Multi-Agent Intelligence for Security Research
 
 A terminal-based multi-agent intelligence system for authorized security testing.
 
 Key Features:
-• 🆕 NeuroRift Intelligence Mode (--orchestrated)
+- NeuroRift Intelligence Mode (--orchestrated)
   - Multi-Agent Architecture (Planner, Operator, Analyst, Scribe)
   - OFFENSIVE/DEFENSIVE Mode Separation (--mode offensive|defensive)
   - Terminal-Only Execution with Human-in-the-Loop
   - Advanced CVSS Scoring & Professional Reporting
-• AI-Autonomous Operation (--ai-only, --agentic)
-• Advanced Reconnaissance & Dark Web OSINT
-• Stealth Mode Capabilities
-• Multi-format Reporting (Markdown, JSON, HTML, PDF)
-• Custom Tool Generation
-• Interactive AI Assistant
-• Development Mode
+- AI-Autonomous Operation (--ai-only, --agentic)
+- Advanced Reconnaissance & Dark Web OSINT
+- Stealth Mode Capabilities
+- Multi-format Reporting (Markdown, JSON, HTML, PDF)
+- Custom Tool Generation
+- Interactive AI Assistant
+- Development Mode
 
 Documentation: docs/NEURORIFT_README.md
 Migration Guide: docs/MIGRATION_GUIDE.md
@@ -626,28 +461,17 @@ Designed and developed by demonking369
 Thanks to the open-source projects that inspired and supported NeuroRift.
 
 For detailed documentation, visit: https://github.com/demonking369/NeuroRift
->>>>>>> main
 """,
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument("--target", "-t", help="Target domain or IP")
     parser.add_argument(
-<<<<<<< HEAD
-        "--mode",
-        "-m",
-        choices=["recon", "scan", "web", "exploit"],
-        default="recon",
-        help="Operation mode",
-    )
-    # ... (rest of arguments remain unchanged) ...
-=======
         "--operation-mode",
         "-m",
         choices=["recon", "scan", "web", "exploit"],
         default="recon",
         help="Operation mode (legacy: recon, scan, web, exploit)",
     )
->>>>>>> main
     parser.add_argument("--output", "-o", help="Output file path")
     parser.add_argument(
         "--output-format",
@@ -668,15 +492,6 @@ For detailed documentation, visit: https://github.com/demonking369/NeuroRift
         "--dev-mode", action="store_true", help="Enable development mode"
     )
     parser.add_argument(
-<<<<<<< HEAD
-        "--web-mode", "--webmod", action="store_true", help="Launch the Web Mode UI"
-    )
-    parser.add_argument(
-        "--prototype", action="store_true", help="Launch Web Mode in Prototype (Mock) Mode"
-    )
-    parser.add_argument(
-=======
->>>>>>> main
         "--verbose", "-v", action="store_true", help="Show detailed logs"
     )
     parser.add_argument(
@@ -686,9 +501,6 @@ For detailed documentation, visit: https://github.com/demonking369/NeuroRift
         "--ai-pipeline", action="store_true", help="Enable the advanced multi-prompt AI pipeline."
     )
     parser.add_argument(
-<<<<<<< HEAD
-        "--prompt-dir", help="Directory for the AI pipeline prompts.", default="AI_Propmt/system-prompts-and-models-of-ai-tools"
-=======
         "--prompt-dir", help="Directory for the AI pipeline prompts.", default="prompts/system_prompts"
     )
     parser.add_argument(
@@ -725,7 +537,6 @@ For detailed documentation, visit: https://github.com/demonking369/NeuroRift
     )
     parser.add_argument(
         "--configure", action="store_true", help="🆕 Launch interactive configuration wizard"
->>>>>>> main
     )
 
     # Add subparsers for commands
@@ -747,18 +558,6 @@ For detailed documentation, visit: https://github.com/demonking369/NeuroRift
     list_tools_parser = subparsers.add_parser('list-tools', help='List all custom tools')
     list_tools_parser.add_argument('--verbose', action='store_true', help='Show detailed tool information')
 
-<<<<<<< HEAD
-    args = parser.parse_args()
-
-    # Initialize NeuroRift
-    nr = NeuroRift()
-    nr.banner()
-
-    # Handle Web Mode
-    if args.web_mode:
-        mode = "prototype" if args.prototype else "real"
-        nr.launch_web_mode(mode=mode)
-=======
     # Dark web OSINT command (Robin integration)
     darkweb_parser = subparsers.add_parser(
         'darkweb', help='Run the Robin dark web OSINT workflow'
@@ -927,7 +726,6 @@ async def _async_main(args):
             print(f"Error running uninstall script: {e}")
         except KeyboardInterrupt:
             print("\nUninstall cancelled by user")
->>>>>>> main
         return
 
     # Handle AI Pipeline Mode
@@ -945,11 +743,6 @@ async def _async_main(args):
         orchestrator.execute_task(f"Perform a security scan on {args.target}")
         return
 
-<<<<<<< HEAD
-    # Set logging level based on verbose flag
-    if args.verbose:
-        nr.logger.setLevel(logging.DEBUG)
-=======
     # Handle Agentic AI Mode
     if args.agentic:
         vf.agentic_mode = True
@@ -970,22 +763,12 @@ async def _async_main(args):
     # Set logging level based on verbose flag
     if args.verbose:
         vf.logger.setLevel(logging.DEBUG)
->>>>>>> main
 
     # Handle commands
     if args.command == "ask-ai":
         if args.dangerous and not args.confirm_danger:
             print("Error: --dangerous mode requires --confirm-danger flag")
             return
-<<<<<<< HEAD
-        nr.ask_ai(args.question)
-        return
-    elif args.command == "generate-tool":
-        nr.generate_tool(args.description)
-        return
-    elif args.command == "list-tools":
-        nr.list_custom_tools()
-=======
         vf.ask_ai(args.question)
         return
     elif args.command == "generate-tool":
@@ -1007,34 +790,21 @@ async def _async_main(args):
             threads=args.threads,
             output=args.output,
         )
->>>>>>> main
         return
 
     # Check tools
     if args.check:
-<<<<<<< HEAD
-        if nr.check_tools():
-=======
         if vf.check_tools():
->>>>>>> main
             print("✓ All required tools are installed")
         else:
             print("✗ Some tools are missing")
             if input("Install missing tools? (y/N): ").lower() == "y":
-<<<<<<< HEAD
-                nr.install_missing_tools()
-=======
                 vf.install_missing_tools()
->>>>>>> main
         return
 
     # Install tools
     if args.install:
-<<<<<<< HEAD
-        nr.install_missing_tools()
-=======
         vf.install_missing_tools()
->>>>>>> main
         return
 
     # Require target for operations
@@ -1044,10 +814,6 @@ async def _async_main(args):
             "Use --target to specify a domain or IP address you own or have authorization to test"
         )
         return
-<<<<<<< HEAD
-
-    nr.logger.info("Authorization assumed. Continuing...")
-=======
     
     # SECURITY: Validate target input
     if not validate_target(args.target):
@@ -1064,18 +830,11 @@ async def _async_main(args):
     #     print("Exiting. Only use this tool on authorized targets.")
     #     return
     vf.logger.info("Authorization assumed. Continuing...")
->>>>>>> main
     # Optionally, log a warning to file only
     logging.getLogger("neurorift").warning(
         "No explicit authorization prompt. User is responsible for legal/ethical use."
     )
 
-<<<<<<< HEAD
-    # Create session directory
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    session_dir = nr.base_dir / "sessions" / args.target / timestamp
-    session_dir.mkdir(parents=True, exist_ok=True)
-=======
     # SECURITY: Create session directory with secure permissions
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     
@@ -1087,18 +846,13 @@ async def _async_main(args):
     if not FilePermissionManager.create_secure_directory(session_dir, mode=0o700):
         print("Error: Failed to create secure session directory")
         return
->>>>>>> main
 
     # Initialize AI controller if needed
     if args.ai_only or args.ai_debug:
         from ai_controller import AIController
 
         ai_controller = AIController(
-<<<<<<< HEAD
-            str(session_dir), str(nr.base_dir / "configs" / "scan_config.json")
-=======
             str(session_dir), str(vf.base_dir / "configs" / "scan_config.json")
->>>>>>> main
         )
         if not ai_controller.setup_ai():
             print("Error: Failed to setup AI system")
@@ -1108,11 +862,7 @@ async def _async_main(args):
         ai_controller.output_format = args.output_format
 
     # Execute based on mode
-<<<<<<< HEAD
-    if args.mode == "recon":
-=======
     if args.operation_mode == "recon":
->>>>>>> main
         print(f"\n🔍 Starting reconnaissance on {args.target}")
         if args.ai_only:
             print("Running in AI-only mode - AI will make all decisions")
@@ -1121,11 +871,7 @@ async def _async_main(args):
         if args.stealth:
             print("Stealth mode enabled - using random delays and rotating user agents")
 
-<<<<<<< HEAD
-        results = await nr.run_recon(args.target, args.output)
-=======
         results = await vf.run_recon(args.target, args.output)
->>>>>>> main
 
         # Display summary
         console = Console()
@@ -1146,19 +892,6 @@ async def _async_main(args):
 
         # Start dev mode shell if requested
         if args.dev_mode:
-<<<<<<< HEAD
-            await dev_mode_shell(nr, session_dir)
-
-    elif args.mode == "scan":
-        print("Port scanning mode not implemented yet")
-
-    elif args.mode == "web":
-        # Launch web mode if explicitly selected via mode argument as well
-        nr.launch_web_mode()
-
-    elif args.mode == "exploit":
-        print("Exploit mode not implemented yet")
-=======
             await dev_mode_shell(vf, session_dir)
 
     elif args.operation_mode == "scan":
@@ -1299,14 +1032,10 @@ async def _async_main(args):
         # Start dev mode shell if requested
         if args.dev_mode:
             await dev_mode_shell(vf, session_dir)
->>>>>>> main
 
 
 def main():
     """Synchronous entrypoint for console_scripts."""
-<<<<<<< HEAD
-    asyncio.run(_async_main())
-=======
     parser, args = get_parser()
 
     # Handle web mode BEFORE starting asyncio loop
@@ -1355,7 +1084,6 @@ def main():
 
     # Run the main async pipeline
     asyncio.run(_async_main(args))
->>>>>>> main
 
 if __name__ == "__main__":
     main()

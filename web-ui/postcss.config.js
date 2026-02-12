@@ -3,8 +3,4 @@ module.exports = {
         tailwindcss: {},
         autoprefixer: {},
     },
-<<<<<<< HEAD
-};
-=======
 }
->>>>>>> main
