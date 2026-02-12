@@ -1,5 +1,18 @@
 'use client';
 
+<<<<<<< HEAD
+import { Workflow } from 'lucide-react';
+
+export function IntentFlowPanel() {
+    return (
+        <div className="space-y-3">
+            <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-neuro-text-muted">
+                <Workflow className="w-4 h-4 text-violet-300" />
+                Intent Flow
+            </div>
+            <div className="text-xs text-neuro-text-secondary p-4 rounded-xl bg-neuro-bg/60 border border-neuro-border/40 text-center">
+                Submit an intent to visualize the negotiation flow.
+=======
 import { ArrowRight, Shield, Wand2, Layers } from 'lucide-react';
 
 const steps = [
@@ -30,6 +43,7 @@ export function IntentFlowPanel() {
             </div>
             <div className="rounded-xl border border-neuro-border/60 bg-neuro-bg/60 p-4 text-sm text-neuro-text-secondary">
                 Intent routing is declarative and policy-driven. Execution is triggered only after negotiation, scoring, and enforcement checks succeed.
+>>>>>>> main
             </div>
         </div>
     );

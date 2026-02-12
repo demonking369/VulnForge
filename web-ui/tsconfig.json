@@ -1,5 +1,23 @@
 {
   "compilerOptions": {
+<<<<<<< HEAD
+    "target": "es5",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+=======
     "target": "ES2020",
     "lib": [
       "ES2020",
@@ -16,6 +34,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
+>>>>>>> main
     "incremental": true,
     "plugins": [
       {
@@ -26,8 +45,12 @@
       "@/*": [
         "./src/*"
       ]
+<<<<<<< HEAD
+    }
+=======
     },
     "isolatedModules": true
+>>>>>>> main
   },
   "include": [
     "next-env.d.ts",
