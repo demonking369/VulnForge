@@ -1,123 +1,137 @@
+'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useWebModeContext } from '../WebModeProvider';
-import { Play, Square, Terminal, Loader2 } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { useWebModeContext } from '@/components/webmode/WebModeProvider';
+import { Terminal, Bug, Play, XCircle, RotateCw } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { ToolExecution } from '@/lib/webmode/adapter/interface';
 
 export function ManualToolPanel() {
     const { adapter } = useWebModeContext();
-    const [selectedTool, setSelectedTool] = useState('nmap');
-    const [args, setArgs] = useState('');
-    const [isRunning, setIsRunning] = useState(false);
+    const [tool, setTool] = useState('nmap');
+    const [args, setArgs] = useState('-sV -T4 localhost');
     const [executionId, setExecutionId] = useState<string | null>(null);
-    const [output, setOutput] = useState<string[]>([]);
+    const [output, setOutput] = useState('');
+    const [status, setStatus] = useState<'idle' | 'running' | 'completed' | 'failed'>('idle');
     const outputRef = useRef<HTMLDivElement>(null);
 
-    const tools = ['nmap', 'nuclei', 'subfinder', 'ffuf', 'custom'];
-
-    const handleRun = async () => {
-        try {
-            setIsRunning(true);
-            setOutput([]);
-            const id = await adapter.runTool(selectedTool, args);
-            setExecutionId(id);
-        } catch (e) {
-            setOutput(prev => [...prev, `Error starting tool: ${e}`]);
-            setIsRunning(false);
-        }
-    };
-
-    const handleStop = async () => {
-        if (executionId) {
-            await adapter.cancelTool(executionId);
-            setIsRunning(false);
-            setOutput(prev => [...prev, '\n[Stopped by user]']);
-        }
-    };
-
-    useEffect(() => {
-        if (!isRunning || !executionId) return;
-
-        const interval = setInterval(async () => {
-            try {
-                const status = await adapter.getToolStatus(executionId);
-                setOutput([...status.stdout, ...status.stderr]);
-
-                if (status.status !== 'running') {
-                    setIsRunning(false);
-                    setExecutionId(null);
-                }
-            } catch (e) {
-                console.error("Failed to poll status", e);
-            }
-        }, 1000);
-
-        return () => clearInterval(interval);
-    }, [isRunning, executionId, adapter]);
-
+    // Auto-scroll output
     useEffect(() => {
         if (outputRef.current) {
             outputRef.current.scrollTop = outputRef.current.scrollHeight;
         }
     }, [output]);
 
+    // Poll execution status
+    useEffect(() => {
+        if (!executionId || status !== 'running') return;
+
+        const interval = setInterval(async () => {
+            try {
+                const exec = await adapter.getToolStatus(executionId);
+                const fullOutput = exec.stdout + (exec.stderr ? `\nERR: ${exec.stderr}` : '');
+
+                // Only update if output changed to avoid render thrashing
+                setOutput(prev => prev.length !== fullOutput.length ? fullOutput : prev);
+
+                if (exec.status !== 'running') {
+                    setStatus(exec.status);
+                    setExecutionId(null);
+                }
+            } catch (e) {
+                console.error("Poll error", e);
+            }
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [executionId, status, adapter]);
+
+    const handleRun = async () => {
+        if (!args.trim()) return;
+        setStatus('running');
+        setOutput('');
+        try {
+            const id = await adapter.runTool(tool, args);
+            setExecutionId(id);
+        } catch (e) {
+            setStatus('failed');
+            setOutput(`Error launching tool: ${e}`);
+        }
+    };
+
+    const handleAbort = async () => {
+        if (executionId) {
+            await adapter.abortTool(executionId);
+            setStatus('failed'); // Optimistic update
+        }
+    };
+
     return (
-        <div className="flex flex-col h-full bg-black/40 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden shadow-xl">
-            <div className="flex items-center justify-between px-4 py-3 bg-white/5 border-b border-white/10">
-                <div className="flex items-center gap-2">
-                    <Terminal className="w-4 h-4 text-cyan-400" />
-                    <span className="font-mono text-sm font-medium text-cyan-100/90 tracking-wide">MANUAL OPERATOR PLANE</span>
-                </div>
-                {isRunning && <span className="text-xs text-green-400 animate-pulse flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" /> EXECUTING</span>}
+        <div className="h-full flex flex-col space-y-4">
+            <div className="flex items-center gap-2 mb-2">
+                <Terminal className="w-4 h-4 text-cyan-400" />
+                <h3 className="text-xs uppercase tracking-widest text-cyan-100 font-semibold">Manual Verification</h3>
             </div>
 
-            <div className="p-4 space-y-4 flex-1 flex flex-col min-h-0">
+            <div className="grid grid-cols-[1fr_2fr_auto] gap-2 items-center">
+                <select
+                    value={tool}
+                    onChange={e => setTool(e.target.value)}
+                    className="bg-neuro-surface border border-neuro-border text-xs rounded px-2 py-1.5 focus:border-cyan-500 outline-none"
+                    disabled={status === 'running'}
+                >
+                    {['nmap', 'nuclei', 'ffuf', 'subfinder', 'curl'].map(t => (
+                        <option key={t} value={t}>{t}</option>
+                    ))}
+                </select>
+                <input
+                    type="text"
+                    value={args}
+                    onChange={e => setArgs(e.target.value)}
+                    className="bg-neuro-surface border border-neuro-border text-xs rounded px-2 py-1.5 font-mono focus:border-cyan-500 outline-none"
+                    placeholder="Arguments..."
+                    disabled={status === 'running'}
+                />
                 <div className="flex gap-2">
-                    <select
-                        value={selectedTool}
-                        onChange={(e) => setSelectedTool(e.target.value)}
-                        disabled={isRunning}
-                        className="bg-black/50 border border-white/20 rounded px-3 py-1.5 text-sm font-mono text-cyan-100 focus:outline-none focus:border-cyan-500/50"
-                    >
-                        {tools.map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                    <input
-                        type="text"
-                        value={args}
-                        onChange={(e) => setArgs(e.target.value)}
-                        placeholder="--flags target"
-                        disabled={isRunning}
-                        className="flex-1 bg-black/50 border border-white/20 rounded px-3 py-1.5 text-sm font-mono text-cyan-100 focus:outline-none focus:border-cyan-500/50 placeholder-white/20"
-                    />
-                    {!isRunning ? (
+                    {status === 'running' ? (
+                        <button
+                            onClick={handleAbort}
+                            className="p-1.5 rounded bg-red-900/30 border border-red-500/50 text-red-200 hover:bg-red-900/50 transition-colors"
+                        >
+                            <XCircle className="w-4 h-4" />
+                        </button>
+                    ) : (
                         <button
                             onClick={handleRun}
-                            disabled={!args && selectedTool === 'custom'}
-                            className="bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/30 rounded px-3 py-1.5 transition-colors flex items-center justify-center w-10"
+                            className="p-1.5 rounded bg-cyan-900/30 border border-cyan-500/50 text-cyan-200 hover:bg-cyan-900/50 transition-colors"
                         >
                             <Play className="w-4 h-4" />
                         </button>
-                    ) : (
-                        <button
-                            onClick={handleStop}
-                            className="bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 rounded px-3 py-1.5 transition-colors flex items-center justify-center w-10"
-                        >
-                            <Square className="w-4 h-4 fill-current" />
-                        </button>
                     )}
                 </div>
+            </div>
 
-                <div
-                    ref={outputRef}
-                    className="flex-1 bg-black/80 rounded border border-white/10 p-3 font-mono text-xs overflow-y-auto min-h-[150px] shadow-inner font-light"
-                >
-                    {output.length === 0 ? (
-                        <span className="text-white/20 italic">Ready for input...</span>
-                    ) : (
-                        output.map((line, i) => (
-                            <div key={i} className="whitespace-pre-wrap break-all text-white/80 leading-relaxed border-l-2 border-transparent hover:border-white/10 hover:bg-white/5 px-1">{line}</div>
-                        ))
-                    )}
-                </div>
+            <div
+                ref={outputRef}
+                className="flex-1 rounded-lg bg-black/40 border border-neuro-border/50 p-3 font-mono text-[10px] text-neuro-text-secondary overflow-y-auto whitespace-pre-wrap min-h-[160px]"
+            >
+                {output || <span className="text-neuro-text-muted italic">Ready for manual instruction...</span>}
+            </div>
+
+            <div className="flex justify-between items-center text-[10px] text-neuro-text-muted border-t border-neuro-border/30 pt-2">
+                <span className="flex items-center gap-1">
+                    <Bug className="w-3 h-3" />
+                    {adapter.mode} MODE
+                </span>
+                <span className={cn(
+                    "flex items-center gap-1",
+                    status === 'running' && "text-cyan-400 animate-pulse",
+                    status === 'failed' && "text-red-400",
+                    status === 'completed' && "text-emerald-400"
+                )}>
+                    {status === 'running' && <RotateCw className="w-3 h-3 animate-spin" />}
+                    {status.toUpperCase()}
+                </span>
             </div>
         </div>
     );

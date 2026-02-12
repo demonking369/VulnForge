@@ -1,95 +1,79 @@
+'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useWebModeContext } from '../WebModeProvider';
-import { Folder, PlayCircle, Trash2, Database, RefreshCw } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useWebModeContext } from '@/components/webmode/WebModeProvider';
+import { Archive, Clock, Trash2, ArrowRight } from 'lucide-react';
 import { Session } from '@/lib/webmode/adapter/interface';
+import { cn } from '@/lib/utils';
 
 export function SessionManagerPanel() {
     const { adapter } = useWebModeContext();
     const [sessions, setSessions] = useState<Session[]>([]);
     const [loading, setLoading] = useState(false);
 
-    const fetchSessions = async () => {
+    const refresh = async () => {
         setLoading(true);
         try {
-            const data = await adapter.listSessions();
-            setSessions(data);
+            const list = await adapter.listSessions();
+            setSessions(list);
         } catch (e) {
-            console.error("Failed to load sessions", e);
+            console.error(e);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchSessions();
+        refresh();
     }, [adapter]);
 
-    const handleLoad = async (id: string) => {
-        try {
-            await adapter.loadSession(id);
-            // Trigger a global refresh or notification if needed
-        } catch (e) {
-            console.error("Failed to load session", e);
-        }
-    };
-
-    const handleDelete = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this session?')) return;
-        try {
+    const handleDelete = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (confirm('Delete session?')) {
             await adapter.deleteSession(id);
-            fetchSessions();
-        } catch (e) {
-            console.error("Failed to delete", e);
+            refresh();
         }
     };
 
     return (
-        <div className="flex flex-col h-full bg-black/40 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden shadow-xl">
-            <div className="flex items-center justify-between px-4 py-3 bg-white/5 border-b border-white/10">
+        <div className="h-full flex flex-col space-y-3">
+            <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
-                    <Database className="w-4 h-4 text-purple-400" />
-                    <span className="font-mono text-sm font-medium text-purple-100/90 tracking-wide">SESSION MANAGER</span>
+                    <Archive className="w-4 h-4 text-cyan-400" />
+                    <h3 className="text-xs uppercase tracking-widest text-cyan-100 font-semibold">Sessions</h3>
                 </div>
-                <button onClick={fetchSessions} className={`text-white/40 hover:text-white ${loading ? 'animate-spin' : ''}`}>
-                    <RefreshCw className="w-3.5 h-3.5" />
-                </button>
+                <button onClick={refresh} className="text-[10px] text-cyan-400 hover:text-cyan-300">REFRESH</button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-2 space-y-2 min-h-0">
+            <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
                 {sessions.length === 0 ? (
-                    <div className="text-center p-8 text-white/20 italic text-sm">No active sessions found.</div>
+                    <div className="text-center py-8 text-neuro-text-muted text-xs">No active sessions.</div>
                 ) : (
                     sessions.map(s => (
-                        <div key={s.id} className="group flex items-center justify-between p-3 rounded bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all">
-                            <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <span className={`w-1.5 h-1.5 rounded-full ${s.status === 'active' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-white/20'}`} />
-                                    <span className="font-mono text-xs font-bold text-white/90 truncate">{s.target}</span>
-                                    <span className="text-[10px] uppercase tracking-wider text-white/40 border border-white/10 px-1 rounded">{s.mode}</span>
-                                </div>
-                                <div className="flex items-center gap-3 text-[10px] text-white/50 font-mono">
-                                    <span>{new Date(s.startTime).toLocaleDateString()}</span>
-                                    <span>•</span>
-                                    <span>{s.toolCount} tools</span>
-                                </div>
+                        <div key={s.id} className="group flex flex-col gap-1 p-3 rounded-lg bg-neuro-surface/50 border border-neuro-border/50 hover:border-cyan-500/30 transition-colors cursor-pointer">
+                            <div className="flex justify-between items-start">
+                                <span className="text-sm text-neuro-text-primary font-medium">{s.target}</span>
+                                <span className={cn(
+                                    "text-[9px] px-1.5 py-0.5 rounded border uppercase",
+                                    s.status === 'active' ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" : "border-neuro-border text-neuro-text-muted"
+                                )}>{s.status}</span>
                             </div>
-
-                            <div className="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button
-                                    onClick={() => handleLoad(s.id)}
-                                    title="Load Session"
-                                    className="p-1.5 hover:bg-purple-500/20 text-white/40 hover:text-purple-300 rounded"
-                                >
-                                    <PlayCircle className="w-3.5 h-3.5" />
-                                </button>
-                                <button
-                                    onClick={() => handleDelete(s.id)}
-                                    title="Delete Session"
-                                    className="p-1.5 hover:bg-red-500/20 text-white/40 hover:text-red-300 rounded"
-                                >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                </button>
+                            <div className="flex justify-between items-center text-[10px] text-neuro-text-secondary mt-1">
+                                <span className="flex items-center gap-1">
+                                    <Clock className="w-3 h-3" />
+                                    {new Date(s.timestamp).toLocaleDateString()}
+                                </span>
+                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button
+                                        className="p-1 hover:text-red-400"
+                                        onClick={(e) => handleDelete(s.id, e)}
+                                    >
+                                        <Trash2 className="w-3 h-3" />
+                                    </button>
+                                    <button className="p-1 hover:text-cyan-400">
+                                        <ArrowRight className="w-3 h-3" />
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     ))

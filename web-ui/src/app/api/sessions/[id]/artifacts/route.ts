@@ -47,7 +47,7 @@ export async function GET(
     const target = parts[0];
     const timestamp = parts[1];
 
-    const sessionDir = path.join(os.homedir(), '.vulnforge', 'sessions', target, timestamp);
+    const sessionDir = path.join(os.homedir(), '.vulnforge', 'sessions', id);
 
     try {
         // checks if sessions exist

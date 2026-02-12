@@ -1,22 +1,12 @@
-
-import { WebModeConfig } from '../types';
-
-export interface FileNode {
-    name: string;
-    type: 'file' | 'directory';
-    path: string;
-    children?: FileNode[];
-    size?: number;
-    lastModified?: string;
-}
+import { StreamEvent } from '../stream';
 
 export interface Session {
     id: string;
     target: string;
-    mode: string;
-    startTime: string;
-    status: 'active' | 'completed' | 'failed';
+    timestamp: string;
+    status: 'active' | 'completed' | 'archived';
     toolCount: number;
+    findingsCount: number;
 }
 
 export interface ToolExecution {
@@ -25,34 +15,70 @@ export interface ToolExecution {
     args: string;
     status: 'running' | 'completed' | 'failed';
     startTime: number;
-    duration?: number;
-    stdout: string[];
-    stderr: string[];
+    endTime?: number;
+    stdout: string;
+    stderr: string;
 }
 
 export interface Artifact {
     id: string;
-    sessionId: string;
-    filename: string;
-    type: 'json' | 'markdown' | 'html' | 'text';
-    content?: string;
+    name: string;
+    type: 'json' | 'md' | 'html' | 'text' | 'image';
+    path: string;
+    size: number;
+    content?: string; // Loaded on demand
+}
+
+export interface FileNode {
+    name: string;
+    type: 'file' | 'directory';
+    path: string;
+    children?: FileNode[];
+    size?: number;
+}
+
+export interface SystemMetrics {
+    cpu: number;
+    memory: number;
+    network: { rx: number; tx: number };
 }
 
 export interface WebModeAdapter {
+    // Mode Identity
+    mode: 'REAL' | 'PROTOTYPE';
+
     // Session Management
     listSessions(): Promise<Session[]>;
-    loadSession(id: string): Promise<void>;
+    createSession(target: string): Promise<Session>;
     deleteSession(id: string): Promise<void>;
 
     // Tool Execution
-    runTool(tool: string, args: string): Promise<string>; // Returns execution ID
+    runTool(tool: string, args: string, sessionId?: string): Promise<string>; // returns execution ID
     getToolStatus(executionId: string): Promise<ToolExecution>;
-    cancelTool(executionId: string): Promise<void>;
+    abortTool(executionId: string): Promise<void>;
 
-    // Filesystem / Artifacts
+    // Artifacts & Files
     listArtifacts(sessionId: string): Promise<FileNode[]>;
-    getArtifactContent(path: string): Promise<string>;
+    readArtifact(path: string): Promise<string>;
 
     // System State
-    getSystemMetrics(): Promise<{ cpu: number; memory: number; network: { in: number; out: number } }>;
+    getSystemMetrics(): Promise<SystemMetrics>;
+
+    // Event Streaming
+    subscribeToEvents(callback: (event: StreamEvent) => void): () => void;
+
+    // AI Control
+    sendAIMessage(prompt: string): AsyncGenerator<string, void, unknown>;
+    cancelAI(): void;
+
+    // System Control
+    getSystemState(): Promise<SystemState>;
+}
+
+export interface SystemState {
+    status: 'healthy' | 'degraded' | 'critical';
+    ollama: {
+        status: 'connected' | 'disconnected';
+        model: string;
+    };
 }

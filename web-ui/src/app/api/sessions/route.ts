@@ -1,74 +1,72 @@
-
 import { NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
 
+const SESSIONS_DIR = path.join(os.homedir(), '.vulnforge', 'sessions');
+
 export async function GET() {
     try {
-        const sessionsDir = path.join(os.homedir(), '.vulnforge', 'sessions');
+        await fs.mkdir(SESSIONS_DIR, { recursive: true });
+        const dirs = await fs.readdir(SESSIONS_DIR, { withFileTypes: true });
 
-        // Check if directory exists
-        try {
-            await fs.access(sessionsDir);
-        } catch {
-            return NextResponse.json([]);
-        }
+        const sessions = await Promise.all(
+            dirs.filter(d => d.isDirectory()).map(async (d) => {
+                const sessionPath = path.join(SESSIONS_DIR, d.name);
+                const stats = await fs.stat(sessionPath);
 
-        const targets = await fs.readdir(sessionsDir, { withFileTypes: true });
+                // Try to read metadata if exists
+                let metadata = { toolCount: 0, findingsCount: 0, status: 'active' };
+                try {
+                    const metaPath = path.join(sessionPath, 'metadata.json');
+                    const metaContent = await fs.readFile(metaPath, 'utf-8');
+                    metadata = JSON.parse(metaContent);
+                } catch {
+                    // Ignore if no metadata
+                }
 
-        const sessions = [];
+                // Parse ID format: target__timestamp
+                const [target, timestamp] = d.name.split('__');
 
-        for (const target of targets) {
-            if (!target.isDirectory()) continue;
-
-            const targetPath = path.join(sessionsDir, target.name);
-            const timestamps = await fs.readdir(targetPath, { withFileTypes: true });
-
-            for (const ts of timestamps) {
-                if (!ts.isDirectory()) continue;
-
-                // Try to read metadata if it exists
-                const sessionPath = path.join(targetPath, ts.name);
-                let metadata = { toolCount: 0, status: 'completed' }; // Defaults
-
-                // You might want to define a metadata.json in each session folder in the python backend
-
-                sessions.push({
-                    id: `${target.name}__${ts.name}`, // Composite ID
-                    target: target.name,
-                    startTime: parseTimestamp(ts.name), // Helper needed
-                    mode: 'recon', // Default or read from metadata
+                return {
+                    id: d.name,
+                    target: target || 'unknown',
+                    timestamp: timestamp ? new Date(parseInt(timestamp)).toISOString() : stats.birthtime.toISOString(),
                     status: metadata.status,
-                    toolCount: metadata.toolCount
-                });
-            }
-        }
+                    toolCount: metadata.toolCount,
+                    findingsCount: metadata.findingsCount
+                };
+            })
+        );
 
-        // Sort by recent first
-        sessions.sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
-
-        return NextResponse.json(sessions);
+        return NextResponse.json(sessions.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
     } catch (e) {
-        return NextResponse.json({ error: 'Failed to list sessions' }, { status: 500 });
+        return NextResponse.json({ error: String(e) }, { status: 500 });
     }
 }
 
-function parseTimestamp(ts: string) {
-    // Expected format: YYYYMMDD_HHMMSS
-    // Simple fallback
+export async function POST(request: Request) {
     try {
-        const parts = ts.split('_');
-        const dateStr = parts[0];
-        const timeStr = parts[1];
-        const year = parseInt(dateStr.substring(0, 4));
-        const month = parseInt(dateStr.substring(4, 6)) - 1;
-        const day = parseInt(dateStr.substring(6, 8));
-        const hour = parseInt(timeStr.substring(0, 2));
-        const min = parseInt(timeStr.substring(2, 4));
-        const sec = parseInt(timeStr.substring(4, 6));
-        return new Date(year, month, day, hour, min, sec).toISOString();
-    } catch {
-        return new Date().toISOString();
+        const { target } = await request.json();
+        const timestamp = Date.now();
+        const id = `${target}__${timestamp}`;
+        const sessionPath = path.join(SESSIONS_DIR, id);
+
+        await fs.mkdir(sessionPath, { recursive: true });
+
+        // Init metadata
+        const metadata = { toolCount: 0, findingsCount: 0, status: 'active', startTime: timestamp };
+        await fs.writeFile(path.join(sessionPath, 'metadata.json'), JSON.stringify(metadata, null, 2));
+
+        return NextResponse.json({
+            id,
+            target,
+            timestamp: new Date(timestamp).toISOString(),
+            status: 'active',
+            toolCount: 0,
+            findingsCount: 0
+        });
+    } catch (e) {
+        return NextResponse.json({ error: String(e) }, { status: 500 });
     }
 }

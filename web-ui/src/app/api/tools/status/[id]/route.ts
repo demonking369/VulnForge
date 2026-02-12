@@ -1,7 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-const globalExecutions = (global as any)._nr_executions || new Map();
+export const globalExecutions = (global as any)._nr_executions || new Map();
 (global as any)._nr_executions = globalExecutions;
 
 export async function GET(
